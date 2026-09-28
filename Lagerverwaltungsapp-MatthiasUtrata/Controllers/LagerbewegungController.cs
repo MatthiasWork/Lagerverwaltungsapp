@@ -12,13 +12,13 @@ public class LagerbewegungController : Controller
         _context = context;
     }
 
-    // GET: LAGERBEWEGUNGS
+    // GET: Lagerbewegung
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Lagerbewegung.ToListAsync());
     }
 
-    // GET: LAGERBEWEGUNGS/Details/5
+    // GET: Lagerbewegung/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,19 +36,26 @@ public class LagerbewegungController : Controller
         return View(lagerbewegung);
     }
 
-    // GET: LAGERBEWEGUNGS/Create
+    // GET: Lagerbewegung/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: LAGERBEWEGUNGS/Create
+    // POST: Lagerbewegung/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Menge,ErstelltAm,BestaetigtAm,BewegungsartID,VonRaumID,NachRaumID,GegenstandID,PersonID,Bewegungsart,Gegenstand,NachRaum,Person,VonRaum")] Lagerbewegung lagerbewegung)
+    public async Task<IActionResult> Create([Bind("ID,Menge,ErstelltAm,BestaetigtAm,BewegungsartID,VonRaumID,NachRaumID,GegenstandID,PersonID")] Lagerbewegung lagerbewegung)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Lagerbewegung.Bewegungsart));
+        ModelState.Remove(nameof(Lagerbewegung.Gegenstand));
+        ModelState.Remove(nameof(Lagerbewegung.NachRaum));
+        ModelState.Remove(nameof(Lagerbewegung.Person));
+        ModelState.Remove(nameof(Lagerbewegung.VonRaum));
+
         if (ModelState.IsValid)
         {
             _context.Add(lagerbewegung);
@@ -58,7 +65,7 @@ public class LagerbewegungController : Controller
         return View(lagerbewegung);
     }
 
-    // GET: LAGERBEWEGUNGS/Edit/5
+    // GET: Lagerbewegung/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,13 +81,20 @@ public class LagerbewegungController : Controller
         return View(lagerbewegung);
     }
 
-    // POST: LAGERBEWEGUNGS/Edit/5
+    // POST: Lagerbewegung/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Menge,ErstelltAm,BestaetigtAm,BewegungsartID,VonRaumID,NachRaumID,GegenstandID,PersonID,Bewegungsart,Gegenstand,NachRaum,Person,VonRaum")] Lagerbewegung lagerbewegung)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Menge,ErstelltAm,BestaetigtAm,BewegungsartID,VonRaumID,NachRaumID,GegenstandID,PersonID")] Lagerbewegung lagerbewegung)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Lagerbewegung.Bewegungsart));
+        ModelState.Remove(nameof(Lagerbewegung.Gegenstand));
+        ModelState.Remove(nameof(Lagerbewegung.NachRaum));
+        ModelState.Remove(nameof(Lagerbewegung.Person));
+        ModelState.Remove(nameof(Lagerbewegung.VonRaum));
+
         if (id != lagerbewegung.ID)
         {
             return NotFound();
@@ -109,7 +123,7 @@ public class LagerbewegungController : Controller
         return View(lagerbewegung);
     }
 
-    // GET: LAGERBEWEGUNGS/Delete/5
+    // GET: Lagerbewegung/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +141,7 @@ public class LagerbewegungController : Controller
         return View(lagerbewegung);
     }
 
-    // POST: LAGERBEWEGUNGS/Delete/5
+    // POST: Lagerbewegung/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

@@ -18,21 +18,6 @@
             <th>
                 @Html.DisplayNameFor(model => model.RaumartID)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LagerbewegungNachRaum)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LagerbewegungVonRaum)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Person)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Raumart)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Raumbestand)
-            </th>
             <th></th>
         </tr>
     </thead>
@@ -44,21 +29,6 @@
             </td>
             <td>
                 @Html.DisplayFor(model => item.RaumartID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.LagerbewegungNachRaum)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.LagerbewegungVonRaum)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Person)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Raumart)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Raumbestand)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |

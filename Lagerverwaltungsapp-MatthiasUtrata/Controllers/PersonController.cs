@@ -12,13 +12,13 @@ public class PersonController : Controller
         _context = context;
     }
 
-    // GET: PERSONS
+    // GET: Person
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Person.ToListAsync());
     }
 
-    // GET: PERSONS/Details/5
+    // GET: Person/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,19 +36,22 @@ public class PersonController : Controller
         return View(person);
     }
 
-    // GET: PERSONS/Create
+    // GET: Person/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: PERSONS/Create
+    // POST: Person/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID,Lagerbewegung,Raum,Rolle")] Person person)
+    public async Task<IActionResult> Create([Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID")] Person person)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Person.Rolle));
+
         if (ModelState.IsValid)
         {
             _context.Add(person);
@@ -58,7 +61,7 @@ public class PersonController : Controller
         return View(person);
     }
 
-    // GET: PERSONS/Edit/5
+    // GET: Person/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,13 +77,16 @@ public class PersonController : Controller
         return View(person);
     }
 
-    // POST: PERSONS/Edit/5
+    // POST: Person/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID,Lagerbewegung,Raum,Rolle")] Person person)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID")] Person person)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Person.Rolle));
+
         if (id != person.ID)
         {
             return NotFound();
@@ -109,7 +115,7 @@ public class PersonController : Controller
         return View(person);
     }
 
-    // GET: PERSONS/Delete/5
+    // GET: Person/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +133,7 @@ public class PersonController : Controller
         return View(person);
     }
 
-    // POST: PERSONS/Delete/5
+    // POST: Person/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

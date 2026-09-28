@@ -12,13 +12,13 @@ public class HerstellerController : Controller
         _context = context;
     }
 
-    // GET: HERSTELLERS
+    // GET: Hersteller
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Hersteller.ToListAsync());
     }
 
-    // GET: HERSTELLERS/Details/5
+    // GET: Hersteller/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,18 +36,18 @@ public class HerstellerController : Controller
         return View(hersteller);
     }
 
-    // GET: HERSTELLERS/Create
+    // GET: Hersteller/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: HERSTELLERS/Create
+    // POST: Hersteller/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Gegenstand")] Hersteller hersteller)
+    public async Task<IActionResult> Create([Bind("ID,Name")] Hersteller hersteller)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +58,7 @@ public class HerstellerController : Controller
         return View(hersteller);
     }
 
-    // GET: HERSTELLERS/Edit/5
+    // GET: Hersteller/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,12 +74,12 @@ public class HerstellerController : Controller
         return View(hersteller);
     }
 
-    // POST: HERSTELLERS/Edit/5
+    // POST: Hersteller/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Gegenstand")] Hersteller hersteller)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name")] Hersteller hersteller)
     {
         if (id != hersteller.ID)
         {
@@ -109,7 +109,7 @@ public class HerstellerController : Controller
         return View(hersteller);
     }
 
-    // GET: HERSTELLERS/Delete/5
+    // GET: Hersteller/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +127,7 @@ public class HerstellerController : Controller
         return View(hersteller);
     }
 
-    // POST: HERSTELLERS/Delete/5
+    // POST: Hersteller/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

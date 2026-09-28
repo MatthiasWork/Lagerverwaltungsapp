@@ -1,0 +1,42 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.Raumbestand
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Raumbestand</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.GegenstandID)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.GegenstandID)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Gegenstand.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Gegenstand.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.RaumID)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.RaumID)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Menge)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Menge)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-gegenstandID="@Model?.GegenstandID" asp-route-raumID="@Model?.RaumID">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

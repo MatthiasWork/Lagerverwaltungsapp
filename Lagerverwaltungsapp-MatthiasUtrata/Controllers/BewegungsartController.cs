@@ -12,13 +12,13 @@ public class BewegungsartController : Controller
         _context = context;
     }
 
-    // GET: BEWEGUNGSARTS
+    // GET: Bewegungsart
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Bewegungsart.ToListAsync());
     }
 
-    // GET: BEWEGUNGSARTS/Details/5
+    // GET: Bewegungsart/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,18 +36,18 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
-    // GET: BEWEGUNGSARTS/Create
+    // GET: Bewegungsart/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: BEWEGUNGSARTS/Create
+    // POST: Bewegungsart/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Lagerbewegung")] Bewegungsart bewegungsart)
+    public async Task<IActionResult> Create([Bind("ID,Name")] Bewegungsart bewegungsart)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +58,7 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
-    // GET: BEWEGUNGSARTS/Edit/5
+    // GET: Bewegungsart/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,12 +74,12 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
-    // POST: BEWEGUNGSARTS/Edit/5
+    // POST: Bewegungsart/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Lagerbewegung")] Bewegungsart bewegungsart)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name")] Bewegungsart bewegungsart)
     {
         if (id != bewegungsart.ID)
         {
@@ -109,7 +109,7 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
-    // GET: BEWEGUNGSARTS/Delete/5
+    // GET: Bewegungsart/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +127,7 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
-    // POST: BEWEGUNGSARTS/Delete/5
+    // POST: Bewegungsart/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

@@ -12,13 +12,13 @@ public class KategorieController : Controller
         _context = context;
     }
 
-    // GET: KATEGORIES
+    // GET: Kategorie
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Kategorie.ToListAsync());
     }
 
-    // GET: KATEGORIES/Details/5
+    // GET: Kategorie/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,18 +36,18 @@ public class KategorieController : Controller
         return View(kategorie);
     }
 
-    // GET: KATEGORIES/Create
+    // GET: Kategorie/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: KATEGORIES/Create
+    // POST: Kategorie/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Gegenstand")] Kategorie kategorie)
+    public async Task<IActionResult> Create([Bind("ID,Name")] Kategorie kategorie)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +58,7 @@ public class KategorieController : Controller
         return View(kategorie);
     }
 
-    // GET: KATEGORIES/Edit/5
+    // GET: Kategorie/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,12 +74,12 @@ public class KategorieController : Controller
         return View(kategorie);
     }
 
-    // POST: KATEGORIES/Edit/5
+    // POST: Kategorie/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Gegenstand")] Kategorie kategorie)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name")] Kategorie kategorie)
     {
         if (id != kategorie.ID)
         {
@@ -109,7 +109,7 @@ public class KategorieController : Controller
         return View(kategorie);
     }
 
-    // GET: KATEGORIES/Delete/5
+    // GET: Kategorie/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +127,7 @@ public class KategorieController : Controller
         return View(kategorie);
     }
 
-    // POST: KATEGORIES/Delete/5
+    // POST: Kategorie/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

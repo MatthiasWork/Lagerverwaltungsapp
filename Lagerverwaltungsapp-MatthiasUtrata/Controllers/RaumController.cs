@@ -12,13 +12,13 @@ public class RaumController : Controller
         _context = context;
     }
 
-    // GET: RAUMS
+    // GET: Raum
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Raum.ToListAsync());
     }
 
-    // GET: RAUMS/Details/5
+    // GET: Raum/Details/A101
     public async Task<IActionResult> Details(string? id)
     {
         if (id == null)
@@ -36,19 +36,22 @@ public class RaumController : Controller
         return View(raum);
     }
 
-    // GET: RAUMS/Create
+    // GET: Raum/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: RAUMS/Create
+    // POST: Raum/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,PersonID,RaumartID,LagerbewegungNachRaum,LagerbewegungVonRaum,Person,Raumart,Raumbestand")] Raum raum)
+    public async Task<IActionResult> Create([Bind("ID,PersonID,RaumartID")] Raum raum)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Raum.Raumart));
+
         if (ModelState.IsValid)
         {
             _context.Add(raum);
@@ -58,7 +61,7 @@ public class RaumController : Controller
         return View(raum);
     }
 
-    // GET: RAUMS/Edit/5
+    // GET: Raum/Edit/A101
     public async Task<IActionResult> Edit(string? id)
     {
         if (id == null)
@@ -74,13 +77,16 @@ public class RaumController : Controller
         return View(raum);
     }
 
-    // POST: RAUMS/Edit/5
+    // POST: Raum/Edit/A101
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string? id, [Bind("ID,PersonID,RaumartID,LagerbewegungNachRaum,LagerbewegungVonRaum,Person,Raumart,Raumbestand")] Raum raum)
+    public async Task<IActionResult> Edit(string? id, [Bind("ID,PersonID,RaumartID")] Raum raum)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Raum.Raumart));
+
         if (id != raum.ID)
         {
             return NotFound();
@@ -109,7 +115,7 @@ public class RaumController : Controller
         return View(raum);
     }
 
-    // GET: RAUMS/Delete/5
+    // GET: Raum/Delete/A101
     public async Task<IActionResult> Delete(string? id)
     {
         if (id == null)
@@ -127,7 +133,7 @@ public class RaumController : Controller
         return View(raum);
     }
 
-    // POST: RAUMS/Delete/5
+    // POST: Raum/Delete/A101
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string? id)

@@ -12,13 +12,13 @@ public class GegenstandController : Controller
         _context = context;
     }
 
-    // GET: GEGENSTANDS
+    // GET: Gegenstand
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Gegenstand.ToListAsync());
     }
 
-    // GET: GEGENSTANDS/Details/5
+    // GET: Gegenstand/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,19 +36,23 @@ public class GegenstandController : Controller
         return View(gegenstand);
     }
 
-    // GET: GEGENSTANDS/Create
+    // GET: Gegenstand/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: GEGENSTANDS/Create
+    // POST: Gegenstand/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Seriennummer,KategorieID,HerstellerID,Hersteller,Kategorie,Lagerbewegung,Raumbestand")] Gegenstand gegenstand)
+    public async Task<IActionResult> Create([Bind("ID,Name,Seriennummer,KategorieID,HerstellerID")] Gegenstand gegenstand)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Gegenstand.Hersteller));
+        ModelState.Remove(nameof(Gegenstand.Kategorie));
+
         if (ModelState.IsValid)
         {
             _context.Add(gegenstand);
@@ -58,7 +62,7 @@ public class GegenstandController : Controller
         return View(gegenstand);
     }
 
-    // GET: GEGENSTANDS/Edit/5
+    // GET: Gegenstand/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,13 +78,17 @@ public class GegenstandController : Controller
         return View(gegenstand);
     }
 
-    // POST: GEGENSTANDS/Edit/5
+    // POST: Gegenstand/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Seriennummer,KategorieID,HerstellerID,Hersteller,Kategorie,Lagerbewegung,Raumbestand")] Gegenstand gegenstand)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Seriennummer,KategorieID,HerstellerID")] Gegenstand gegenstand)
     {
+        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
+        ModelState.Remove(nameof(Gegenstand.Hersteller));
+        ModelState.Remove(nameof(Gegenstand.Kategorie));
+
         if (id != gegenstand.ID)
         {
             return NotFound();
@@ -109,7 +117,7 @@ public class GegenstandController : Controller
         return View(gegenstand);
     }
 
-    // GET: GEGENSTANDS/Delete/5
+    // GET: Gegenstand/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +135,7 @@ public class GegenstandController : Controller
         return View(gegenstand);
     }
 
-    // POST: GEGENSTANDS/Delete/5
+    // POST: Gegenstand/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

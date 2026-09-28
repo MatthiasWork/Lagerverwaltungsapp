@@ -12,6 +12,11 @@
     <div class="col-md-4">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="ID" class="control-label"></label>
+                <input asp-for="ID" class="form-control" />
+                <span asp-validation-for="ID" class="text-danger"></span>
+            </div>
 
             <div class="form-group">
                 <label asp-for="PersonID" class="control-label"></label>
@@ -25,35 +30,6 @@
                 <span asp-validation-for="RaumartID" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <label asp-for="LagerbewegungNachRaum" class="control-label"></label>
-                <input asp-for="LagerbewegungNachRaum" class="form-control" />
-                <span asp-validation-for="LagerbewegungNachRaum" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="LagerbewegungVonRaum" class="control-label"></label>
-                <input asp-for="LagerbewegungVonRaum" class="form-control" />
-                <span asp-validation-for="LagerbewegungVonRaum" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Person" class="control-label"></label>
-                <input asp-for="Person" class="form-control" />
-                <span asp-validation-for="Person" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Raumart" class="control-label"></label>
-                <input asp-for="Raumart" class="form-control" />
-                <span asp-validation-for="Raumart" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Raumbestand" class="control-label"></label>
-                <input asp-for="Raumbestand" class="form-control" />
-                <span asp-validation-for="Raumbestand" class="text-danger"></span>
-            </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>

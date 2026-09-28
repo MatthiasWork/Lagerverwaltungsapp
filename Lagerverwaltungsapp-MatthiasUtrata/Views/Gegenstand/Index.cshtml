@@ -24,18 +24,6 @@
             <th>
                 @Html.DisplayNameFor(model => model.HerstellerID)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Hersteller)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Kategorie)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Lagerbewegung)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Raumbestand)
-            </th>
             <th></th>
         </tr>
     </thead>
@@ -53,18 +41,6 @@
             </td>
             <td>
                 @Html.DisplayFor(model => item.HerstellerID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Hersteller)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Kategorie)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Lagerbewegung)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Raumbestand)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |

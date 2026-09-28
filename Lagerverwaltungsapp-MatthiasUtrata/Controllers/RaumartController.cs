@@ -12,13 +12,13 @@ public class RaumartController : Controller
         _context = context;
     }
 
-    // GET: RAUMARTS
+    // GET: Raumart
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Raumart.ToListAsync());
     }
 
-    // GET: RAUMARTS/Details/5
+    // GET: Raumart/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,18 +36,18 @@ public class RaumartController : Controller
         return View(raumart);
     }
 
-    // GET: RAUMARTS/Create
+    // GET: Raumart/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: RAUMARTS/Create
+    // POST: Raumart/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Raum")] Raumart raumart)
+    public async Task<IActionResult> Create([Bind("ID,Name")] Raumart raumart)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +58,7 @@ public class RaumartController : Controller
         return View(raumart);
     }
 
-    // GET: RAUMARTS/Edit/5
+    // GET: Raumart/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,12 +74,12 @@ public class RaumartController : Controller
         return View(raumart);
     }
 
-    // POST: RAUMARTS/Edit/5
+    // POST: Raumart/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Raum")] Raumart raumart)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name")] Raumart raumart)
     {
         if (id != raumart.ID)
         {
@@ -109,7 +109,7 @@ public class RaumartController : Controller
         return View(raumart);
     }
 
-    // GET: RAUMARTS/Delete/5
+    // GET: Raumart/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +127,7 @@ public class RaumartController : Controller
         return View(raumart);
     }
 
-    // POST: RAUMARTS/Delete/5
+    // POST: Raumart/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)

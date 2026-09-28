@@ -12,13 +12,13 @@ public class RolleController : Controller
         _context = context;
     }
 
-    // GET: ROLLES
+    // GET: Rolle
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Rolle.ToListAsync());
     }
 
-    // GET: ROLLES/Details/5
+    // GET: Rolle/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -36,18 +36,18 @@ public class RolleController : Controller
         return View(rolle);
     }
 
-    // GET: ROLLES/Create
+    // GET: Rolle/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: ROLLES/Create
+    // POST: Rolle/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ID,Name,Admin,Person")] Rolle rolle)
+    public async Task<IActionResult> Create([Bind("ID,Name,Admin")] Rolle rolle)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +58,7 @@ public class RolleController : Controller
         return View(rolle);
     }
 
-    // GET: ROLLES/Edit/5
+    // GET: Rolle/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -74,12 +74,12 @@ public class RolleController : Controller
         return View(rolle);
     }
 
-    // POST: ROLLES/Edit/5
+    // POST: Rolle/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Admin,Person")] Rolle rolle)
+    public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Admin")] Rolle rolle)
     {
         if (id != rolle.ID)
         {
@@ -109,7 +109,7 @@ public class RolleController : Controller
         return View(rolle);
     }
 
-    // GET: ROLLES/Delete/5
+    // GET: Rolle/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -127,7 +127,7 @@ public class RolleController : Controller
         return View(rolle);
     }
 
-    // POST: ROLLES/Delete/5
+    // POST: Rolle/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)
