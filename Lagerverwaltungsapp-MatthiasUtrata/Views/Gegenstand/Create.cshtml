@@ -1,0 +1,72 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.Gegenstand
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Gegenstand</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Seriennummer" class="control-label"></label>
+                <input asp-for="Seriennummer" class="form-control" />
+                <span asp-validation-for="Seriennummer" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="KategorieID" class="control-label"></label>
+                <input asp-for="KategorieID" class="form-control" />
+                <span asp-validation-for="KategorieID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="HerstellerID" class="control-label"></label>
+                <input asp-for="HerstellerID" class="form-control" />
+                <span asp-validation-for="HerstellerID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Hersteller" class="control-label"></label>
+                <input asp-for="Hersteller" class="form-control" />
+                <span asp-validation-for="Hersteller" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Kategorie" class="control-label"></label>
+                <input asp-for="Kategorie" class="form-control" />
+                <span asp-validation-for="Kategorie" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Lagerbewegung" class="control-label"></label>
+                <input asp-for="Lagerbewegung" class="form-control" />
+                <span asp-validation-for="Lagerbewegung" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Raumbestand" class="control-label"></label>
+                <input asp-for="Raumbestand" class="form-control" />
+                <span asp-validation-for="Raumbestand" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
