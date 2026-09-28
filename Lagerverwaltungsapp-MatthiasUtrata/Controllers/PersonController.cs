@@ -1,21 +1,28 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+using Lagerverwaltungsapp_MatthiasUtrata.Services;
 
+// Benutzerverwaltung darf nur ein Admin, sonst könnte sich jeder selbst zum Admin machen
+[Authorize(Roles = "Admin")]
 public class PersonController : Controller
 {
     private readonly LagerverwaltungContext _context;
+    private readonly PasswordService _passwordService;
 
-    public PersonController(LagerverwaltungContext context)
+    public PersonController(LagerverwaltungContext context, PasswordService passwordService)
     {
         _context = context;
+        _passwordService = passwordService;
     }
 
     // GET: Person
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
-        return View(await _context.Person.ToListAsync());
+        return View(await _context.Person.Include(p => p.Rolle).ToListAsync());
     }
 
     // GET: Person/Details/5
@@ -27,6 +34,7 @@ public class PersonController : Controller
         }
 
         var person = await _context.Person
+            .Include(p => p.Rolle)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (person == null)
         {
@@ -39,6 +47,7 @@ public class PersonController : Controller
     // GET: Person/Create
     public IActionResult Create()
     {
+        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name");
         return View();
     }
 
@@ -52,12 +61,22 @@ public class PersonController : Controller
         // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Person.Rolle));
 
+        // Der Login sucht über den Benutzernamen, daher muss er eindeutig sein
+        if (await _context.Person.AnyAsync(p => p.Username == person.Username))
+        {
+            ModelState.AddModelError(nameof(Person.Username), "Dieser Benutzername ist bereits vergeben.");
+        }
+
         if (ModelState.IsValid)
         {
+            // Passwort hashen
+            person.Password = _passwordService.HashPassword(person, person.Password);
+
             _context.Add(person);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
         return View(person);
     }
 
@@ -74,6 +93,7 @@ public class PersonController : Controller
         {
             return NotFound();
         }
+        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
         return View(person);
     }
 
@@ -86,14 +106,39 @@ public class PersonController : Controller
     {
         // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Person.Rolle));
+        // Beim Bearbeiten ist das Passwort optional (leer = bisheriges Passwort behalten)
+        ModelState.Remove(nameof(Person.Password));
 
         if (id != person.ID)
         {
             return NotFound();
         }
 
+        if (await _context.Person.AnyAsync(p => p.Username == person.Username && p.ID != person.ID))
+        {
+            ModelState.AddModelError(nameof(Person.Username), "Dieser Benutzername ist bereits vergeben.");
+        }
+
         if (ModelState.IsValid)
         {
+            if (string.IsNullOrEmpty(person.Password))
+            {
+                // Bisherigen Hash aus der Datenbank übernehmen
+                var bisherigerHash = await _context.Person
+                    .Where(p => p.ID == person.ID)
+                    .Select(p => p.Password)
+                    .FirstOrDefaultAsync();
+                if (bisherigerHash == null)
+                {
+                    return NotFound();
+                }
+                person.Password = bisherigerHash;
+            }
+            else
+            {
+                person.Password = _passwordService.HashPassword(person, person.Password);
+            }
+
             try
             {
                 _context.Update(person);
@@ -112,6 +157,7 @@ public class PersonController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
+        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
         return View(person);
     }
 
@@ -124,6 +170,7 @@ public class PersonController : Controller
         }
 
         var person = await _context.Person
+            .Include(p => p.Rolle)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (person == null)
         {

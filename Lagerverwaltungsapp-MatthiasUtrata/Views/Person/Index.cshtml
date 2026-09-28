@@ -22,13 +22,10 @@
                 @Html.DisplayNameFor(model => model.Username)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Password)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.Email)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.RolleID)
+                @Html.DisplayNameFor(model => model.Rolle)
             </th>
             <th></th>
         </tr>
@@ -46,13 +43,10 @@
                 @Html.DisplayFor(model => item.Username)
             </td>
             <td>
-                @Html.DisplayFor(model => item.Password)
-            </td>
-            <td>
                 @Html.DisplayFor(model => item.Email)
             </td>
             <td>
-                @Html.DisplayFor(model => item.RolleID)
+                @Html.DisplayFor(model => item.Rolle.Name)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |

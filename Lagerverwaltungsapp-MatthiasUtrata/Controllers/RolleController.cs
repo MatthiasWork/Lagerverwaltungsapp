@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Rollen verwalten darf nur ein Admin
+[Authorize(Roles = "Admin")]
 public class RolleController : Controller
 {
     private readonly LagerverwaltungContext _context;
@@ -13,7 +16,7 @@ public class RolleController : Controller
     }
 
     // GET: Rolle
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
         return View(await _context.Rolle.ToListAsync());
     }
