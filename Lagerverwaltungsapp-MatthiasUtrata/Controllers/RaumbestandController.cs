@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
 // Raumbestand hat einen zusammengesetzten Schlüssel (GegenstandID + RaumID),
 // daher kann dotnet-scaffold diesen Controller nicht generieren.
+// Raumbestände verwalten darf nur ein Admin
+[Authorize(Roles = "Admin")]
 public class RaumbestandController : Controller
 {
     private readonly LagerverwaltungContext _context;

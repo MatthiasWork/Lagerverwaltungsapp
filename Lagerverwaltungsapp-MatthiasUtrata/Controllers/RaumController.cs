@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Räume verwalten darf nur ein Admin
+[Authorize(Roles = "Admin")]
 public class RaumController : Controller
 {
     private readonly LagerverwaltungContext _context;

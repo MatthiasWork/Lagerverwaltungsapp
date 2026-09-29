@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Bewegungsarten verwalten darf nur ein Admin
+[Authorize(Roles = "Admin")]
 public class BewegungsartController : Controller
 {
     private readonly LagerverwaltungContext _context;
