@@ -122,6 +122,80 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
+        /// Methode, die die Registrierungsseite anzeigt. Bereits angemeldete Benutzer werden zur Startseite weitergeleitet.
+        /// </summary>
+        /// <returns>Gibt ein IActionResult zurück</returns>
+        // GET: Home/Register
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            return View();
+        }
+
+        /// <summary>
+        /// Methode, die einen neuen Benutzer registriert, sofern der Benutzername noch nicht vergeben ist.
+        /// Neue Benutzer bekommen automatisch die Rolle "LehrerIn" und werden danach direkt angemeldet.
+        /// </summary>
+        /// <param name="registrierung">Das RegisterViewModel mit den Daten aus dem Formular</param>
+        /// <returns>Gibt eine Task zurück</returns>
+        // POST: Home/Register
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel registrierung)
+        {
+            // Der Login sucht über den Benutzernamen, daher muss er eindeutig sein
+            if (await _context.Person.AnyAsync(p => p.Username == registrierung.Username))
+            {
+                ModelState.AddModelError(nameof(RegisterViewModel.Username), "Dieser Benutzername ist bereits vergeben.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(registrierung);
+            }
+
+            // Wer sich selbst registriert, darf nie Admin werden. Deshalb nur eine LehrerIn-Rolle ohne Admin-Rechte verwenden
+            // und sie neu anlegen, falls sie gelöscht oder zu einer Admin-Rolle gemacht wurde.
+            var lehrerInRolle = await _context.Rolle.FirstOrDefaultAsync(r => r.Name == Rolle.LehrerIn && !r.Admin)
+                ?? new Rolle { Name = Rolle.LehrerIn, Admin = false };
+
+            var person = new Person
+            {
+                Vorname = registrierung.Vorname,
+                Nachname = registrierung.Nachname,
+                Username = registrierung.Username,
+                Email = registrierung.Email,
+                Rolle = lehrerInRolle
+            };
+            person.Password = _passwordService.HashPassword(person, registrierung.Password);
+
+            _context.Person.Add(person);
+            await _context.SaveChangesAsync();
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, person.Email),
+                new Claim(ClaimTypes.Sid, person.ID.ToString()),
+                new Claim(ClaimTypes.Name, person.Username),
+                new Claim(ClaimTypes.Surname, person.Nachname),
+                new Claim(ClaimTypes.GivenName, person.Vorname),
+                new Claim(ClaimTypes.Role, person.Rolle.Name)
+            };
+
+            // Keine Admin-Prüfung nötig, da neu registrierte Benutzer immer die LehrerIn-Rolle ohne Admin-Rechte bekommen
+            ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
         /// Methode, die den Logout eines Benutzers verarbeitet.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>

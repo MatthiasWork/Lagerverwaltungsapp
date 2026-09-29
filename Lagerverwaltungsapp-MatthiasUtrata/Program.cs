@@ -57,6 +57,13 @@ using (var scope = app.Services.CreateScope())
         context.Person.Add(admin);
         context.SaveChanges();
     }
+
+    // Standardrolle für alle, die keine Admins sind; neu registrierte Benutzer bekommen sie automatisch
+    if (!context.Rolle.Any(r => r.Name == Rolle.LehrerIn))
+    {
+        context.Rolle.Add(new Rolle { Name = Rolle.LehrerIn, Admin = false });
+        context.SaveChanges();
+    }
 }
 
 // Configure the HTTP request pipeline.
