@@ -22,9 +22,9 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         /// <summary>
         /// Konstruktor der HomeController-Klasse.
         /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="context"></param>
-        /// <param name="passwordService"></param>
+        /// <param name="logger">Der Logger für den HomeController</param>
+        /// <param name="context">Der Datenbankkontext der Lagerverwaltung</param>
+        /// <param name="passwordService">Der Service zum Hashen und Prüfen von Passwörtern</param>
         public HomeController(ILogger<HomeController> logger, LagerverwaltungContext context, PasswordService passwordService)
         {
             _logger = logger;
@@ -33,27 +33,29 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Login-Seite anzeigt.
+        /// Methode, die die Startseite anzeigt.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Gibt ein IActionResult zurück</returns>
+        // GET: Home
         public IActionResult Index()
         {
             return View();
         }
 
         /// <summary>
-        /// Methode, 
+        /// Methode, die die Seite mit der Datenschutzerklärung anzeigt.
         /// </summary>
         /// <returns>Gibt ein IActionResult zurück</returns>
+        // GET: Home/Privacy
         public IActionResult Privacy()
         {
             return View();
         }
 
         /// <summary>
-        /// Methode, die überprüft, ob das eingegebene Passwort mit dem gespeicherten Passwort übereinstimmt.
+        /// Methode, die die Login-Seite anzeigt.
         /// </summary>
-        /// <param name="returnUrl"></param>
+        /// <param name="returnUrl">Die URL, zu der nach erfolgreichem Login weitergeleitet wird</param>
         /// <returns>Gibt ein IActionResult zurück</returns>
         // GET: Home/Login
         [AllowAnonymous]
@@ -64,10 +66,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die den Login eines Benutzers verarbeitet.
+        /// Methode, die den Login eines Benutzers verarbeitet. Stimmen Benutzername und Passwort,
+        /// wird der Benutzer per Cookie angemeldet und weitergeleitet.
         /// </summary>
-        /// <param name="login"></param>
-        /// <param name="returnUrl"></param>
+        /// <param name="login">Das LoginViewModel mit Benutzername und Passwort aus dem Formular</param>
+        /// <param name="returnUrl">Die URL, zu der nach erfolgreichem Login weitergeleitet wird</param>
         /// <returns>Gibt eine Task zurück</returns>
         // POST: Home/Login
         [AllowAnonymous]
@@ -145,6 +148,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         /// Methode, die die View für Fehlermeldungen zurückgibt.
         /// </summary>
         /// <returns>Gibt ein IActionResult zurück</returns>
+        // GET: Home/Error
         [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
