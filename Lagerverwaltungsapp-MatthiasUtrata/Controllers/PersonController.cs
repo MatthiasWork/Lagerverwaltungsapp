@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
+using System.Security.Claims;
 
 // Benutzerverwaltung darf nur ein Admin, sonst könnte sich jeder selbst zum Admin machen
 [Authorize(Roles = "Admin")]
@@ -25,13 +26,13 @@ public class PersonController : Controller
     }
 
     /// <summary>
-    /// Methode, die alle Personen mit ihrer Rolle auflistet.
+    /// Methode, die zur Adminübersicht weiterleitet, da die Benutzerliste dort angezeigt wird.
     /// </summary>
-    /// <returns>Gibt eine Task zurück</returns>
+    /// <returns>Gibt ein IActionResult zurück</returns>
     // GET: Person
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        return View(await _context.Person.Include(p => p.Rolle).ToListAsync());
+        return RedirectToAction("Index", "Admin");
     }
 
     /// <summary>
@@ -98,7 +99,8 @@ public class PersonController : Controller
 
             _context.Add(person);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            TempData["Meldung"] = $"Benutzer \"{person.Username}\" wurde angelegt.";
+            return RedirectToAction("Index", "Admin");
         }
         ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
         return View(person);
@@ -156,6 +158,14 @@ public class PersonController : Controller
             ModelState.AddModelError(nameof(Person.Username), "Dieser Benutzername ist bereits vergeben.");
         }
 
+        // Der letzte Admin darf seine Admin-Rolle nicht verlieren, sonst kann niemand mehr Benutzer verwalten
+        var warAdmin = await _context.Person.Where(p => p.ID == person.ID).Select(p => p.Rolle.Admin).FirstOrDefaultAsync();
+        var wirdAdmin = await _context.Rolle.Where(r => r.ID == person.RolleID).Select(r => r.Admin).FirstOrDefaultAsync();
+        if (warAdmin && !wirdAdmin && !await GibtEsAndereAdminsAsync(person.ID))
+        {
+            ModelState.AddModelError(nameof(Person.RolleID), "Der letzte Administrator muss eine Admin-Rolle behalten.");
+        }
+
         if (ModelState.IsValid)
         {
             if (string.IsNullOrEmpty(person.Password))
@@ -192,7 +202,8 @@ public class PersonController : Controller
                     throw;
                 }
             }
-            return RedirectToAction(nameof(Index));
+            TempData["Meldung"] = $"Benutzer \"{person.Username}\" wurde gespeichert.";
+            return RedirectToAction("Index", "Admin");
         }
         ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
         return View(person);
@@ -219,11 +230,14 @@ public class PersonController : Controller
             return NotFound();
         }
 
+        ViewData["LoeschHindernis"] = await LoeschHindernisAsync(person);
+        ViewData["AnzahlRaeume"] = await _context.Raum.CountAsync(r => r.PersonID == person.ID);
         return View(person);
     }
 
     /// <summary>
-    /// Methode, die eine Person nach der Bestätigung löscht.
+    /// Methode, die eine Person nach der Bestätigung löscht, sofern nichts dagegen spricht.
+    /// Räume, für die die Person zuständig war, bleiben erhalten und verlieren nur die Zuordnung.
     /// </summary>
     /// <param name="id">Die ID der Person, die gelöscht werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
@@ -232,14 +246,32 @@ public class PersonController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int? id)
     {
-        var person = await _context.Person.FindAsync(id);
-        if (person != null)
+        var person = await _context.Person
+            .Include(p => p.Rolle)
+            .Include(p => p.Raum)
+            .FirstOrDefaultAsync(p => p.ID == id);
+        if (person == null)
         {
-            _context.Person.Remove(person);
+            return RedirectToAction("Index", "Admin");
         }
 
+        // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
+        var hindernis = await LoeschHindernisAsync(person);
+        if (hindernis != null)
+        {
+            TempData["Fehler"] = hindernis;
+            return RedirectToAction("Index", "Admin");
+        }
+
+        foreach (var raum in person.Raum)
+        {
+            raum.PersonID = null;
+        }
+        _context.Person.Remove(person);
         await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+
+        TempData["Meldung"] = $"Benutzer \"{person.Username}\" wurde gelöscht.";
+        return RedirectToAction("Index", "Admin");
     }
 
     /// <summary>
@@ -250,5 +282,43 @@ public class PersonController : Controller
     private bool PersonExists(int? id)
     {
         return _context.Person.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob es außer der angegebenen Person noch weitere Admins gibt.
+    /// </summary>
+    /// <param name="personID">Die ID der Person, die nicht mitgezählt werden soll</param>
+    /// <returns>Gibt True oder False zurück</returns>
+    private async Task<bool> GibtEsAndereAdminsAsync(int personID)
+    {
+        return await _context.Person.AnyAsync(p => p.ID != personID && p.Rolle.Admin);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob eine Person gelöscht werden darf.
+    /// Die Rolle der Person muss dafür geladen sein.
+    /// </summary>
+    /// <param name="person">Die Person, die gelöscht werden soll</param>
+    /// <returns>Der Grund, warum die Person nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
+    private async Task<string?> LoeschHindernisAsync(Person person)
+    {
+        if (person.ID.ToString() == User.FindFirstValue(ClaimTypes.Sid))
+        {
+            return "Du kannst dein eigenes Benutzerkonto nicht löschen.";
+        }
+
+        if (person.Rolle.Admin && !await GibtEsAndereAdminsAsync(person.ID))
+        {
+            return "Der letzte Administrator kann nicht gelöscht werden.";
+        }
+
+        // Lagerbewegungen brauchen zwingend eine Person, sonst wäre nicht mehr nachvollziehbar, wer sie erfasst hat
+        var anzahlLagerbewegungen = await _context.Lagerbewegung.CountAsync(l => l.PersonID == person.ID);
+        if (anzahlLagerbewegungen > 0)
+        {
+            return $"\"{person.Username}\" hat {anzahlLagerbewegungen} Lagerbewegung(en) erfasst und kann daher nicht gelöscht werden.";
+        }
+
+        return null;
     }
 }
