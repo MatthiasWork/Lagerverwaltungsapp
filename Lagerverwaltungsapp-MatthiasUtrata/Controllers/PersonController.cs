@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
-using System.Security.Claims;
 
 // Benutzerverwaltung darf nur ein Admin, sonst könnte sich jeder selbst zum Admin machen
 [Authorize(Roles = "Admin")]
@@ -302,7 +302,7 @@ public class PersonController : Controller
     /// <returns>Der Grund, warum die Person nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
     private async Task<string?> LoeschHindernisAsync(Person person)
     {
-        if (person.ID.ToString() == User.FindFirstValue(ClaimTypes.Sid))
+        if (person.ID == User.GetPersonID())
         {
             return "Du kannst dein eigenes Benutzerkonto nicht löschen.";
         }

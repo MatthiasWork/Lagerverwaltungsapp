@@ -29,41 +29,16 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddScoped<IPasswordHasher<Person>, PasswordHasher<Person>>();
 builder.Services.AddScoped<PasswordService>();
+builder.Services.AddScoped<LagerService>();
+builder.Services.AddScoped<SeedService>();
 
 var app = builder.Build();
 
-// Ersteinrichtung: Gibt es noch keine Person, wird ein Admin angelegt,
-// damit man sich überhaupt anmelden kann (Passwort danach ändern!)
+// Ersteinrichtung: fehlende Stammdaten anlegen (Admin, Rollen, Raumarten, Bewegungsarten, Haupt- und Umbuchungslager)
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<LagerverwaltungContext>();
-    var passwordService = scope.ServiceProvider.GetRequiredService<PasswordService>();
-
-    if (!context.Person.Any())
-    {
-        var adminRolle = context.Rolle.FirstOrDefault(r => r.Admin)
-            ?? new Rolle { Name = "Administrator", Admin = true };
-
-        var admin = new Person
-        {
-            Vorname = "Admin",
-            Nachname = "Admin",
-            Username = "admin",
-            Email = "admin@lagerverwaltung.local",
-            Rolle = adminRolle
-        };
-        admin.Password = passwordService.HashPassword(admin, "admin");
-
-        context.Person.Add(admin);
-        context.SaveChanges();
-    }
-
-    // Standardrolle für alle, die keine Admins sind; neu registrierte Benutzer bekommen sie automatisch
-    if (!context.Rolle.Any(r => r.Name == Rolle.LehrerIn))
-    {
-        context.Rolle.Add(new Rolle { Name = Rolle.LehrerIn, Admin = false });
-        context.SaveChanges();
-    }
+    var seedService = scope.ServiceProvider.GetRequiredService<SeedService>();
+    await seedService.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.

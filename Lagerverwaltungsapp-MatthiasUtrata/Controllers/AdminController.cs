@@ -1,9 +1,9 @@
+using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 {
@@ -58,7 +58,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 Suche = suche,
                 RolleID = rolleID,
                 Rollen = new SelectList(await _context.Rolle.OrderBy(r => r.Name).ToListAsync(), "ID", "Name", rolleID),
-                AngemeldeteBenutzerID = int.TryParse(User.FindFirstValue(ClaimTypes.Sid), out var id) ? id : null
+                AngemeldeteBenutzerID = User.GetPersonID()
             };
 
             return View(uebersicht);
