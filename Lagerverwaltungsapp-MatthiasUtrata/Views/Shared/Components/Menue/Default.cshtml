@@ -1,0 +1,52 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.MenueViewModel
+
+@* Für alle angemeldeten Benutzer *@
+<li class="nav-item">
+    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
+</li>
+
+@* Nach Zuständigkeit: Es zählt nur, welcher Raum der Person zugewiesen ist, nicht dessen Raumart *@
+@if (Model.RaumID != null)
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="MeinRaum" asp-action="Index">Mein Raum (@Model.RaumID)</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Uebernahme" asp-action="Index">
+            Offene Übernahmen
+            @if (Model.OffeneUebernahmen > 0)
+            {
+                <span class="badge rounded-pill bg-warning text-dark">@Model.OffeneUebernahmen</span>
+            }
+        </a>
+    </li>
+}
+
+@* Nach Rolle: Übersichten, Stammdaten und Benutzerverwaltung nur für Admins *@
+@if (Model.IstAdmin)
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Raumbestand" asp-action="Index">Lagerbestand</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Raum" asp-action="Index">Lagerübersicht</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Lagerbewegung" asp-action="Index">Historie</a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Stammdaten</a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" asp-area="" asp-controller="Gegenstand" asp-action="Index">Gegenstände</a></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Kategorie" asp-action="Index">Kategorien</a></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Hersteller" asp-action="Index">Hersteller</a></li>
+            <li><hr class="dropdown-divider" /></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Raum" asp-action="Index">Räume</a></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Raumart" asp-action="Index">Raumarten</a></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Bewegungsart" asp-action="Index">Bewegungsarten</a></li>
+        </ul>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Benutzer</a>
+    </li>
+}

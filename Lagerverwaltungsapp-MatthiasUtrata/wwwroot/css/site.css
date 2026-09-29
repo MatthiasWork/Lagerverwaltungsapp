@@ -17,6 +17,11 @@ html {
   min-height: 100%;
 }
 
+/* Menüpunkte nicht umbrechen; bei zu wenig Platz wird stattdessen das Menü eingeklappt */
+.navbar-nav .nav-link {
+  white-space: nowrap;
+}
+
 body {
   margin-bottom: 60px;
 }

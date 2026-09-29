@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+using Lagerverwaltungsapp_MatthiasUtrata.Services;
 
 // Räume verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]
 public class RaumController : Controller
 {
     private readonly LagerverwaltungContext _context;
+    private readonly LagerService _lagerService;
 
-    public RaumController(LagerverwaltungContext context)
+    public RaumController(LagerverwaltungContext context, LagerService lagerService)
     {
         _context = context;
+        _lagerService = lagerService;
     }
 
     // GET: Raum
@@ -54,6 +57,7 @@ public class RaumController : Controller
     {
         // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Raum.Raumart));
+        await VerantwortlichePruefenAsync(raum);
 
         if (ModelState.IsValid)
         {
@@ -94,6 +98,8 @@ public class RaumController : Controller
         {
             return NotFound();
         }
+
+        await VerantwortlichePruefenAsync(raum);
 
         if (ModelState.IsValid)
         {
@@ -154,5 +160,26 @@ public class RaumController : Controller
     private bool RaumExists(string? id)
     {
         return _context.Raum.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob die gewählte Person schon für einen anderen Raum verantwortlich ist.
+    /// Eine Person kann nur für einen Raum verantwortlich sein, sonst wird ein Fehler im ModelState eingetragen.
+    /// </summary>
+    /// <param name="raum">Der Raum, der gespeichert werden soll</param>
+    /// <returns>Gibt eine Task zurück</returns>
+    private async Task VerantwortlichePruefenAsync(Raum raum)
+    {
+        if (raum.PersonID == null)
+        {
+            return;
+        }
+
+        var andererRaum = await _lagerService.AndererRaumAsync(raum.PersonID.Value, raum.ID);
+        if (andererRaum != null)
+        {
+            ModelState.AddModelError(nameof(Raum.PersonID),
+                $"Diese Person ist bereits für den Raum {andererRaum} verantwortlich. Eine Person kann nur für einen Raum verantwortlich sein.");
+        }
     }
 }

@@ -9,10 +9,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
     /// </summary>
     public class SeedService
     {
-        // IDs der beiden Lager, falls sie neu angelegt werden müssen
-        private const string HauptlagerID = "HL";
-        private const string UmbuchungslagerID = "UL";
-
         private readonly LagerverwaltungContext _context;
         private readonly PasswordService _passwordService;
 
@@ -20,7 +16,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         /// Konstruktor für den SeedService.
         /// </summary>
         /// <param name="context">Der Datenbankkontext der Lagerverwaltung</param>
-        /// <param name="passwordService">Der Service zum Hashen des Admin-Passworts</param>
+        /// <param name="passwordService">Der Service zum Hashen der Start-Passwörter</param>
         public SeedService(LagerverwaltungContext context, PasswordService passwordService)
         {
             _context = context;
@@ -28,8 +24,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die alle fehlenden Stammdaten anlegt. Die Reihenfolge ist wichtig,
-        /// da die Lager eine Raumart und einen Admin als verantwortliche Person brauchen.
+        /// Methode, die alle fehlenden Stammdaten und bei der Ersteinrichtung Beispieldaten anlegt. Die Reihenfolge ist wichtig,
+        /// da die Beispielräume eine Raumart und die LehrerIn-Rolle für ihre verantwortliche Person brauchen.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
         public async Task SeedAsync()
@@ -38,7 +34,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
             await LehrerInRolleAnlegenAsync();
             await RaumartenAnlegenAsync();
             await BewegungsartenAnlegenAsync();
-            await LagerAnlegenAsync();
+            await RaeumeAnlegenAsync();
         }
 
         /// <summary>
@@ -85,75 +81,93 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die die Raumarten Hauptlager, Umbuchungslager und Labor anlegt, sofern sie noch fehlen.
+        /// Methode, die bei der Ersteinrichtung Beispiel-Raumarten anlegt, falls es noch keine Raumart gibt.
+        /// Eine Raumart beschreibt einen Raum nur näher und hat keinen Einfluss auf den Ablauf.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
         private async Task RaumartenAnlegenAsync()
         {
-            foreach (var name in Raumart.Systemeintraege)
+            // Nur bei der Ersteinrichtung, sonst kämen umbenannte oder gelöschte Raumarten beim nächsten Start wieder
+            if (await _context.Raumart.AnyAsync())
             {
-                if (!await _context.Raumart.AnyAsync(r => r.Name == name))
-                {
-                    _context.Raumart.Add(new Raumart { Name = name });
-                }
+                return;
+            }
+
+            foreach (var name in new[] { "Hauptlager", "Umbuchungslager", "Labor" })
+            {
+                _context.Raumart.Add(new Raumart { Name = name });
             }
             await _context.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Methode, die die Bewegungsarten Wareneingang, Ausgabe, Rückgabe und Einlagerung anlegt, sofern sie noch fehlen.
+        /// Methode, die bei der Ersteinrichtung Beispiel-Bewegungsarten anlegt, falls es noch keine Bewegungsart gibt.
+        /// Eine Bewegungsart beschreibt eine Lagerbewegung nur näher und gibt keine Regeln für den Ablauf vor.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
         private async Task BewegungsartenAnlegenAsync()
         {
-            foreach (var name in Bewegungsart.Systemeintraege)
-            {
-                if (!await _context.Bewegungsart.AnyAsync(b => b.Name == name))
-                {
-                    _context.Bewegungsart.Add(new Bewegungsart { Name = name });
-                }
-            }
-            await _context.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Methode, die das Hauptlager und das Umbuchungslager anlegt, falls es noch keinen Raum dieser Raumart gibt.
-        /// Verantwortlich ist zunächst der erste Admin; das kann später in der Raumverwaltung geändert werden.
-        /// </summary>
-        /// <returns>Gibt eine Task zurück</returns>
-        private async Task LagerAnlegenAsync()
-        {
-            // Jeder Raum braucht eine verantwortliche Person. Ohne Admin werden die Lager erst beim nächsten Start angelegt.
-            var admin = await _context.Person
-                .Where(p => p.Rolle.Admin)
-                .OrderBy(p => p.ID)
-                .FirstOrDefaultAsync();
-            if (admin == null)
+            // Nur bei der Ersteinrichtung, sonst kämen umbenannte oder gelöschte Bewegungsarten beim nächsten Start wieder
+            if (await _context.Bewegungsart.AnyAsync())
             {
                 return;
             }
 
-            await LagerAnlegenAsync(HauptlagerID, Raumart.Hauptlager, admin.ID);
-            await LagerAnlegenAsync(UmbuchungslagerID, Raumart.Umbuchungslager, admin.ID);
+            foreach (var name in new[] { "Wareneingang", "Ausgabe", "Rueckgabe", "Einlagerung" })
+            {
+                _context.Bewegungsart.Add(new Bewegungsart { Name = name });
+            }
             await _context.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Methode, die einen Raum der angegebenen Raumart anlegt, sofern es noch keinen gibt.
+        /// Methode, die bei der Ersteinrichtung Beispielräume anlegt, falls es noch keinen Raum gibt.
+        /// Da eine Person nur für einen Raum verantwortlich sein kann, bekommt jeder Raum eine eigene LehrerIn.
+        /// Die Zuständigkeit kann später in der Raumverwaltung geändert werden.
+        /// </summary>
+        /// <returns>Gibt eine Task zurück</returns>
+        private async Task RaeumeAnlegenAsync()
+        {
+            // Nur bei der Ersteinrichtung, sonst kämen gelöschte Räume beim nächsten Start wieder
+            if (await _context.Raum.AnyAsync())
+            {
+                return;
+            }
+
+            await RaumAnlegenAsync("HL", "Hauptlager", "hauptlager");
+            await RaumAnlegenAsync("UL", "Umbuchungslager", "umbuchungslager");
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Methode, die einen Raum samt verantwortlicher LehrerIn anlegt (Passwort = Benutzername, danach ändern!).
         /// </summary>
         /// <param name="raumID">Die ID des neuen Raums</param>
-        /// <param name="raumartName">Der Name der Raumart, von der es genau einen Raum geben soll</param>
-        /// <param name="personID">Die ID der verantwortlichen Person</param>
+        /// <param name="raumartName">Der Name der Raumart, die den Raum beschreibt</param>
+        /// <param name="username">Der Benutzername der verantwortlichen LehrerIn</param>
         /// <returns>Gibt eine Task zurück</returns>
-        private async Task LagerAnlegenAsync(string raumID, string raumartName, int personID)
+        private async Task RaumAnlegenAsync(string raumID, string raumartName, string username)
         {
-            if (await _context.Raum.AnyAsync(r => r.Raumart.Name == raumartName))
+            // Die Raumart kann inzwischen umbenannt oder gelöscht worden sein, dann wird sie neu angelegt
+            var raumart = await _context.Raumart.FirstOrDefaultAsync(r => r.Name == raumartName)
+                ?? new Raumart { Name = raumartName };
+
+            // Da es noch keinen Raum gibt, hat auch keine Person einen Raum. Eine vorhandene Person kann also übernommen werden
+            var person = await _context.Person.FirstOrDefaultAsync(p => p.Username == username);
+            if (person == null)
             {
-                return;
+                person = new Person
+                {
+                    Vorname = "Lehrer",
+                    Nachname = raumartName,
+                    Username = username,
+                    Email = $"{username}@lagerverwaltung.local",
+                    Rolle = await _context.Rolle.FirstAsync(r => r.Name == Rolle.LehrerIn)
+                };
+                person.Password = _passwordService.HashPassword(person, username);
             }
 
-            var raumart = await _context.Raumart.FirstAsync(r => r.Name == raumartName);
-            _context.Raum.Add(new Raum { ID = raumID, RaumartID = raumart.ID, PersonID = personID });
+            _context.Raum.Add(new Raum { ID = raumID, Raumart = raumart, Person = person });
         }
     }
 }

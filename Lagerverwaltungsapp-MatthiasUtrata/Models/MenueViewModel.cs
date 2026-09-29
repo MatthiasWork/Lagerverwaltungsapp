@@ -5,16 +5,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Rollenbasiert: Stammdaten, Übersichten und Benutzerverwaltung
         public bool IstAdmin { get; set; }
 
-        // Zuständigkeitsbasiert: für welche Raumarten die angemeldete Person mindestens einen Raum verantwortet
-        public bool HauptlagerVerantwortlich { get; set; }
+        // Zuständigkeitsbasiert: ID des Raums, für den die angemeldete Person verantwortlich ist (null = kein Raum).
+        // Die Raumart spielt dafür keine Rolle
+        public string? RaumID { get; set; }
 
-        public bool UmbuchungslagerVerantwortlich { get; set; }
-
-        public bool LaborVerantwortlich { get; set; }
-
-        // Zahlen für die Badges neben den Menüpunkten
+        // Zahl für das Badge neben "Offene Übernahmen"
         public int OffeneUebernahmen { get; set; }
-
-        public int OffeneRueckgaben { get; set; }
     }
 }

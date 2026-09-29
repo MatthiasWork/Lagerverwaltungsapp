@@ -34,7 +34,7 @@ builder.Services.AddScoped<SeedService>();
 
 var app = builder.Build();
 
-// Ersteinrichtung: fehlende Stammdaten anlegen (Admin, Rollen, Raumarten, Bewegungsarten, Haupt- und Umbuchungslager)
+// Ersteinrichtung: fehlende Stammdaten anlegen (Admin, Rollen) und Beispieldaten (Raumarten, Bewegungsarten, Räume mit LehrerInnen)
 using (var scope = app.Services.CreateScope())
 {
     var seedService = scope.ServiceProvider.GetRequiredService<SeedService>();

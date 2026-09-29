@@ -21,24 +21,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die das Hauptlager über seine Raumart sucht.
-        /// </summary>
-        /// <returns>Das Hauptlager oder null, wenn es noch nicht angelegt ist</returns>
-        public async Task<Raum?> HauptlagerAsync()
-        {
-            return await RaumNachRaumartAsync(Raumart.Hauptlager);
-        }
-
-        /// <summary>
-        /// Methode, die das Umbuchungslager über seine Raumart sucht.
-        /// </summary>
-        /// <returns>Das Umbuchungslager oder null, wenn es noch nicht angelegt ist</returns>
-        public async Task<Raum?> UmbuchungslagerAsync()
-        {
-            return await RaumNachRaumartAsync(Raumart.Umbuchungslager);
-        }
-
-        /// <summary>
         /// Methode, die überprüft, ob eine Person für einen Raum verantwortlich ist.
         /// Es wird immer die aktuelle Zuständigkeit aus der Datenbank verwendet.
         /// </summary>
@@ -51,27 +33,32 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die ermittelt, für welche Raumarten eine Person verantwortlich ist (z. B. für das Menü).
+        /// Methode, die den Raum ermittelt, für den eine Person verantwortlich ist (z. B. für das Menü).
+        /// Eine Person ist für höchstens einen Raum verantwortlich.
         /// </summary>
         /// <param name="personID">Die ID der Person</param>
-        /// <returns>Die Namen der Raumarten, für die die Person mindestens einen Raum verantwortet</returns>
-        public async Task<List<string>> VerantwortlicheRaumartenAsync(int personID)
+        /// <returns>Die ID ihres Raums oder null, wenn sie für keinen Raum verantwortlich ist</returns>
+        public async Task<string?> RaumDerPersonAsync(int personID)
         {
             return await _context.Raum
                 .Where(r => r.PersonID == personID)
-                .Select(r => r.Raumart.Name)
-                .Distinct()
-                .ToListAsync();
+                .Select(r => r.ID)
+                .FirstOrDefaultAsync();
         }
 
         /// <summary>
-        /// Methode, die den (einzigen) Raum einer Raumart sucht.
+        /// Methode, die sucht, ob eine Person schon für einen anderen Raum verantwortlich ist.
+        /// Wird vor dem Zuweisen eines Raums aufgerufen, da eine Person nur für einen Raum verantwortlich sein kann.
         /// </summary>
-        /// <param name="raumartName">Der Name der Raumart</param>
-        /// <returns>Der Raum oder null, wenn es keinen gibt</returns>
-        private async Task<Raum?> RaumNachRaumartAsync(string raumartName)
+        /// <param name="personID">Die ID der Person</param>
+        /// <param name="raumID">Die ID des Raums, der der Person zugewiesen werden soll</param>
+        /// <returns>Die ID des anderen Raums oder null, wenn die Person noch keinen anderen Raum hat</returns>
+        public async Task<string?> AndererRaumAsync(int personID, string raumID)
         {
-            return await _context.Raum.FirstOrDefaultAsync(r => r.Raumart.Name == raumartName);
+            return await _context.Raum
+                .Where(r => r.PersonID == personID && r.ID != raumID)
+                .Select(r => r.ID)
+                .FirstOrDefaultAsync();
         }
     }
 }

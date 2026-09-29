@@ -13,16 +13,19 @@ public class PersonController : Controller
 {
     private readonly LagerverwaltungContext _context;
     private readonly PasswordService _passwordService;
+    private readonly LagerService _lagerService;
 
     /// <summary>
     /// Konstruktor der PersonController-Klasse.
     /// </summary>
     /// <param name="context">Der Datenbankkontext der Lagerverwaltung</param>
     /// <param name="passwordService">Der Service zum Hashen und Prüfen von Passwörtern</param>
-    public PersonController(LagerverwaltungContext context, PasswordService passwordService)
+    /// <param name="lagerService">Der Service, der weiß, für welchen Raum eine Person verantwortlich ist</param>
+    public PersonController(LagerverwaltungContext context, PasswordService passwordService, LagerService lagerService)
     {
         _context = context;
         _passwordService = passwordService;
+        _lagerService = lagerService;
     }
 
     /// <summary>
@@ -231,13 +234,13 @@ public class PersonController : Controller
         }
 
         ViewData["LoeschHindernis"] = await LoeschHindernisAsync(person);
-        ViewData["AnzahlRaeume"] = await _context.Raum.CountAsync(r => r.PersonID == person.ID);
+        ViewData["RaumID"] = await _lagerService.RaumDerPersonAsync(person.ID);
         return View(person);
     }
 
     /// <summary>
     /// Methode, die eine Person nach der Bestätigung löscht, sofern nichts dagegen spricht.
-    /// Räume, für die die Person zuständig war, bleiben erhalten und verlieren nur die Zuordnung.
+    /// Der Raum, für den die Person zuständig war, bleibt erhalten und verliert nur die Zuordnung.
     /// </summary>
     /// <param name="id">Die ID der Person, die gelöscht werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
