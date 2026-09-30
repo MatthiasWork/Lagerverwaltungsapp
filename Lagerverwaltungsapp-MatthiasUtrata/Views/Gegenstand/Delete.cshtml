@@ -1,44 +1,42 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.Gegenstand
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Gegenstand löschen";
+    var loeschHindernis = ViewData["LoeschHindernis"] as string;
 }
 
-<h1>Delete</h1>
+<h1>Gegenstand löschen</h1>
+<hr />
 
-<h3>Are you sure you want to delete this?</h3>
+@if (loeschHindernis != null)
+{
+    <div class="alert alert-danger">@loeschHindernis</div>
+}
+else
+{
+    <h3>Soll dieser Gegenstand wirklich gelöscht werden?</h3>
+}
+
 <div>
-    <h4>Lagerverwaltungsapp_MatthiasUtrata.Models.Gegenstand</h4>
-    <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Seriennummer)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Seriennummer)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.KategorieID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.KategorieID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.HerstellerID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.HerstellerID)
-        </dd>
+        <dt class="col-sm-2">Bezeichnung</dt>
+        <dd class="col-sm-10">@Model.Name</dd>
+
+        <dt class="col-sm-2">Seriennummer</dt>
+        <dd class="col-sm-10">@(Model.Seriennummer ?? "keine")</dd>
+
+        <dt class="col-sm-2">Kategorie</dt>
+        <dd class="col-sm-10">@Model.Kategorie.Name</dd>
+
+        <dt class="col-sm-2">Hersteller</dt>
+        <dd class="col-sm-10">@Model.Hersteller.Name</dd>
     </dl>
     <form asp-action="Delete">
         <input type="hidden" asp-for="ID" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+        @if (loeschHindernis == null)
+        {
+            <input type="submit" value="Löschen" class="btn btn-danger" />
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Zurück zur Übersicht</a>
     </form>
 </div>

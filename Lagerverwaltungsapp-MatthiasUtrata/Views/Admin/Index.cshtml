@@ -8,20 +8,7 @@
 <hr />
 
 @* Rückmeldungen aus dem PersonController (Anlegen, Speichern, Löschen) *@
-@if (TempData["Meldung"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Meldung"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
-    </div>
-}
-@if (TempData["Fehler"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["Fehler"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
-    </div>
-}
+<partial name="_Meldungen" />
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
@@ -108,7 +95,6 @@ else
                         <td class="text-end text-nowrap">
                             <a asp-controller="Person" asp-action="Details" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-secondary">Details</a>
                             <a asp-controller="Person" asp-action="Edit" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
-                            @* Das eigene Konto kann nicht gelöscht werden, daher auch kein Button *@
                             @if (!istAngemeldet)
                             {
                                 <a asp-controller="Person" asp-action="Delete" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-danger">Löschen</a>

@@ -1,53 +1,87 @@
-@model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Gegenstand>
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.GegenstandUebersichtViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Gegenstände";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Gegenstände</h1>
+    <a asp-action="Create" class="btn btn-primary">Neuer Gegenstand</a>
+</div>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Seriennummer)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.KategorieID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HerstellerID)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Seriennummer)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.KategorieID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.HerstellerID)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
+<partial name="_Meldungen" />
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-md">
+        <input asp-for="Suche" class="form-control" placeholder="Bezeichnung oder Seriennummer" aria-label="Suche" />
+    </div>
+    <div class="col-md-2">
+        <select asp-for="KategorieID" asp-items="Model.Kategorien" class="form-select" aria-label="Kategorie">
+            <option value="">Alle Kategorien</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select asp-for="HerstellerID" asp-items="Model.Hersteller" class="form-select" aria-label="Hersteller">
+            <option value="">Alle Hersteller</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select asp-for="MitSeriennummer" class="form-select" aria-label="Seriennummer">
+            <option value="">Mit und ohne SN</option>
+            <option value="true">Nur mit SN</option>
+            <option value="false">Nur ohne SN</option>
+        </select>
+    </div>
+    <div class="col-md-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtern</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Zurücksetzen</a>
+    </div>
+</form>
+
+@if (!Model.Gegenstaende.Any())
+{
+    <p class="text-muted">Keine Gegenstände gefunden.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Bezeichnung</th>
+                    <th>Seriennummer</th>
+                    <th>Kategorie</th>
+                    <th>Hersteller</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var gegenstand in Model.Gegenstaende)
+                {
+                    <tr>
+                        <td>@gegenstand.Name</td>
+                        <td>
+                            @if (gegenstand.Seriennummer != null)
+                            {
+                                @gegenstand.Seriennummer
+                            }
+                            else
+                            {
+                                <span class="text-muted">keine</span>
+                            }
+                        </td>
+                        <td>@gegenstand.Kategorie.Name</td>
+                        <td>@gegenstand.Hersteller.Name</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-secondary">Details</a>
+                            <a asp-action="Edit" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            <a asp-action="Delete" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small">@Model.Gegenstaende.Count von @Model.AnzahlGesamt Gegenständen angezeigt</p>
+}

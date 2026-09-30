@@ -2,13 +2,19 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Die Validierungsattribute wurden von Hand ergänzt (Maximallänge wie in der Tabelle Kategorie).
+// Achtung: Beim erneuten Generieren mit EF Core Power Tools wird diese Datei überschrieben und die Attribute gehen verloren
 public partial class Kategorie
 {
     public int ID { get; set; }
 
+    [Required(ErrorMessage = "Bitte einen Namen eingeben.")]
+    [StringLength(30, ErrorMessage = "Der Name darf höchstens {1} Zeichen lang sein.")]
+    [Display(Name = "Name")]
     public string Name { get; set; } = null!;
 
     public virtual ICollection<Gegenstand> Gegenstand { get; set; } = new List<Gegenstand>();

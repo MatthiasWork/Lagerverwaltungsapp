@@ -1,42 +1,114 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.Gegenstand
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Gegenstand";
+    // Offene Lagerbewegungen sind im Von-Raum schon abgebucht, im Nach-Raum aber noch nicht bestätigt, also "unterwegs"
+    var unterwegs = Model.Lagerbewegung.Where(l => l.BestaetigtAm == null).OrderBy(l => l.ErstelltAm).ToList();
 }
 
-<h1>Details</h1>
+<h1>@Model.Name</h1>
+<hr />
+<dl class="row">
+    <dt class="col-sm-2">Seriennummer</dt>
+    <dd class="col-sm-10">@(Model.Seriennummer ?? "keine (Artikel mit Menge)")</dd>
+
+    <dt class="col-sm-2">Kategorie</dt>
+    <dd class="col-sm-10">@Model.Kategorie.Name</dd>
+
+    <dt class="col-sm-2">Hersteller</dt>
+    <dd class="col-sm-10">@Model.Hersteller.Name</dd>
+</dl>
+
+<h2 class="h4 mt-4">Standort</h2>
+@if (!Model.Raumbestand.Any() && !unterwegs.Any())
+{
+    <p class="text-muted">Der Gegenstand liegt derzeit in keinem Raum.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Ort</th>
+                    <th>Verantwortlich</th>
+                    <th class="text-end">Menge</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bestand in Model.Raumbestand.OrderBy(r => r.RaumID))
+                {
+                    <tr>
+                        <td>Raum @bestand.RaumID <span class="text-muted">(@bestand.Raum.Raumart.Name)</span></td>
+                        <td>@(bestand.Raum.Person == null ? "–" : $"{bestand.Raum.Person.Vorname} {bestand.Raum.Person.Nachname}")</td>
+                        <td class="text-end">@bestand.Menge</td>
+                    </tr>
+                }
+                @foreach (var bewegung in unterwegs)
+                {
+                    <tr>
+                        <td>
+                            <span class="badge bg-warning text-dark">unterwegs</span>
+                            von Raum @bewegung.VonRaumID nach Raum @bewegung.NachRaumID
+                        </td>
+                        <td>wartet auf: @(bewegung.NachRaum.Person == null ? "–" : $"{bewegung.NachRaum.Person.Vorname} {bewegung.NachRaum.Person.Nachname}")</td>
+                        <td class="text-end">@bewegung.Menge</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h2 class="h4 mt-4">Bewegungshistorie</h2>
+@if (!Model.Lagerbewegung.Any())
+{
+    <p class="text-muted">Für diesen Gegenstand gibt es noch keine Lagerbewegungen.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Erstellt am</th>
+                    <th>Bewegungsart</th>
+                    <th>Von</th>
+                    <th>Nach</th>
+                    <th class="text-end">Menge</th>
+                    <th>Angelegt von</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bewegung in Model.Lagerbewegung.OrderByDescending(l => l.ErstelltAm))
+                {
+                    <tr>
+                        <td class="text-nowrap">@bewegung.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@bewegung.Bewegungsart.Name</td>
+                        <td>@bewegung.VonRaumID</td>
+                        <td>@bewegung.NachRaumID</td>
+                        <td class="text-end">@bewegung.Menge</td>
+                        <td>@bewegung.Person.Vorname @bewegung.Person.Nachname</td>
+                        <td>
+                            @if (bewegung.BestaetigtAm != null)
+                            {
+                                <span class="badge bg-success">bestätigt</span>
+                                <span class="text-nowrap">@bewegung.BestaetigtAm.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">offen</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 <div>
-    <h4>Gegenstand</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Seriennummer)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Seriennummer)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.KategorieID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.KategorieID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.HerstellerID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.HerstellerID)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.ID">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-primary">Bearbeiten</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Zurück zur Übersicht</a>
 </div>

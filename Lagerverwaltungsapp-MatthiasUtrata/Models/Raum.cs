@@ -2,15 +2,25 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Die Validierungsattribute wurden von Hand ergänzt (Maximallänge wie in der Tabelle Raum).
+// Achtung: Beim erneuten Generieren mit EF Core Power Tools wird diese Datei überschrieben und die Attribute gehen verloren
 public partial class Raum
 {
+    [Required(ErrorMessage = "Bitte eine Raumnummer eingeben.")]
+    [StringLength(8, ErrorMessage = "Die Raumnummer darf höchstens {1} Zeichen lang sein.")]
+    [Display(Name = "Raumnummer")]
     public string ID { get; set; } = null!;
 
+    // In der Datenbank optional, in der Anwendung aber Pflicht (wird im RaumController geprüft)
+    [Display(Name = "Verantwortliche Person")]
     public int? PersonID { get; set; }
 
+    [Required(ErrorMessage = "Bitte eine Raumart auswählen.")]
+    [Display(Name = "Raumart")]
     public int RaumartID { get; set; }
 
     public virtual ICollection<Lagerbewegung> LagerbewegungNachRaum { get; set; } = new List<Lagerbewegung>();

@@ -1,0 +1,15 @@
+@* Rückmeldungen nach Anlegen, Speichern oder Löschen. TempData übersteht genau eine Weiterleitung *@
+@if (TempData["Meldung"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Meldung"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
+    </div>
+}
+@if (TempData["Fehler"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Fehler"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
+    </div>
+}
