@@ -1,14 +1,127 @@
-﻿@using System.Globalization
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.UebersichtViewModel
+@using System.Globalization
 @using System.Security.Claims
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Übersicht";
 
     // Begrüßung wie im Design: Datum und Gruß je nach Tageszeit mit dem Vornamen aus dem Login
+    var kultur = new CultureInfo("de-AT");
     var jetzt = DateTime.Now;
     var gruss = jetzt.Hour < 11 ? "Guten Morgen" : jetzt.Hour < 18 ? "Guten Tag" : "Guten Abend";
     var vorname = User.FindFirstValue(ClaimTypes.GivenName);
+
+    // Zeitangabe in der Aktivitätsliste: heute die Uhrzeit, gestern "Gestern", sonst das Datum
+    string Zeit(DateTime zeitpunkt)
+    {
+        if (zeitpunkt.Date == jetzt.Date)
+        {
+            return zeitpunkt.ToString("HH:mm");
+        }
+        return zeitpunkt.Date == jetzt.Date.AddDays(-1) ? "Gestern" : zeitpunkt.ToString("dd.MM.");
+    }
+
+    // Beispieldaten: Rückgabefristen gibt es im Datenmodell noch nicht (siehe Models/Beispieldaten.cs)
+    var faellig = Beispieldaten.FaelligeAusleihen;
 }
 
-<p class="text-muted mb-1">@jetzt.ToString("dddd, d. MMMM", new CultureInfo("de-AT"))</p>
-<h1>@gruss, @vorname</h1>
-<p class="text-muted">Wähle im Menü einen Bereich aus.</p>
+<div class="seite seite-voll">
+    <div class="seiten-kopf">
+        <div>
+            @* Mobil kürzer: "Mi, 30. September" und "Hallo" statt Gruß nach Tageszeit *@
+            <div class="seiten-datum">
+                <span class="d-none d-lg-inline">@jetzt.ToString("dddd, d. MMMM", kultur)</span>
+                <span class="d-lg-none">@jetzt.ToString("dddd", kultur)[..2], @jetzt.ToString("d. MMMM", kultur)</span>
+            </div>
+            <h1><span class="d-none d-lg-inline">@gruss</span><span class="d-lg-none">Hallo</span>, @vorname</h1>
+        </div>
+        <div class="seiten-aktionen d-none d-lg-flex">
+            <a class="btn btn-outline-secondary" asp-controller="Scan" asp-action="Index"><i data-lucide="scan-line"></i>QR scannen</a>
+            <a class="btn btn-primary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="plus"></i>Neue Ausleihe</a>
+        </div>
+    </div>
+
+    <div class="kennzahlen">
+        <div class="kennzahl blueprint">
+            <span class="kennzahl-label">Verfügbar</span>
+            <span class="kennzahl-wert">@Model.Verfuegbar.ToString("N0", kultur)</span>
+            <span class="kennzahl-info">von @Model.Gesamt.ToString("N0", kultur) Geräten</span>
+        </div>
+        @* Beispieldaten: Verleih an Personen mit Frist gibt es noch nicht *@
+        <div class="kennzahl blueprint">
+            <span class="kennzahl-label">Verliehen</span>
+            <span class="kennzahl-wert">@Beispieldaten.Verliehen</span>
+            <span class="kennzahl-info">@Beispieldaten.HeuteFaellig davon heute fällig</span>
+        </div>
+        <div class="kennzahl blueprint">
+            <span class="kennzahl-label">Überfällig</span>
+            <span class="kennzahl-wert">@Beispieldaten.Ueberfaellig</span>
+            <span class="kennzahl-info">@Beispieldaten.Eskaliert an Admins eskaliert</span>
+        </div>
+        <div class="kennzahl blueprint">
+            <span class="kennzahl-label">Freigaben offen</span>
+            <span class="kennzahl-wert">@Model.OffeneFreigaben</span>
+            <span class="kennzahl-info">@(Model.OffeneFreigaben == 0 ? "nichts offen" : Model.OffeneFreigaben == 1 ? "1 Transfer" : $"{Model.OffeneFreigaben} Transfers")</span>
+        </div>
+    </div>
+
+    @* Desktop: fällige Ausleihen als Tabelle, daneben die letzten Buchungen *@
+    <div class="uebersicht-raster seite-fuellen d-none d-lg-grid">
+        <div class="blueprint">
+            <div class="panel-kopf">
+                <h4>Überfällig &amp; bald fällig</h4>
+                <a class="btn btn-ghost btn-sm" asp-controller="Rueckgabe" asp-action="Index">Alle Rückgaben</a>
+            </div>
+            <table class="table liste-tabelle">
+                <thead>
+                    <tr>
+                        <th>Gerät</th>
+                        <th>Ausgeliehen an</th>
+                        <th>Fällig</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ausleihe in faellig)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-medium">@ausleihe.Geraet</div>
+                                <div class="nebeninfo">@ausleihe.InventarNr</div>
+                            </td>
+                            <td>@ausleihe.Ausleiher</td>
+                            <td>@ausleihe.Faellig</td>
+                            <td><span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="blueprint aktivitaeten">
+            <h4>Aktivität</h4>
+            @foreach (var aktivitaet in Model.Aktivitaeten)
+            {
+                <div class="aktivitaet">
+                    <span class="aktivitaet-zeit">@Zeit(aktivitaet.Zeitpunkt)</span>
+                    <span>@aktivitaet.Text</span>
+                </div>
+            }
+            @if (Model.Aktivitaeten.Count == 0)
+            {
+                <p class="aktivitaet-leer">Noch keine Buchungen.</p>
+            }
+        </div>
+    </div>
+
+    @* Mobil: nur die fälligen Ausleihen als Liste *@
+    <section class="d-lg-none">
+        <h4 class="liste-titel">Bald fällig</h4>
+        @foreach (var ausleihe in faellig)
+        {
+            <div class="listen-zeile">
+                <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">@ausleihe.Ausleiher · @ausleihe.Faellig</span></span>
+                <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+            </div>
+        }
+    </section>
+</div>

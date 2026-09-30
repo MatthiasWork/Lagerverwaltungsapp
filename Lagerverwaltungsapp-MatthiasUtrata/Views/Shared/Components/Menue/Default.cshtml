@@ -1,10 +1,30 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.MenueViewModel
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.Controllers
 
 @{
-    // Hervorgehoben wird der erste Menüpunkt, dessen Controller zur aktuellen Seite gehört
-    var aktuellerController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var aktivGefunden = false;
+    // Welcher Menüpunkt zur aktuellen Seite gehört. Der Controllername aus dem ActionDescriptor ist immer gleich geschrieben,
+    // egal wie die URL eingetippt wurde
+    var aktion = ViewContext.ActionDescriptor as ControllerActionDescriptor;
+    var aktiv = aktion?.ControllerName switch
+    {
+        "Home" => "Übersicht",
+        "MeinRaum" when aktion.ActionName == "Ausborgen" => "Transfers",
+        "MeinRaum" => "Mein Raum",
+        "Gegenstand" => "Katalog",
+        "Ausleihe" => "Ausleihen",
+        "Rueckgabe" => "Rückgaben",
+        "Uebernahme" => "Freigaben",
+        "Raum" => "Räume",
+        "Admin" or "Person" or "Rolle" => "Benutzer",
+        "Kategorie" => "Kategorien",
+        "Hersteller" => "Hersteller",
+        "Raumart" => "Raumarten",
+        "Bewegungsart" => "Bewegungsarten",
+        "Raumbestand" => "Lagerbestand",
+        "Lagerbewegung" => "Historie",
+        _ => null
+    };
 
     // Name und Rolle für den Block unten in der Seitenleiste (Claims aus dem Login)
     var vorname = User.FindFirstValue(ClaimTypes.GivenName) ?? "";
@@ -13,18 +33,15 @@
     var rolle = User.FindFirstValue(ClaimTypes.Role) ?? "";
     if (Model.RaumID != null)
     {
-        rolle += $" · Raum {Model.RaumID}";
+        rolle += $" · {Model.RaumID}";
     }
 
-    // Ein Menüpunkt mit Lucide-Icon und optionalem Badge; auchAktivBei = weitere Controller, bei denen er hervorgehoben wird
-    async Task Eintrag(string controller, string icon, string text, int badge = 0, params string[] auchAktivBei)
+    // Ein Menüpunkt mit Lucide-Icon und optionalem Badge; hervorgehoben, wenn sein Text zur aktuellen Seite passt
+    async Task Eintrag(string text, string controller, string action, string icon, int badge = 0)
     {
-        var aktiv = !aktivGefunden
-            && (string.Equals(controller, aktuellerController, StringComparison.OrdinalIgnoreCase)
-                || auchAktivBei.Contains(aktuellerController, StringComparer.OrdinalIgnoreCase));
-        aktivGefunden |= aktiv;
+        var istAktiv = text == aktiv;
 
-        <a class="sidebar-link @(aktiv ? "active" : null)" asp-area="" asp-controller="@controller" asp-action="Index" aria-current="@(aktiv ? "page" : null)">
+        <a class="sidebar-link @(istAktiv ? "active" : null)" asp-area="" asp-controller="@controller" asp-action="@action" aria-current="@(istAktiv ? "page" : null)">
             <i data-lucide="@icon"></i>
             <span class="label">@text</span>
             @if (badge > 0)
@@ -36,36 +53,47 @@
 }
 
 <nav class="sidebar-nav" aria-label="Hauptmenü">
-    @* Für alle angemeldeten Benutzer *@
+    @* Menüpunkte wie im Design. Wer was sieht, hängt von der Rolle (Admin) und davon ab, ob die Person einen Raum hat *@
     @{
-        await Eintrag("Home", "layout-dashboard", "Dashboard");
+        await Eintrag("Übersicht", "Home", "Index", "layout-dashboard");
     }
-
-    @* Nach Zuständigkeit: Es zählt nur, welcher Raum der Person zugewiesen ist, nicht dessen Raumart *@
     @if (Model.RaumID != null)
     {
-        await Eintrag("MeinRaum", "door-open", $"Mein Raum ({Model.RaumID})");
-        await Eintrag("Uebernahme", "inbox", "Offene Übernahmen", Model.OffeneUebernahmen);
+        await Eintrag("Mein Raum", "MeinRaum", "Index", "door-open");
     }
-
-    @* Nach Rolle: Übersichten, Stammdaten und Benutzerverwaltung nur für Admins *@
     @if (Model.IstAdmin)
     {
-        <div class="sidebar-section">Übersichten</div>
-        await Eintrag("Raumbestand", "boxes", "Lagerbestand");
-        await Eintrag("Raum", "map", "Lagerübersicht");
-        await Eintrag("Lagerbewegung", "history", "Historie");
+        await Eintrag("Katalog", "Gegenstand", "Index", "package");
+    }
+    @{
+        await Eintrag("Ausleihen", "Ausleihe", "Index", "handshake");
+    }
+    @if (Model.RaumID != null)
+    {
+        await Eintrag("Transfers", "MeinRaum", "Ausborgen", "arrow-right-left");
+    }
+    @if (Model.IstAdmin)
+    {
+        @* Beispieldaten: Rückgabefristen gibt es noch nicht *@
+        await Eintrag("Rückgaben", "Rueckgabe", "Index", "undo-2", Beispieldaten.Ueberfaellig);
+    }
+    @if (Model.RaumID != null)
+    {
+        await Eintrag("Freigaben", "Uebernahme", "Index", "inbox", Model.OffeneUebernahmen);
+    }
+    @if (Model.IstAdmin)
+    {
+        await Eintrag("Räume", "Raum", "Index", "map");
+        await Eintrag("Benutzer", "Admin", "Index", "users");
 
+        @* Stammdaten gibt es im Design nicht; sie bleiben für Admins unter den Menüpunkten des Designs erreichbar *@
         <div class="sidebar-section">Stammdaten</div>
-        await Eintrag("Gegenstand", "package", "Gegenstände");
-        await Eintrag("Kategorie", "tags", "Kategorien");
-        await Eintrag("Hersteller", "factory", "Hersteller");
-        await Eintrag("Raum", "door-closed", "Räume");
-        await Eintrag("Raumart", "layout-grid", "Raumarten");
-        await Eintrag("Bewegungsart", "arrow-right-left", "Bewegungsarten");
-
-        <div class="sidebar-section">Verwaltung</div>
-        await Eintrag("Admin", "users", "Benutzer", 0, "Person", "Rolle");
+        await Eintrag("Kategorien", "Kategorie", "Index", "tags");
+        await Eintrag("Hersteller", "Hersteller", "Index", "factory");
+        await Eintrag("Raumarten", "Raumart", "Index", "layout-grid");
+        await Eintrag("Bewegungsarten", "Bewegungsart", "Index", "list");
+        await Eintrag("Lagerbestand", "Raumbestand", "Index", "boxes");
+        await Eintrag("Historie", "Lagerbewegung", "Index", "history");
     }
 </nav>
 

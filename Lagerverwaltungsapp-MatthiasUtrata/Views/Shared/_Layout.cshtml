@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Lagerverwaltung BS EVITA</title>
+    <title>@ViewData["Title"] · BSEVITA Geräteverleih</title>
     <script type="importmap"></script>
     @* Schriften des Design-Systems: Barlow (Text) und Barlow Condensed (Überschriften) *@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,36 +15,23 @@
 <body>
     @if (User.Identity?.IsAuthenticated == true)
     {
-        @* Seitenleiste: ab 992 px fest links, darunter über den Menü-Button als Offcanvas ausklappbar *@
-        <aside class="sidebar offcanvas-lg offcanvas-start" id="sidebar" tabindex="-1" aria-label="Hauptmenü">
-            <div class="offcanvas-header d-lg-none">
-                <span class="sidebar-section m-0">Menü</span>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Menü schließen"></button>
-            </div>
-            <div class="offcanvas-body">
-                <a class="brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark">B</span>
-                    <span class="brand-text"><span class="brand-name">BS EVITA</span><span class="brand-sub">Lagerverwaltung</span></span>
-                </a>
-                @* Menüpunkte je nach Rolle und Zuständigkeit, siehe MenueViewComponent *@
-                @await Component.InvokeAsync("Menue")
-            </div>
+        @* Wie im Design: ab 992 px die Seitenleiste links (Desktop), darunter die Tab-Leiste unten (Mobil).
+           Menüpunkte je nach Rolle und Zuständigkeit, siehe MenueViewComponent *@
+        <aside class="sidebar d-none d-lg-flex" aria-label="Seitenleiste">
+            <a class="brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="brand-mark">B</span>
+                <span class="brand-text"><span class="brand-name">BSEVITA</span><span class="brand-sub">Geräteverleih</span></span>
+            </a>
+            @await Component.InvokeAsync("Menue")
         </aside>
 
         <div class="app-main">
-            <header class="topbar d-lg-none">
-                <a class="brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="brand-mark">B</span>
-                    <span class="brand-text"><span class="brand-name">BS EVITA</span><span class="brand-sub">Lagerverwaltung</span></span>
-                </a>
-                <button type="button" class="btn btn-outline-secondary btn-icon" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Menü öffnen">
-                    <i data-lucide="menu"></i>
-                </button>
-            </header>
             <main role="main" class="app-content">
                 @RenderBody()
             </main>
         </div>
+
+        @await Component.InvokeAsync("Menue", new { ansicht = "TabLeiste" })
     }
     else
     {
@@ -52,7 +39,7 @@
         <main role="main" class="auth-page">
             <a class="brand" asp-area="" asp-controller="Home" asp-action="Login">
                 <span class="brand-mark">B</span>
-                <span class="brand-text"><span class="brand-name">BS EVITA</span><span class="brand-sub">Lagerverwaltung</span></span>
+                <span class="brand-text"><span class="brand-name">BSEVITA</span><span class="brand-sub">Geräteverleih</span></span>
             </a>
             <div class="auth-box">
                 @RenderBody()

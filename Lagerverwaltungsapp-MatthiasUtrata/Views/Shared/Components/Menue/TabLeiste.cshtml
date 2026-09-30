@@ -1,0 +1,45 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.MenueViewModel
+@using Microsoft.AspNetCore.Mvc.Controllers
+
+@{
+    // Tab-Leiste unten wie im Mobil-Design: fünf feste Tabs, "Scannen" hervorgehoben in der Mitte.
+    // Seiten ohne eigenen Tab hängen wie im Design unter "Übersicht" bzw. "Profil"
+    var aktion = ViewContext.ActionDescriptor as ControllerActionDescriptor;
+    var aktiv = aktion?.ControllerName switch
+    {
+        // Neue Ausleihe und Transfer sind im Design Abläufe ohne hervorgehobenen Tab
+        "Ausleihe" => null,
+        "MeinRaum" when aktion.ActionName == "Ausborgen" => null,
+        "Home" or "MeinRaum" or "Rueckgabe" or "Raum" => "Übersicht",
+        "Gegenstand" => "Katalog",
+        "Scan" => "Scannen",
+        "Uebernahme" => "Freigaben",
+        _ => "Profil"
+    };
+
+    async Task Tab(string text, string controller, string icon, int badge = 0)
+    {
+        var istAktiv = text == aktiv;
+
+        <a class="tabbar-link @(istAktiv ? "active" : null) @(text == "Scannen" ? "scan" : null)" asp-area="" asp-controller="@controller" asp-action="Index" aria-current="@(istAktiv ? "page" : null)">
+            <span class="tabbar-icon">
+                <i data-lucide="@icon"></i>
+                @if (badge > 0)
+                {
+                    <span class="tabbar-badge">@badge</span>
+                }
+            </span>
+            <span>@text</span>
+        </a>
+    }
+}
+
+<nav class="tabbar d-lg-none" aria-label="Hauptmenü">
+    @{
+        await Tab("Übersicht", "Home", "layout-dashboard");
+        await Tab("Katalog", "Gegenstand", "package");
+        await Tab("Scannen", "Scan", "scan-line");
+        await Tab("Freigaben", "Uebernahme", "inbox", Model.OffeneUebernahmen);
+        await Tab("Profil", "Profil", "user");
+    }
+</nav>

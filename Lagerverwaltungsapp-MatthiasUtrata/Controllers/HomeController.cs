@@ -1,3 +1,4 @@
+using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -19,27 +20,86 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
         private readonly PasswordService _passwordService;
 
+        private readonly LagerService _lagerService;
+
         /// <summary>
         /// Konstruktor der HomeController-Klasse.
         /// </summary>
         /// <param name="logger">Der Logger für den HomeController</param>
         /// <param name="context">Der Datenbankkontext der Lagerverwaltung</param>
         /// <param name="passwordService">Der Service zum Hashen und Prüfen von Passwörtern</param>
-        public HomeController(ILogger<HomeController> logger, LagerverwaltungContext context, PasswordService passwordService)
+        /// <param name="lagerService">Der Service, der die Zuständigkeiten für Räume kennt</param>
+        public HomeController(ILogger<HomeController> logger, LagerverwaltungContext context, PasswordService passwordService, LagerService lagerService)
         {
             _logger = logger;
             _context = context;
             _passwordService = passwordService;
+            _lagerService = lagerService;
         }
 
         /// <summary>
-        /// Methode, die die Startseite anzeigt.
+        /// Methode, die die Übersicht (Startseite) mit Kennzahlen und den letzten Buchungen anzeigt.
+        /// Admins sehen alle Buchungen, alle anderen nur ihre eigenen und die ihres Raums.
         /// </summary>
-        /// <returns>Gibt ein IActionResult zurück</returns>
+        /// <returns>Gibt eine Task zurück</returns>
         // GET: Home
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var personID = User.GetPersonID();
+            var istAdmin = User.IsInRole("Admin");
+            var raumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value);
+
+            var offen = _context.Lagerbewegung.Where(l => l.BestaetigtAm == null);
+            var uebersicht = new UebersichtViewModel
+            {
+                Verfuegbar = await _context.Raumbestand.SumAsync(r => r.Menge),
+                OffeneFreigaben = istAdmin ? await offen.CountAsync()
+                    : raumID != null ? await offen.CountAsync(l => l.NachRaumID == raumID)
+                    : 0
+            };
+            // Unterwegs ist, was schon abgebucht, aber noch nicht übernommen wurde
+            uebersicht.Gesamt = uebersicht.Verfuegbar + await offen.SumAsync(l => l.Menge);
+
+            var bewegungen = _context.Lagerbewegung.AsQueryable();
+            if (!istAdmin)
+            {
+                bewegungen = bewegungen.Where(l => l.PersonID == personID || l.VonRaumID == raumID || l.NachRaumID == raumID);
+            }
+
+            // Jede Bewegung ergibt bis zu zwei Einträge (angefragt, übernommen). Die 5 neuesten Einträge
+            // stammen daher sicher aus den 5 Bewegungen mit dem neuesten Zeitpunkt
+            var letzte = await bewegungen
+                .Include(l => l.Person)
+                .Include(l => l.Gegenstand)
+                .OrderByDescending(l => l.BestaetigtAm ?? l.ErstelltAm)
+                .Take(5)
+                .ToListAsync();
+
+            foreach (var l in letzte)
+            {
+                var person = $"{l.Person.Vorname} {l.Person.Nachname}";
+                var was = l.Menge == 1 ? l.Gegenstand.Name : $"{l.Menge} × {l.Gegenstand.Name}";
+
+                if (l.BestaetigtAm == l.ErstelltAm)
+                {
+                    // Sofort bestätigt: Wareneingang oder Umbuchung zwischen zwei eigenen Räumen
+                    var text = l.VonRaumID == l.NachRaumID
+                        ? $"{person} hat {was} in {l.NachRaumID} eingebucht"
+                        : $"{person} hat {was} von {l.VonRaumID} nach {l.NachRaumID} umgebucht";
+                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
+                    continue;
+                }
+
+                uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = $"{person} fragt Transfer von {was} nach {l.NachRaumID} an" });
+                if (l.BestaetigtAm != null)
+                {
+                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm.Value, Text = $"{was} in {l.NachRaumID} übernommen" });
+                }
+            }
+
+            uebersicht.Aktivitaeten = uebersicht.Aktivitaeten.OrderByDescending(a => a.Zeitpunkt).Take(5).ToList();
+
+            return View(uebersicht);
         }
 
         /// <summary>

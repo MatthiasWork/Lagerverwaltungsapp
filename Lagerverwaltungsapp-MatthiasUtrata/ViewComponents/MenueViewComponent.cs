@@ -27,8 +27,9 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.ViewComponents
         /// Methode, die die Menüpunkte und Badge-Zahlen für die angemeldete Person ermittelt.
         /// Die Zuständigkeit wird bei jedem Seitenaufruf neu gelesen, damit eine geänderte Zuständigkeit sofort gilt.
         /// </summary>
+        /// <param name="ansicht">"Default" für die Seitenleiste (Desktop), "TabLeiste" für die Tab-Leiste unten (Mobil)</param>
         /// <returns>Gibt eine Task zurück</returns>
-        public async Task<IViewComponentResult> InvokeAsync()
+        public async Task<IViewComponentResult> InvokeAsync(string ansicht = "Default")
         {
             var personID = UserClaimsPrincipal.GetPersonID();
             if (personID == null)
@@ -52,7 +53,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.ViewComponents
                     .CountAsync(l => l.BestaetigtAm == null && l.NachRaumID == raumID);
             }
 
-            return View(menue);
+            return View(ansicht, menue);
         }
     }
 }

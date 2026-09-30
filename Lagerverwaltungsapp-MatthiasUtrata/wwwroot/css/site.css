@@ -180,8 +180,8 @@ hr {
     --bs-btn-font-weight: 600;
     --bs-btn-font-size: 14px;
     --bs-btn-line-height: 1.2;
-    --bs-btn-padding-y: 8px;
-    --bs-btn-padding-x: 14px;
+    --bs-btn-padding-y: 6.8px;
+    --bs-btn-padding-x: 12.24px;
     --bs-btn-disabled-opacity: 0.45;
     display: inline-flex;
     align-items: center;
@@ -696,21 +696,226 @@ dl.row dd {
         color: var(--color-accent-700);
     }
 
-/* ══════════ App-Hülle: Seitenleiste ══════════ */
-.sidebar {
-    --bs-offcanvas-width: 264px;
-    --bs-offcanvas-bg: var(--color-bg);
-    --bs-offcanvas-border-color: var(--color-divider);
+/* ══════════ Seiten aus dem Design "Geräteverleih Final" ══════════ */
+/* Desktop nach den Screens 1a, Mobil (unter 992 px) nach 1d */
+
+/* Randloser Button in Akzentfarbe (z. B. "Alle Rückgaben") */
+.btn-ghost {
+    --bs-btn-color: var(--color-accent);
+    --bs-btn-border-color: transparent;
+    --bs-btn-padding-x: 3.4px;
+    --bs-btn-hover-color: var(--color-accent);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--color-accent);
+    --bs-btn-active-bg: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    --bs-btn-active-border-color: transparent;
 }
 
-    .sidebar .offcanvas-body {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-        padding: 22px 12px 16px;
-        overflow-y: auto;
+    /* Klein heißt beim Ghost-Button nur kleinere Schrift, die Höhe bleibt wie im Design */
+    .btn-ghost.btn-sm {
+        --bs-btn-padding-y: 6.8px;
     }
 
+/* Seite als Spalte mit festen Abständen zwischen den Blöcken */
+.seite {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Seitenkopf: links Datum/Untertitel und Überschrift, rechts die Buttons */
+.seiten-kopf {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+    .seiten-kopf h1 {
+        margin: 2px 0 0;
+    }
+
+.seiten-datum {
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+.seiten-aktionen {
+    gap: 8px;
+}
+
+/* Kleine Zusatzzeile unter einem Namen (Inventar-Nr., Person, Datum) */
+.nebeninfo {
+    font-size: 12px;
+    color: var(--color-neutral-700);
+}
+
+/* Kennzahlen: Desktop Beschriftung, Zahl und Zusatz untereinander; mobil 2 × 2 mit Zahl über der Beschriftung */
+.kennzahlen {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.kennzahl {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+}
+
+.kennzahl-label,
+.kennzahl-info {
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+.kennzahl-wert {
+    font: 600 44px/1 var(--font-heading);
+    letter-spacing: -0.015em;
+}
+
+.kennzahl-info {
+    font-size: 12.5px;
+}
+
+/* Kopf eines gerahmten Blocks mit Tabelle: Überschrift links, Link rechts */
+.panel-kopf {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 14px 18px 8px;
+}
+
+    .panel-kopf h4 {
+        margin: 0;
+    }
+
+/* Tabellen im Design: kompakte Zellen, erste Spalte mit Abstand zum Rahmen, Inhalt vertikal mittig */
+.liste-tabelle {
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+    .liste-tabelle > :not(caption) > * > *,
+    .liste-tabelle > thead th {
+        padding: 6.8px;
+    }
+
+    .liste-tabelle > :not(caption) > * > *:first-child {
+        padding-left: 18px;
+    }
+
+    .liste-tabelle > tbody > tr > td:first-child {
+        padding-top: 10px;
+        padding-right: 8px;
+        padding-bottom: 10px;
+    }
+
+    .liste-tabelle > tbody > tr:last-child > * {
+        border-bottom-width: 0;
+    }
+
+/* Liste als Zeilen mit Trennlinie (mobil statt Tabelle) */
+.liste-titel {
+    margin: 0 0 4px;
+}
+
+.listen-zeile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+/* Übersicht: fällige Ausleihen und Aktivität nebeneinander, bis zum unteren Rand gestreckt */
+.uebersicht-raster {
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.aktivitaeten {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 18px;
+}
+
+    .aktivitaeten h4 {
+        margin: 0 0 6px;
+    }
+
+.aktivitaet {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.aktivitaet-zeit,
+.aktivitaet-leer {
+    color: var(--color-neutral-700);
+}
+
+.aktivitaet-leer {
+    margin: 0;
+    font-size: 13.5px;
+}
+
+@media (min-width: 992px) {
+    /* Seite füllt die Höhe des Fensters (abzüglich Innenabstand), der Block mit .seite-fuellen wächst mit */
+    .seite-voll {
+        min-height: calc(100vh - 60px);
+    }
+
+        .seite-voll > .seite-fuellen {
+            flex: 1;
+        }
+}
+
+@media (max-width: 991.98px) {
+    .seite {
+        gap: 16px;
+    }
+
+    .seiten-kopf h1 {
+        margin: 0;
+    }
+
+    .kennzahlen {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .kennzahl {
+        gap: 0;
+        padding: 12px;
+    }
+
+    .kennzahl-wert {
+        font-size: 36px;
+    }
+
+    .kennzahl-label {
+        order: 1;
+        font-size: 12.5px;
+    }
+
+    .kennzahl-info {
+        display: none;
+    }
+}
+
+/* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
+/* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {
     .sidebar {
         position: fixed;
@@ -718,17 +923,14 @@ dl.row dd {
         bottom: 0;
         left: 0;
         z-index: 1030;
-        display: flex;
         flex-direction: column;
+        gap: 24px;
         width: 220px;
+        padding: 22px 12px 16px;
+        overflow-y: auto;
         border-right: 1px solid var(--color-divider);
         background: var(--color-bg);
     }
-
-        .sidebar .offcanvas-body {
-            flex: 1;
-            min-height: 0;
-        }
 
     .app-main {
         margin-left: 220px;
@@ -796,14 +998,13 @@ dl.row dd {
     gap: 10px;
     padding: 8px 10px;
     font-size: 14px;
-    line-height: 1.3;
     color: var(--color-text);
     text-decoration: none;
 }
 
     .sidebar-link:hover {
         color: var(--color-text);
-        background: color-mix(in srgb, var(--color-text) 5%, transparent);
+        background: color-mix(in srgb, var(--color-text) 6%, transparent);
     }
 
     .sidebar-link.active {
@@ -874,33 +1075,75 @@ dl.row dd {
     border-color: transparent;
 }
 
-/* Kopfzeile nur auf schmalen Bildschirmen (öffnet die Seitenleiste) */
-.topbar {
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    padding: 0 12px 0 12px;
+/* ══════════ App-Hülle: Tab-Leiste (Mobil) ══════════ */
+/* Unter 992 px fest am unteren Rand, fünf Tabs wie im Mobil-Design */
+.tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: start;
+    height: calc(78px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 6px env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--color-divider);
     background: var(--color-bg);
-    border-bottom: 1px solid var(--color-divider);
 }
 
-    .topbar .btn-icon {
-        width: 44px;
-        height: 44px;
+.tabbar-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    color: var(--color-neutral-700);
+    text-decoration: none;
+}
+
+    .tabbar-link:hover {
+        color: var(--color-neutral-700);
     }
 
-    .topbar .lucide {
+    .tabbar-link.active {
+        color: var(--color-accent-800);
+    }
+
+.tabbar-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+}
+
+    .tabbar-icon .lucide {
         width: 20px;
         height: 20px;
     }
 
+/* "Scannen" als gefülltes Quadrat in der Mitte */
+.tabbar-link.scan .tabbar-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--color-accent);
+    color: var(--color-bg);
+}
+
+.tabbar-badge {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    padding: 0 4px;
+    font-size: 10px;
+    background: var(--color-accent-900);
+    color: var(--color-bg);
+}
+
 .app-content {
     max-width: 1320px;
-    padding: 30px 36px 48px;
+    padding: 30px 36px;
 }
 
 @media (max-width: 991.98px) {
@@ -912,16 +1155,13 @@ dl.row dd {
         font-size: 36px;
     }
 
+    /* Unten Platz für die Tab-Leiste lassen */
     .app-content {
-        padding: 18px 20px 40px;
+        padding: 12px 20px calc(78px + 24px + env(safe-area-inset-bottom, 0px));
     }
     /* Auf dem Handy mindestens 44 px hohe Ziele */
     .form-control, .form-select {
         min-height: 44px;
-    }
-
-    .sidebar-link {
-        padding: 11px 10px;
     }
 }
 
