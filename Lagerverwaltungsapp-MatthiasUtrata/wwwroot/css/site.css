@@ -534,7 +534,8 @@ dl.row dd {
     color: var(--color-accent-700);
 }
 
-.avatar-sm {
+/* .avatar.avatar-sm, da .avatar weiter unten steht und sonst gewinnt */
+.avatar.avatar-sm {
     width: 28px;
     height: 28px;
     font-size: 11px;
@@ -564,7 +565,109 @@ dl.row dd {
     color: var(--color-neutral-700);
 }
 
-/* Übernahme-Karten */
+/* Freigaben (Übernahmen): Karten in drei Spalten, darunter die erledigten.
+   .seite.freigaben, da .seite weiter unten steht und sonst gewinnt */
+.seite.freigaben {
+    gap: 20px;
+}
+
+.freigaben-raster {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.freigabe-karte {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+}
+
+.freigabe-kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.freigabe-zeit {
+    font-size: 12px;
+    color: var(--color-neutral-700);
+}
+
+.freigabe-info {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--color-neutral-800);
+}
+
+.freigabe-person {
+    flex: 1;
+    font-size: 13px;
+}
+
+.erledigt {
+    max-width: 760px;
+}
+
+    .erledigt h4 {
+        margin: 8px 0 6px;
+        color: var(--color-neutral-800);
+    }
+
+.erledigt-zeit {
+    font-size: 12.5px;
+    white-space: nowrap;
+    color: var(--color-neutral-700);
+}
+
+@media (max-width: 991.98px) {
+    /* Mobil: Karten untereinander, kompakter, ohne Zusatzzeile und Fuß */
+    .seite.freigaben {
+        gap: 14px;
+    }
+
+    .freigaben .seiten-untertitel {
+        font-size: 13px;
+    }
+
+    .freigaben-raster {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .freigabe-karte {
+        gap: 8px;
+        padding: 14px;
+    }
+
+        .freigabe-karte .tag {
+            padding: 1px 8px;
+        }
+
+        .freigabe-karte .uebernahme-titel {
+            font-size: 19px;
+        }
+
+        .freigabe-karte .route {
+            font-size: 12.5px;
+        }
+
+            .freigabe-karte .route .lucide {
+                display: none;
+            }
+
+        .freigabe-karte .btn-cta {
+            --bs-btn-padding-y: 6.8px;
+            min-height: 44px;
+        }
+
+            .freigabe-karte .btn-cta::before {
+                display: none;
+            }
+}
+
 .uebernahme-titel {
     margin: 0;
     font: 600 22px/1.15 var(--font-heading);

@@ -89,8 +89,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             {
                 var anzahl = ids.Distinct().Count();
                 TempData["Meldung"] = anzahl == 1
-                    ? "Die Übernahme wurde bestätigt. Der Gegenstand ist jetzt im Bestand deines Raums."
-                    : $"{anzahl} Übernahmen wurden bestätigt. Die Gegenstände sind jetzt im Bestand deines Raums.";
+                    ? "Der Transfer wurde freigegeben. Das Gerät ist jetzt im Bestand Ihres Raums."
+                    : $"{anzahl} Transfers wurden freigegeben. Die Geräte sind jetzt im Bestand Ihres Raums.";
             }
 
             return RedirectToAction(nameof(Index));
