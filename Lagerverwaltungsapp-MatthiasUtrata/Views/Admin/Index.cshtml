@@ -1,110 +1,172 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.AdminUebersichtViewModel
 
 @{
-    ViewData["Title"] = "Adminübersicht";
+    ViewData["Title"] = "Benutzer";
+
+    // Links auf die Benutzerliste; Suche, Rolle und ausgewählter Benutzer bleiben erhalten, wenn nicht anders angegeben
+    string RolleLink(int? rolleID) => Url.Action("Index", new { suche = Model.Suche, rolleID })!;
+    string AuswahlLink(int id) => Url.Action("Index", new { suche = Model.Suche, rolleID = Model.RolleID, id })!;
+
+    // Räume, für die eine Person verantwortlich ist, z. B. "HL · Hauptlager"
+    List<string> Raeume(Person person) => person.Raum.OrderBy(r => r.ID).Select(r => $"{r.ID} · {r.Raumart.Name}").ToList();
+
+    int Offen(Person person) => Model.OffeneTransfers.GetValueOrDefault(person.ID);
+
+    var ausgewaehlt = Model.Ausgewaehlt;
 }
 
-<h1>Adminübersicht</h1>
-<hr />
-
-@* Rückmeldungen aus dem PersonController (Anlegen, Speichern, Löschen) *@
-<partial name="_Meldungen" />
-
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h6 card-subtitle text-muted">Benutzer</h2>
-                <p class="display-6 mb-0">@Model.AnzahlBenutzer</p>
-            </div>
+<div class="seite benutzer">
+    <div class="seiten-kopf">
+        <div>
+            <h1>Benutzer</h1>
+            @* Beispiel aus dem Design: einen Abgleich mit der Schulverwaltung gibt es noch nicht *@
+            <div class="seiten-untertitel sync-info d-none d-lg-flex"><i data-lucide="refresh-cw"></i>Aus der Schulverwaltung synchronisiert, @Beispieldaten.SynchronisiertAm</div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h6 card-subtitle text-muted">Administratoren</h2>
-                <p class="display-6 mb-0">@Model.AnzahlAdmins</p>
-            </div>
+        <div class="seiten-aktionen d-none d-lg-flex">
+            <a class="btn btn-outline-secondary" asp-controller="Rolle" asp-action="Index">Rollen verwalten</a>
+            <a class="btn btn-primary" asp-controller="Person" asp-action="Create"><i data-lucide="user-plus"></i>Benutzer anlegen</a>
         </div>
+        <a class="btn btn-outline-secondary btn-quadrat d-lg-none" asp-controller="Person" asp-action="Create" title="Benutzer anlegen" aria-label="Benutzer anlegen"><i data-lucide="user-plus"></i></a>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h6 card-subtitle text-muted">Rollen</h2>
-                <p class="display-6 mb-0">@Model.AnzahlRollen</p>
-                <a asp-controller="Rolle" asp-action="Index" class="card-link">Rollen verwalten</a>
+
+    @* Rückmeldungen aus dem PersonController (Anlegen, Speichern, Löschen) *@
+    <partial name="_Meldungen" />
+
+    <div class="benutzer-filter">
+        <nav class="seg" aria-label="Rolle">
+            @* Die Anzahl nur am Desktop; ein gemeinsames span, damit kein Abstand der Flexbox dazwischenkommt *@
+            <a class="seg-opt @(Model.RolleID == null ? "active" : null)" href="@RolleLink(null)"><span>Alle<span class="d-none d-lg-inline"> · @Model.AnzahlBenutzer</span></span></a>
+            @foreach (var rolle in Model.Rollen)
+            {
+                <a class="seg-opt @(rolle.ID == Model.RolleID ? "active" : null)" href="@RolleLink(rolle.ID)"><span>@rolle.Name<span class="d-none d-lg-inline"> · @Model.AnzahlJeRolle.GetValueOrDefault(rolle.ID)</span></span></a>
+            }
+        </nav>
+        <form class="feld-mit-icon benutzer-suche d-none d-lg-block" asp-action="Index" method="get">
+            <input type="hidden" asp-for="RolleID" />
+            <input asp-for="Suche" class="form-control" placeholder="Name oder E-Mail" aria-label="Suche" />
+            <i data-lucide="search"></i>
+        </form>
+    </div>
+
+    @if (Model.Benutzer.Count == 0)
+    {
+        <p class="text-muted">Keine Benutzer gefunden.</p>
+    }
+    else
+    {
+        @* Desktop: Tabelle, ein Klick auf eine Zeile zeigt den Benutzer rechts *@
+        <div class="benutzer-raster d-none d-lg-grid">
+            <div class="blueprint">
+                <table class="table table-hover liste-tabelle benutzer-tabelle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Rolle</th>
+                            <th>Raumverantwortung</th>
+                            <th>Transfers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var person in Model.Benutzer)
+                        {
+                            var raeume = Raeume(person);
+                            var offen = Offen(person);
+                            <tr class="@(person.ID == ausgewaehlt?.ID ? "ausgewaehlt" : null)" data-href="@AuswahlLink(person.ID)">
+                                <td>
+                                    <div class="person">
+                                        <span class="avatar" aria-hidden="true">@person.Initialen</span>
+                                        <span>
+                                            <a class="zeilen-link fw-medium" href="@AuswahlLink(person.ID)">@person.Vorname @person.Nachname</a><br />
+                                            <span class="nebeninfo">@person.Email</span>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>@person.Rolle.Name</td>
+                                <td>@(raeume.Count == 0 ? "–" : string.Join(", ", raeume))</td>
+                                <td class="@(offen > 0 ? "transfers-offen" : null)">@(offen > 0 ? $"{offen} offen" : "0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </div>
-</div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0">Benutzerverwaltung</h2>
-    <a asp-controller="Person" asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neuer Benutzer</a>
-</div>
-
-<form asp-action="Index" method="get" class="row g-2 mb-3">
-    <div class="col-md-6">
-        <input asp-for="Suche" class="form-control" placeholder="Name, Benutzername oder E-Mail" aria-label="Suche" />
-    </div>
-    <div class="col-md-3">
-        <select asp-for="RolleID" asp-items="Model.Rollen" class="form-select" aria-label="Rolle">
-            <option value="">Alle Rollen</option>
-        </select>
-    </div>
-    <div class="col-md-3 d-flex gap-2">
-        <button type="submit" class="btn btn-outline-primary">Filtern</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Zurücksetzen</a>
-    </div>
-</form>
-
-@if (!Model.Benutzer.Any())
-{
-    <p class="text-muted">Keine Benutzer gefunden.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Benutzername</th>
-                    <th>E-Mail</th>
-                    <th>Rolle</th>
-                    <th class="text-end">Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var benutzer in Model.Benutzer)
+            @if (ausgewaehlt != null)
+            {
+                var raeume = Raeume(ausgewaehlt);
+                // Rechte ergeben sich aus der Rolle (Admin) und der Raumverantwortung, hier nur angezeigt
+                var rechte = new (string Text, bool An)[]
                 {
-                    var istAngemeldet = benutzer.ID == Model.AngemeldeteBenutzerID;
-                    <tr>
-                        <td>
-                            @benutzer.Vorname @benutzer.Nachname
-                            @if (istAngemeldet)
+                    ("Transfers freigeben", raeume.Count > 0),
+                    ("Geräte erfassen", ausgewaehlt.Rolle.Admin),
+                    ("Benutzer verwalten", ausgewaehlt.Rolle.Admin)
+                };
+
+                <aside class="blueprint benutzer-panel" aria-label="Ausgewählter Benutzer">
+                    <div class="benutzer-kopf">
+                        <span class="avatar" aria-hidden="true">@ausgewaehlt.Initialen</span>
+                        <div>
+                            <div class="benutzer-name">@ausgewaehlt.Vorname @ausgewaehlt.Nachname</div>
+                            <div class="nebeninfo">@ausgewaehlt.Email</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="form-label">Rolle</span>
+                        @* Nur Anzeige; die Rolle ändert man über "Bearbeiten" *@
+                        <div class="seg seg-umbruch">
+                            @foreach (var rolle in Model.Rollen)
                             {
-                                <span class="tag tag-outline-neutral">Du</span>
+                                <span class="seg-opt @(rolle.ID == ausgewaehlt.RolleID ? "active" : null)">@rolle.Name</span>
                             }
-                        </td>
-                        <td>@benutzer.Username</td>
-                        <td><a href="mailto:@benutzer.Email">@benutzer.Email</a></td>
-                        <td>
-                            <span class="tag @(benutzer.Rolle.Admin ? "tag-accent" : "tag-neutral")">@benutzer.Rolle.Name</span>
-                        </td>
-                        <td class="text-end text-nowrap">
-                            <a asp-controller="Person" asp-action="Details" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <a asp-controller="Person" asp-action="Edit" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
-                            @* Das eigene Konto kann nicht gelöscht werden, daher auch kein Button *@
-                            @if (!istAngemeldet)
+                        </div>
+                    </div>
+                    <div>
+                        <span class="form-label">Verantwortlich für Räume</span>
+                        <div class="tag-reihe">
+                            @foreach (var raum in raeume)
                             {
-                                <a asp-controller="Person" asp-action="Delete" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                                <span class="tag tag-accent">@raum</span>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    <p class="text-muted small">@Model.Benutzer.Count von @Model.AnzahlBenutzer Benutzern angezeigt</p>
-}
+                            @* Die Zuständigkeit legt man beim Raum fest *@
+                            <a class="tag tag-outline" asp-controller="Raum" asp-action="Index">+ Raum</a>
+                        </div>
+                    </div>
+                    <div class="rechte">
+                        <span class="angabe-label">Rechte</span>
+                        @foreach (var recht in rechte)
+                        {
+                            <div class="recht">
+                                @recht.Text
+                                <span class="schalter @(recht.An ? "an" : null)" role="img" aria-label="@(recht.An ? "ja" : "nein")"></span>
+                            </div>
+                        }
+                    </div>
+                    <div class="panel-aktionen">
+                        <a class="btn btn-outline-secondary" asp-controller="Person" asp-action="Details" asp-route-id="@ausgewaehlt.ID">Profil öffnen</a>
+                        <a class="btn btn-outline-secondary btn-icon" asp-controller="Person" asp-action="Edit" asp-route-id="@ausgewaehlt.ID" title="Bearbeiten" aria-label="Bearbeiten"><i data-lucide="pencil"></i></a>
+                        @* Das eigene Konto kann nicht gelöscht werden, daher auch kein Button *@
+                        @if (ausgewaehlt.ID != Model.AngemeldeteBenutzerID)
+                        {
+                            <a class="btn btn-outline-secondary btn-icon" asp-controller="Person" asp-action="Delete" asp-route-id="@ausgewaehlt.ID" title="Löschen" aria-label="Löschen"><i data-lucide="trash-2"></i></a>
+                        }
+                    </div>
+                </aside>
+            }
+        </div>
+
+        @* Mobil: Liste, ein Tipp öffnet das Profil *@
+        <div class="d-lg-none">
+            @foreach (var person in Model.Benutzer)
+            {
+                var raeume = Raeume(person);
+                <a class="benutzer-zeile" asp-controller="Person" asp-action="Details" asp-route-id="@person.ID">
+                    <span class="avatar" aria-hidden="true">@person.Initialen</span>
+                    <span class="benutzer-zeile-text">
+                        <b class="fw-medium">@person.Vorname @person.Nachname</b><br />
+                        <span class="nebeninfo">@person.Rolle.Name · @(raeume.Count == 0 ? "–" : string.Join(", ", raeume))</span>
+                    </span>
+                    <i data-lucide="chevron-right"></i>
+                </a>
+            }
+        </div>
+    }
+</div>

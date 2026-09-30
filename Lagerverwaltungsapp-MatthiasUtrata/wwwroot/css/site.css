@@ -1988,6 +1988,256 @@ dl.row dd {
     }
 }
 
+/* Segment-Schalter mit Umbruch: bei vielen Optionen weitere Zeilen, die Optionen füllen die Breite */
+.seg-umbruch {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 1px 0 0 1px;
+    border: 0;
+}
+
+    .seg-umbruch .seg-opt,
+    .seg-umbruch .seg-opt + .seg-opt {
+        flex: 1 0 auto;
+        justify-content: center;
+        margin: -1px 0 0 -1px;
+        border: 1px solid var(--color-divider);
+    }
+
+/* Ausgewählte Zeile einer Tabelle (z. B. Benutzer, der rechts angezeigt wird) */
+.liste-tabelle > tbody > tr.ausgewaehlt > * {
+    --bs-table-bg-state: var(--color-accent-100);
+}
+
+/* Benutzer */
+.benutzer {
+    gap: 18px;
+}
+
+.sync-info {
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+    .sync-info .lucide {
+        width: 13px;
+        height: 13px;
+    }
+
+.benutzer-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.benutzer-suche {
+    flex: none;
+    width: 260px;
+    margin-left: auto;
+}
+
+.benutzer-raster {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 24px;
+    align-items: start;
+}
+
+.benutzer-tabelle {
+    --zelle-y: 9px;
+}
+
+.person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.benutzer-tabelle .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.transfers-offen {
+    color: var(--color-accent-800);
+}
+
+.benutzer-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+}
+
+.benutzer-kopf {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.benutzer-panel .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.benutzer-panel .nebeninfo {
+    font-size: 12.5px;
+}
+
+.benutzer-name {
+    font: 600 22px var(--font-heading);
+}
+
+.tag-reihe {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+a.tag-outline {
+    text-decoration: none;
+}
+
+    a.tag-outline:hover {
+        color: var(--color-accent-800);
+        background: var(--color-accent-100);
+    }
+
+/* Rechte als Schalter (nur Anzeige) */
+.rechte {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-divider);
+}
+
+.recht {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+}
+
+.schalter {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex: none;
+    background: var(--color-neutral-300);
+}
+
+    .schalter::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        background: var(--color-bg);
+    }
+
+    .schalter.an {
+        background: var(--color-accent);
+    }
+
+        .schalter.an::after {
+            left: auto;
+            right: 2px;
+        }
+
+.panel-aktionen {
+    display: flex;
+    gap: 8px;
+}
+
+    .panel-aktionen .btn:first-child {
+        flex: 1;
+    }
+
+    /* Icon-Buttons so hoch wie der Button daneben */
+    .panel-aktionen .btn-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+/* Quadratischer Icon-Button in Fingergröße (mobil) */
+.btn-quadrat {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+}
+
+    .btn-quadrat .lucide {
+        width: 18px;
+        height: 18px;
+    }
+
+/* Mobil: Benutzer als Liste mit Pfeil */
+.benutzer-zeile {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--color-text);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+    .benutzer-zeile:hover {
+        color: var(--color-text);
+    }
+
+    .benutzer-zeile .avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    .benutzer-zeile > .lucide {
+        color: var(--color-neutral-600);
+    }
+
+.benutzer-zeile-text {
+    min-width: 0;
+}
+
+@media (max-width: 991.98px) {
+    .benutzer {
+        gap: 12px;
+    }
+
+        .benutzer .seiten-kopf {
+            align-items: center;
+        }
+
+    /* Rollen als Schalter über die ganze Breite, drei je Zeile */
+    .benutzer-filter .seg {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        overflow: visible;
+        padding: 1px 0 0 1px;
+        border: 0;
+    }
+
+        .benutzer-filter .seg .seg-opt,
+        .benutzer-filter .seg .seg-opt + .seg-opt {
+            flex: 1 0 calc(100% / 3);
+            justify-content: center;
+            margin: -1px 0 0 -1px;
+            border: 1px solid var(--color-divider);
+        }
+}
+
 /* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
 /* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {

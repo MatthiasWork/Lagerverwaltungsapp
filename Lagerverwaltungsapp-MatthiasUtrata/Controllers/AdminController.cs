@@ -23,18 +23,22 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Adminübersicht mit Kennzahlen und der Benutzerverwaltung anzeigt.
-        /// Die Benutzerliste kann nach Suchbegriff und Rolle gefiltert werden.
+        /// Methode, die die Benutzerverwaltung anzeigt: links die Benutzerliste, rechts der ausgewählte Benutzer.
+        /// Die Liste kann nach Suchbegriff und Rolle gefiltert werden.
         /// </summary>
         /// <param name="suche">Suchbegriff für Vorname, Nachname, Benutzername oder E-Mail</param>
         /// <param name="rolleID">Die ID der Rolle, nach der gefiltert werden soll</param>
+        /// <param name="id">Die ID des Benutzers, der rechts angezeigt wird (ohne: der erste der Liste)</param>
         /// <returns>Gibt eine Task zurück</returns>
         // GET: Admin
-        public async Task<IActionResult> Index(string? suche, int? rolleID)
+        public async Task<IActionResult> Index(string? suche, int? rolleID, int? id)
         {
             suche = suche?.Trim();
 
-            var abfrage = _context.Person.Include(p => p.Rolle).AsQueryable();
+            var abfrage = _context.Person
+                .Include(p => p.Rolle)
+                .Include(p => p.Raum).ThenInclude(r => r.Raumart)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(suche))
             {
@@ -49,15 +53,25 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 abfrage = abfrage.Where(p => p.RolleID == rolleID);
             }
 
+            var benutzer = await abfrage.OrderBy(p => p.Nachname).ThenBy(p => p.Vorname).ToListAsync();
+
             var uebersicht = new AdminUebersichtViewModel
             {
                 AnzahlBenutzer = await _context.Person.CountAsync(),
-                AnzahlAdmins = await _context.Person.CountAsync(p => p.Rolle.Admin),
-                AnzahlRollen = await _context.Rolle.CountAsync(),
-                Benutzer = await abfrage.OrderBy(p => p.Nachname).ThenBy(p => p.Vorname).ToListAsync(),
+                AnzahlJeRolle = await _context.Person
+                    .GroupBy(p => p.RolleID)
+                    .Select(g => new { RolleID = g.Key, Anzahl = g.Count() })
+                    .ToDictionaryAsync(g => g.RolleID, g => g.Anzahl),
+                Rollen = await _context.Rolle.OrderBy(r => r.Name).ToListAsync(),
+                Benutzer = benutzer,
+                OffeneTransfers = await _context.Lagerbewegung
+                    .Where(l => l.BestaetigtAm == null)
+                    .GroupBy(l => l.PersonID)
+                    .Select(g => new { PersonID = g.Key, Anzahl = g.Count() })
+                    .ToDictionaryAsync(g => g.PersonID, g => g.Anzahl),
+                Ausgewaehlt = benutzer.FirstOrDefault(p => p.ID == id) ?? benutzer.FirstOrDefault(),
                 Suche = suche,
                 RolleID = rolleID,
-                Rollen = new SelectList(await _context.Rolle.OrderBy(r => r.Name).ToListAsync(), "ID", "Name", rolleID),
                 AngemeldeteBenutzerID = User.GetPersonID()
             };
 
