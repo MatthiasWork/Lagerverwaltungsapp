@@ -1,7 +1,7 @@
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models
 {
     // Feste Beispieldaten aus dem Design "Geräteverleih Final" für Funktionen, die es im Datenmodell noch nicht gibt:
-    // Verleih an Personen mit Rückgabefrist, Erinnerungen und Eskalation an die Admins.
+    // Verleih an Personen mit Rückgabefrist, Erinnerungen, Eskalation an die Admins und QR-Etiketten.
     // Sobald eine dieser Funktionen umgesetzt ist, die zugehörigen Daten hier entfernen und aus der Datenbank lesen
     public static class Beispieldaten
     {
@@ -10,6 +10,9 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         public const int HeuteFaellig = 5;
         public const int Ueberfaellig = 6;
         public const int Eskaliert = 2;
+
+        // Gerätedetail: QR-Etiketten gibt es noch nicht
+        public const string EtikettGedrucktAm = "12.08.2025";
 
         // Überfällige und bald fällige Ausleihen (Übersicht, Rückgaben)
         public static readonly IReadOnlyList<FaelligeAusleihe> FaelligeAusleihen = new List<FaelligeAusleihe>

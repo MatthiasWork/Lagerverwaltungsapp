@@ -3,19 +3,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+using Lagerverwaltungsapp_MatthiasUtrata.Services;
 
 public class GegenstandController : Controller
 {
     private readonly LagerverwaltungContext _context;
 
+    private readonly LagerService _lagerService;
+
     /// <summary>
     /// Konstruktor der GegenstandController-Klasse.
     /// </summary>
     /// <param name="context">Der Datenbankkontext der Lagerverwaltung</param>
-    public GegenstandController(LagerverwaltungContext context)
+    /// <param name="lagerService">Der Service, der die Zuständigkeiten für Räume kennt</param>
+    public GegenstandController(LagerverwaltungContext context, LagerService lagerService)
     {
         _context = context;
+        _lagerService = lagerService;
     }
 
     /// <summary>
@@ -56,33 +62,9 @@ public class GegenstandController : Controller
             abfrage = abfrage.Where(g => g.Raumbestand.Any(r => r.RaumID == raumID));
         }
 
-        var eintraege = new List<KatalogEintrag>();
-        foreach (var gegenstand in await abfrage.OrderBy(g => g.Name).ThenBy(g => g.Seriennummer).ToListAsync())
-        {
-            var eintrag = new KatalogEintrag
-            {
-                Gegenstand = gegenstand,
-                // Ist nach einem Raum gefiltert, steht dieser Raum vorne, sonst der mit der größten Menge
-                Standorte = gegenstand.Raumbestand.Where(r => r.Menge > 0)
-                    .OrderByDescending(r => r.RaumID == raumID)
-                    .ThenByDescending(r => r.Menge)
-                    .ToList()
-            };
-            eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
-
-            // Unterwegs ist, was schon abgebucht, aber im Zielraum noch nicht übernommen wurde
-            var unterwegs = gegenstand.Lagerbewegung.Sum(l => l.Menge);
-            if (unterwegs > 0)
-            {
-                var ziele = string.Join(", ", gegenstand.Lagerbewegung.Select(l => l.NachRaumID).Distinct());
-                eintrag.Hinweis = gegenstand.Seriennummer != null ? $"unterwegs nach {ziele}" : $"{unterwegs} Stück unterwegs nach {ziele}";
-            }
-
-            eintrag.Status = eintrag.Stueck > 0 ? GegenstandUebersichtViewModel.Verfuegbar
-                : unterwegs > 0 ? GegenstandUebersichtViewModel.InTransfer
-                : GegenstandUebersichtViewModel.KeinBestand;
-            eintraege.Add(eintrag);
-        }
+        var eintraege = (await abfrage.OrderBy(g => g.Name).ThenBy(g => g.Seriennummer).ToListAsync())
+            .Select(g => KatalogEintragErstellen(g, raumID))
+            .ToList();
 
         // Der Status wird erst hier berechnet, daher auch erst hier gefiltert
         if (!string.IsNullOrEmpty(status))
@@ -104,6 +86,41 @@ public class GegenstandController : Controller
         };
 
         return View(uebersicht);
+    }
+
+    /// <summary>
+    /// Methode, die für einen Gegenstand Standort, Stückzahl und Status berechnet (Katalog und Details).
+    /// Dafür müssen Raumbestand (mit Raum und Raumart) und Lagerbewegung geladen sein.
+    /// </summary>
+    /// <param name="gegenstand">Der Gegenstand mit Raumbestand und Lagerbewegungen</param>
+    /// <param name="raumID">Die ID des Raums, der bei den Standorten vorne stehen soll (Filter im Katalog)</param>
+    /// <returns>Der Eintrag mit Standorten, Stückzahl, Status und Hinweis</returns>
+    private static KatalogEintrag KatalogEintragErstellen(Gegenstand gegenstand, string? raumID = null)
+    {
+        var eintrag = new KatalogEintrag
+        {
+            Gegenstand = gegenstand,
+            // Ist nach einem Raum gefiltert, steht dieser Raum vorne, sonst der mit der größten Menge
+            Standorte = gegenstand.Raumbestand.Where(r => r.Menge > 0)
+                .OrderByDescending(r => r.RaumID == raumID)
+                .ThenByDescending(r => r.Menge)
+                .ToList()
+        };
+        eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
+
+        // Unterwegs ist, was schon abgebucht, aber im Zielraum noch nicht übernommen wurde
+        var offen = gegenstand.Lagerbewegung.Where(l => l.BestaetigtAm == null).ToList();
+        var unterwegs = offen.Sum(l => l.Menge);
+        if (unterwegs > 0)
+        {
+            var ziele = string.Join(", ", offen.Select(l => l.NachRaumID).Distinct());
+            eintrag.Hinweis = gegenstand.Seriennummer != null ? $"unterwegs nach {ziele}" : $"{unterwegs} Stück unterwegs nach {ziele}";
+        }
+
+        eintrag.Status = eintrag.Stueck > 0 ? GegenstandUebersichtViewModel.Verfuegbar
+            : unterwegs > 0 ? GegenstandUebersichtViewModel.InTransfer
+            : GegenstandUebersichtViewModel.KeinBestand;
+        return eintrag;
     }
 
     /// <summary>
@@ -134,7 +151,49 @@ public class GegenstandController : Controller
             return NotFound();
         }
 
-        return View(gegenstand);
+        var personID = User.GetPersonID();
+        var details = new GegenstandDetailsViewModel
+        {
+            Eintrag = KatalogEintragErstellen(gegenstand),
+            Unterwegs = gegenstand.Lagerbewegung.Where(l => l.BestaetigtAm == null).OrderBy(l => l.ErstelltAm).ToList(),
+            EigenerRaumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value)
+        };
+
+        // Verlauf: jede Bewegung ergibt einen Eintrag beim Anlegen und, falls schon bestätigt, einen bei der Übernahme
+        foreach (var l in gegenstand.Lagerbewegung)
+        {
+            var person = $"{l.Person.Vorname} {l.Person.Nachname}";
+            var menge = gegenstand.Seriennummer == null ? $"{l.Menge} Stück " : "";
+
+            if (l.BestaetigtAm == l.ErstelltAm)
+            {
+                // Sofort bestätigt: Wareneingang oder Umbuchung zwischen zwei eigenen Räumen
+                var text = l.VonRaumID == l.NachRaumID
+                    ? $"{menge}in {l.NachRaumID} eingebucht von {person}"
+                    : $"{menge}von {l.VonRaumID} nach {l.NachRaumID} umgebucht von {person}";
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang(text) });
+                continue;
+            }
+
+            details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang($"{menge}von {l.VonRaumID} nach {l.NachRaumID} gebucht von {person} ({l.Bewegungsart.Name})") });
+            if (l.BestaetigtAm != null)
+            {
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm.Value, Text = GrossAnfang($"{menge}in {l.NachRaumID} übernommen") });
+            }
+        }
+        details.Verlauf = details.Verlauf.OrderByDescending(a => a.Zeitpunkt).ToList();
+
+        return View(details);
+    }
+
+    /// <summary>
+    /// Methode, die den ersten Buchstaben eines Textes großschreibt (Verlaufstexte beginnen je nach Menge klein).
+    /// </summary>
+    /// <param name="text">Der Text</param>
+    /// <returns>Der Text mit großem Anfangsbuchstaben</returns>
+    private static string GrossAnfang(string text)
+    {
+        return text.Length == 0 ? text : char.ToUpper(text[0]) + text[1..];
     }
 
     /// <summary>

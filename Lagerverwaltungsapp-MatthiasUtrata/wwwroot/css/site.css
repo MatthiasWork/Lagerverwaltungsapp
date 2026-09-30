@@ -1059,6 +1059,333 @@ dl.row dd {
     font-size: 10.5px;
 }
 
+/* Gerätedetail */
+.geraet-detail {
+    gap: 18px;
+    /* oben 26 statt 30 px wie im Design */
+    margin-top: -4px;
+}
+
+/* Pfad über der Seite (Katalog › Kategorie › Gerät) */
+.brotkrumen {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+    .brotkrumen a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+        .brotkrumen a:hover {
+            color: var(--color-text);
+            text-decoration: underline;
+        }
+
+    .brotkrumen .lucide {
+        width: 14px;
+        height: 14px;
+    }
+
+    .brotkrumen > span {
+        color: var(--color-text);
+    }
+
+.detail-raster {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 32px;
+}
+
+.detail-links {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-rechts {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+/* Bild im Akzent eingefärbt (Duotone); mit Eckmarken darf der Rahmen nicht abgeschnitten werden */
+.duotone {
+    position: relative;
+    overflow: hidden;
+}
+
+    .duotone::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: var(--color-accent);
+        mix-blend-mode: color;
+    }
+
+.blueprint.duotone {
+    overflow: visible;
+}
+
+/* Platzhalter für das Produktfoto (schraffiert wie im Design) */
+.geraet-foto {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    background: repeating-linear-gradient(135deg, var(--color-neutral-200) 0 8px, var(--color-neutral-300) 8px 16px);
+}
+
+.platzhalter-text {
+    padding: 3px 7px;
+    font: 11px ui-monospace, Menlo, monospace;
+    background: var(--color-bg);
+}
+
+/* QR-Etikett: Platzhalter-Code, Kennung und Drucken */
+.etikett {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+}
+
+.qr-code {
+    width: 88px;
+    height: 88px;
+    flex: none;
+    border: 1px solid var(--color-text);
+    background: repeating-conic-gradient(var(--color-text) 0 25%, var(--color-bg) 0 50%) 0 0 / 11px 11px;
+}
+
+.etikett-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+    .etikett-text .nebeninfo {
+        font-size: 12.5px;
+    }
+
+    .etikett-text .btn {
+        align-self: flex-start;
+    }
+
+.etikett-kennung {
+    font: 600 20px var(--font-heading);
+}
+
+.detail-titel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+    .detail-titel .tag {
+        align-self: flex-start;
+        border-width: 0;
+    }
+
+    .detail-titel h1 {
+        margin: 0;
+        font-size: 38px;
+    }
+
+.detail-unterzeile {
+    color: var(--color-neutral-700);
+}
+
+/* Hinweis auf hellem Akzentgrund mit Icon und Button (z. B. Gerät unterwegs) */
+.hinweis-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--color-accent-100);
+}
+
+    .hinweis-box > .lucide {
+        width: 22px;
+        height: 22px;
+        color: var(--color-accent-800);
+    }
+
+.hinweis-box-text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-accent-900);
+}
+
+    .hinweis-box-text b,
+    .hinweis-flaeche b {
+        font-weight: 500;
+    }
+
+/* Angaben in drei Spalten mit Trennlinien */
+.angaben-raster {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--color-divider);
+}
+
+    .angaben-raster > .angabe {
+        padding: 12px 0;
+        font-size: 14.5px;
+        border-bottom: 1px solid var(--color-divider);
+    }
+
+.detail-aktionen {
+    display: flex;
+    gap: 8px;
+}
+
+    .detail-aktionen .lucide {
+        width: 15px;
+        height: 15px;
+    }
+
+/* Bestand je Raum als Zeilen mit Menge rechts */
+.bestand-zeile {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.bestand-liste h4,
+.verlauf h4 {
+    margin: 0 0 6px;
+}
+
+/* Verlauf: Datum, Punkt (der neueste gefüllt) und Text */
+.verlauf {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.verlauf-zeile {
+    display: grid;
+    grid-template-columns: 84px 14px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 6px 0;
+    font-size: 13.5px;
+}
+
+.verlauf-datum {
+    color: var(--color-neutral-700);
+}
+
+.verlauf-punkt {
+    width: 7px;
+    height: 7px;
+    margin-top: 7px;
+    border: 1px solid var(--color-accent-700);
+}
+
+    .verlauf-punkt.aktuell {
+        background: var(--color-accent-700);
+    }
+
+/* Gerätedetail mobil: füllt den Bildschirm bis zur Tab-Leiste, die Buttons sitzen unten */
+.detail-mobil {
+    display: flex;
+    flex-direction: column;
+    /* 114 px = Innenabstand von .app-content oben (12) und unten (78 + 24) */
+    min-height: calc(100dvh - 114px - env(safe-area-inset-bottom, 0px));
+}
+
+.zurueck-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: -12px -20px 0;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: var(--color-accent-700);
+    text-decoration: none;
+}
+
+    .zurueck-link .lucide {
+        width: 20px;
+        height: 20px;
+    }
+
+/* Foto über die ganze Breite, ohne Rahmen */
+.geraet-foto-mobil {
+    aspect-ratio: auto;
+    height: 200px;
+    margin: 0 -20px;
+}
+
+.detail-mobil-inhalt {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0;
+}
+
+    .detail-mobil-inhalt .tag {
+        align-self: flex-start;
+        border-width: 0;
+    }
+
+    .detail-mobil-inhalt h2 {
+        margin: 0;
+    }
+
+.hinweis-flaeche {
+    padding: 12px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--color-accent-900);
+    background: var(--color-accent-100);
+}
+
+.angabe-zeile {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--color-divider);
+}
+
+    .angabe-zeile .angabe-label {
+        font-size: inherit;
+    }
+
+/* Buttons am unteren Rand über die ganze Breite, direkt über der Tab-Leiste */
+.aktionsleiste {
+    display: flex;
+    gap: 8px;
+    margin: auto -20px -24px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-divider);
+}
+
+    .aktionsleiste .btn {
+        flex: 1;
+        min-height: 44px;
+    }
+
+    .aktionsleiste .btn-primary {
+        flex: 2;
+    }
+
+    .aktionsleiste .btn-icon {
+        flex: none;
+        width: 44px;
+    }
+
 /* Liste als Zeilen mit Trennlinie (mobil statt Tabelle) */
 .liste-titel {
     margin: 0 0 4px;
