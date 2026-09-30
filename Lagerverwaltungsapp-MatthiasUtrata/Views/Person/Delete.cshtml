@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Benutzer löschen";
     var loeschHindernis = ViewData["LoeschHindernis"] as string;
-    var raumID = ViewData["RaumID"] as string;
 }
 
 <h1>Benutzer löschen</h1>
@@ -16,12 +15,6 @@
 else
 {
     <h3>Soll dieser Benutzer wirklich gelöscht werden?</h3>
-    @if (raumID != null)
-    {
-        <div class="alert alert-warning">
-            Der Benutzer ist für den Raum @raumID zuständig. Der Raum bleibt erhalten, verliert aber die Zuordnung.
-        </div>
-    }
 }
 
 <div>

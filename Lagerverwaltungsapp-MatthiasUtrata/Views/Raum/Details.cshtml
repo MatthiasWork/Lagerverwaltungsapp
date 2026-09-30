@@ -1,30 +1,31 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.Raum
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Raum";
 }
 
-<h1>Details</h1>
-
+<h1>Raum @Model.ID</h1>
+<hr />
 <div>
-    <h4>Raum</h4>
-    <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PersonID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PersonID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.RaumartID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RaumartID)
+        <dt class="col-sm-3">Raumart</dt>
+        <dd class="col-sm-9">@Model.Raumart.Name</dd>
+
+        <dt class="col-sm-3">Verantwortliche Person</dt>
+        <dd class="col-sm-9">
+            @if (Model.Person != null)
+            {
+                <a asp-controller="Person" asp-action="Details" asp-route-id="@Model.Person.ID">@Model.Person.Vorname @Model.Person.Nachname</a>
+                <span class="text-muted">(@Model.Person.Username)</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">keine – bitte zuweisen</span>
+            }
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.ID">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-primary">Bearbeiten</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Zurück zur Übersicht</a>
 </div>

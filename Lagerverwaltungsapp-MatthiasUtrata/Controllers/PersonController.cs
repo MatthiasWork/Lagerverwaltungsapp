@@ -234,13 +234,11 @@ public class PersonController : Controller
         }
 
         ViewData["LoeschHindernis"] = await LoeschHindernisAsync(person);
-        ViewData["RaumID"] = await _lagerService.RaumDerPersonAsync(person.ID);
         return View(person);
     }
 
     /// <summary>
     /// Methode, die eine Person nach der Bestätigung löscht, sofern nichts dagegen spricht.
-    /// Der Raum, für den die Person zuständig war, bleibt erhalten und verliert nur die Zuordnung.
     /// </summary>
     /// <param name="id">Die ID der Person, die gelöscht werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
@@ -251,7 +249,6 @@ public class PersonController : Controller
     {
         var person = await _context.Person
             .Include(p => p.Rolle)
-            .Include(p => p.Raum)
             .FirstOrDefaultAsync(p => p.ID == id);
         if (person == null)
         {
@@ -266,10 +263,6 @@ public class PersonController : Controller
             return RedirectToAction("Index", "Admin");
         }
 
-        foreach (var raum in person.Raum)
-        {
-            raum.PersonID = null;
-        }
         _context.Person.Remove(person);
         await _context.SaveChangesAsync();
 
@@ -313,6 +306,13 @@ public class PersonController : Controller
         if (person.Rolle.Admin && !await GibtEsAndereAdminsAsync(person.ID))
         {
             return "Der letzte Administrator kann nicht gelöscht werden.";
+        }
+
+        // Jeder Raum braucht eine verantwortliche Person, sonst könnte niemand mehr für ihn buchen oder bestätigen
+        var raumID = await _lagerService.RaumDerPersonAsync(person.ID);
+        if (raumID != null)
+        {
+            return $"\"{person.Username}\" ist für den Raum {raumID} verantwortlich und kann daher nicht gelöscht werden. Weise den Raum zuerst einer anderen Person zu.";
         }
 
         // Lagerbewegungen brauchen zwingend eine Person, sonst wäre nicht mehr nachvollziehbar, wer sie erfasst hat

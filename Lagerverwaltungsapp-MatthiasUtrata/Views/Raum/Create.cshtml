@@ -1,42 +1,50 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.Raum
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Neuer Raum";
 }
 
-<h1>Create</h1>
-
-<h4>Raum</h4>
+<h1>Neuer Raum</h1>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ID" class="control-label"></label>
-                <input asp-for="ID" class="form-control" />
-                <span asp-validation-for="ID" class="text-danger"></span>
-            </div>
 
             <div class="form-group">
-                <label asp-for="PersonID" class="control-label"></label>
-                <input asp-for="PersonID" class="form-control" />
-                <span asp-validation-for="PersonID" class="text-danger"></span>
+                <label asp-for="ID" class="control-label"></label>
+                <input asp-for="ID" class="form-control" placeholder="z. B. 309 oder HL" />
+                <span asp-validation-for="ID" class="text-danger"></span>
+                <div class="form-text">Kann später nicht mehr geändert werden.</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="RaumartID" class="control-label"></label>
-                <input asp-for="RaumartID" class="form-control" />
+                <select asp-for="RaumartID" class="form-select" asp-items="ViewBag.RaumartID"></select>
                 <span asp-validation-for="RaumartID" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <label asp-for="PersonID" class="control-label"></label>
+                <select asp-for="PersonID" class="form-select" asp-items="ViewBag.PersonID">
+                    <option value="">Bitte auswählen</option>
+                </select>
+                <span asp-validation-for="PersonID" class="text-danger"></span>
+                <div class="form-text">
+                    Eine Person kann nur für einen Raum verantwortlich sein, daher werden nur Personen ohne Raum angeboten.
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Anlegen" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

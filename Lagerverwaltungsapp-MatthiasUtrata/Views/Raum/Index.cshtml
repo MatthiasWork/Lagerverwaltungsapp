@@ -1,47 +1,58 @@
 @model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Raum>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Räume";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Räume</h1>
+    <a asp-action="Create" class="btn btn-primary">Neuer Raum</a>
+</div>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RaumartID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonID)
-            </th>
-        </tr>
-    
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.ID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.RaumartID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.PersonID)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
+<partial name="_Meldungen" />
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Es gibt noch keine Räume.</p>
 }
-        </thead>
-    </tbody>
-</table>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Raumnummer</th>
+                    <th>Raumart</th>
+                    <th>Verantwortliche Person</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var raum in Model)
+                {
+                    <tr>
+                        <td>@raum.ID</td>
+                        <td>@raum.Raumart.Name</td>
+                        <td>
+                            @if (raum.Person != null)
+                            {
+                                <text>@raum.Person.Vorname @raum.Person.Nachname</text>
+                            }
+                            else
+                            {
+                                @* Kann nur bei Räumen vorkommen, die angelegt wurden, bevor die verantwortliche Person Pflicht war *@
+                                <span class="badge bg-danger">keine – bitte zuweisen</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@raum.ID" class="btn btn-sm btn-outline-secondary">Details</a>
+                            <a asp-action="Edit" asp-route-id="@raum.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            <a asp-action="Delete" asp-route-id="@raum.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
