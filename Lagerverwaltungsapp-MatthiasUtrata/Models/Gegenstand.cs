@@ -17,7 +17,6 @@ public partial class Gegenstand
     [Display(Name = "Bezeichnung")]
     public string Name { get; set; } = null!;
 
-    // Mit Seriennummer = genau ein Gerät, ohne Seriennummer = Artikel, von dem es beliebig viele Stück geben kann
     [StringLength(50, ErrorMessage = "Die Seriennummer darf höchstens {1} Zeichen lang sein.")]
     [Display(Name = "Seriennummer")]
     public string? Seriennummer { get; set; }

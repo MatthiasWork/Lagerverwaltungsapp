@@ -17,7 +17,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
 
         public int? HerstellerID { get; set; }
 
-        // null = alle, true = nur mit Seriennummer (einzelne Geräte), false = nur ohne Seriennummer (Artikel mit Menge)
         public bool? MitSeriennummer { get; set; }
 
         public SelectList Kategorien { get; set; } = null!;

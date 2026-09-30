@@ -201,7 +201,7 @@ public class GegenstandController : Controller
 
         await EingabenPruefenAsync(gegenstand);
 
-        // Mit Seriennummer ist der Gegenstand ein einzelnes Gerät (Menge 1), ohne ein Artikel mit beliebiger Menge.
+        // Mit Seriennummer wird der Gegenstand als einzelnes Gerät gebucht (Menge 1), ohne Seriennummer über eine beliebige Menge.
         // Gibt es schon Bestand oder Lagerbewegungen (dieselbe Bedingung wie beim Löschen), würden diese Mengen sonst nicht mehr stimmen
         var bisherigeSeriennummer = await _context.Gegenstand
             .Where(g => g.ID == gegenstand.ID)
