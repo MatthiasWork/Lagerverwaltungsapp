@@ -1,0 +1,142 @@
+@{
+    ViewData["Title"] = "Neue Ausleihe";
+
+    // Statische Seite: alle Werte sind Beispieldaten aus dem Design, gespeichert wird nichts.
+    // Wird der Verleih an Personen umgesetzt, kommen sie aus einem ViewModel
+    var geraete = new (string Name, string InventarNr, string Raum, string Freigabe)[]
+    {
+        ("Lego Spike Prime Set", "BSV-ROB-0021", "C 015", "Lea Brandt"),
+        ("Lego Spike Prime Set", "BSV-ROB-0022", "C 015", "Lea Brandt"),
+        ("Dokumentenkamera Elmo", "BSV-DOK-0012", "A 008", "Aylin Öztürk")
+    };
+    var freigaben = new (string Initialen, string Name, string Info)[]
+    {
+        ("LB", "Lea Brandt", "C 015 · 2 Geräte"),
+        ("AÖ", "Aylin Öztürk", "A 008 · 1 Gerät")
+    };
+}
+
+@* Desktop *@
+<div class="seite ausleihe d-none d-lg-flex">
+    <div class="seiten-kopf">
+        <h1>Neue Ausleihe</h1>
+        <ol class="schritte" aria-label="Schritte">
+            <li class="schritt erledigt"><span class="schritt-marke"><i data-lucide="check"></i></span>Geräte</li>
+            <li class="schritt-linie" aria-hidden="true"></li>
+            <li class="schritt aktuell" aria-current="step"><span class="schritt-marke">2</span>Zeitraum</li>
+            <li class="schritt-linie" aria-hidden="true"></li>
+            <li class="schritt"><span class="schritt-marke">3</span>Freigabe</li>
+        </ol>
+    </div>
+
+    <div class="ausleihe-raster">
+        <div class="ausleihe-auswahl">
+            <div class="geraete-liste">
+                <h4>Geräte</h4>
+                @foreach (var geraet in geraete)
+                {
+                    <div class="geraet-zeile">
+                        <div class="geraet-bild" aria-hidden="true"></div>
+                        <div>
+                            <div class="fw-medium">@geraet.Name</div>
+                            <div class="geraet-zeile-info">@geraet.InventarNr · @geraet.Raum</div>
+                        </div>
+                        <span class="geraet-zeile-info">Freigabe: @geraet.Freigabe</span>
+                        <button type="button" class="entfernen" aria-label="@geraet.Name entfernen"><i data-lucide="x"></i></button>
+                    </div>
+                }
+                <div class="geraet-hinzufuegen">
+                    <i data-lucide="scan-line"></i>
+                    <input type="search" placeholder="Weiteres Gerät scannen oder Inventar-Nr. eingeben" aria-label="Gerät hinzufügen" />
+                </div>
+            </div>
+
+            <div class="zeitraum">
+                <h4>Zeitraum</h4>
+                <div class="seg" role="radiogroup" aria-label="Zeitraum">
+                    <label class="seg-opt"><input type="radio" name="zeitraum" />Heute</label>
+                    <label class="seg-opt"><input type="radio" name="zeitraum" checked />Diese Woche</label>
+                    <label class="seg-opt"><input type="radio" name="zeitraum" />2 Wochen</label>
+                    <label class="seg-opt"><input type="radio" name="zeitraum" />Eigener Zeitraum</label>
+                </div>
+                <div class="datum-raster">
+                    <div>
+                        <span class="form-label">Abholung</span>
+                        <div class="form-control anzeige-feld">Mo, 05.10.2026<i data-lucide="calendar"></i></div>
+                    </div>
+                    <div>
+                        <span class="form-label">Rückgabe bis</span>
+                        <div class="form-control anzeige-feld">Fr, 09.10.2026<i data-lucide="calendar"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zweck">
+                <span class="form-label">Zweck (optional, für die Freigabe sichtbar)</span>
+                <div class="form-control">Projektwoche Robotik, Klasse 8b</div>
+            </div>
+        </div>
+
+        <aside class="blueprint zusammenfassung">
+            <span class="card-kicker">Zusammenfassung</span>
+            <div class="angabe">
+                <span class="angabe-label">Ausleiher</span>
+                <span class="fw-medium">Jonas Weber · Lehrkraft</span>
+            </div>
+            <div class="angabe">
+                <span class="angabe-label">Zeitraum</span>
+                <span>05.10. – 09.10.2026 · 5 Tage</span>
+            </div>
+            <div class="angabe freigabe-liste">
+                <span class="angabe-label">Benötigte Freigaben</span>
+                @foreach (var freigabe in freigaben)
+                {
+                    <div class="freigeber">
+                        <span class="avatar avatar-sm" aria-hidden="true">@freigabe.Initialen</span>
+                        <span>@freigabe.Name<br /><span class="nebeninfo">@freigabe.Info</span></span>
+                    </div>
+                }
+            </div>
+            <p class="hinweis-klein"><i data-lucide="bell"></i>Erinnerung am 08.10. Bei mehr als 5 Tagen Verzug werden die IT-Admins informiert.</p>
+            <button type="button" class="btn btn-primary btn-cta">Freigabe anfragen</button>
+        </aside>
+    </div>
+</div>
+
+@* Mobil: Schritt 2 von 3 als eigener Bildschirm *@
+<div class="ausleihe-mobil d-lg-none">
+    <div class="ausleihe-mobil-kopf">
+        <div class="schritt-zeile">
+            <a class="abbrechen-link" asp-controller="Home" asp-action="Index">Abbrechen</a>
+            <span class="schritt-text">Schritt 2 von 3</span>
+        </div>
+        <div class="fortschritt" aria-hidden="true"><span class="fertig"></span><span class="fertig"></span><span></span></div>
+        <h1>Zeitraum</h1>
+    </div>
+
+    <div class="zeitraum-wahl" role="radiogroup" aria-label="Zeitraum">
+        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />Heute</label>
+        <label class="seg-opt"><input type="radio" name="zeitraumMobil" checked />Woche</label>
+        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />2 Wo.</label>
+        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />Eigene</label>
+    </div>
+
+    <div class="datum-kacheln">
+        <div><span>Abholung</span><b>Mo 05.10.</b></div>
+        <div><span>Rückgabe</span><b>Fr 09.10.</b></div>
+    </div>
+
+    <div>
+        <div class="geraete-anzahl">@geraete.Length Geräte</div>
+        @foreach (var geraet in geraete)
+        {
+            <div class="geraete-kurz"><span>@geraet.Name</span><span class="nebeninfo">@geraet.Raum</span></div>
+        }
+    </div>
+
+    <p class="hinweis-klein"><i data-lucide="bell"></i>Freigabe durch Lea Brandt und Aylin Öztürk. Erinnerung am 08.10.</p>
+
+    <div class="ausleihe-weiter">
+        <button type="button" class="btn btn-primary">Weiter zur Freigabe</button>
+    </div>
+</div>

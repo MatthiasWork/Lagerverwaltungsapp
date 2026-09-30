@@ -2457,6 +2457,281 @@ a.tag-outline {
     }
 }
 
+/* Neue Ausleihe (statisch) */
+.ausleihe {
+    gap: 22px;
+}
+
+/* Schritte oben rechts: erledigt gefüllt, aktuell umrandet und fett */
+.schritte {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    font-size: 13.5px;
+    list-style: none;
+}
+
+.schritt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-neutral-700);
+}
+
+    .schritt.erledigt {
+        color: var(--color-accent-800);
+    }
+
+    .schritt.aktuell {
+        font-weight: 500;
+        color: var(--color-text);
+    }
+
+.schritt-marke {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--color-divider);
+}
+
+    .schritt-marke .lucide {
+        width: 14px;
+        height: 14px;
+    }
+
+.schritt.erledigt .schritt-marke {
+    color: var(--color-bg);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.schritt.aktuell .schritt-marke {
+    color: var(--color-accent-800);
+    border-color: var(--color-accent);
+}
+
+.schritt-linie {
+    width: 32px;
+    height: 1px;
+    background: var(--color-divider);
+}
+
+.ausleihe-raster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 28px;
+}
+
+.ausleihe-auswahl {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+.zeitraum {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+    .zeitraum h4 {
+        margin: 0;
+    }
+
+    .zeitraum .seg {
+        align-self: flex-start;
+    }
+
+.datum-raster {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    max-width: 520px;
+}
+
+/* Feld nur zur Anzeige (statische Seite) mit Icon rechts */
+.anzeige-feld {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+    .anzeige-feld .lucide {
+        width: 15px;
+        height: 15px;
+    }
+
+.zweck {
+    max-width: 520px;
+}
+
+    .zweck .form-control {
+        min-height: 70px;
+        color: var(--color-neutral-700);
+    }
+
+.zusammenfassung {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: start;
+    padding: 20px;
+}
+
+    .zusammenfassung .angabe {
+        font-size: 15px;
+    }
+
+.freigabe-liste {
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-divider);
+}
+
+.freigeber {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.3;
+}
+
+/* Kleiner Hinweis mit Icon (z. B. Erinnerung) */
+.hinweis-klein {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--color-neutral-800);
+}
+
+    .hinweis-klein .lucide {
+        width: 15px;
+        height: 15px;
+        margin-top: 2px;
+    }
+
+/* Neue Ausleihe mobil: Schritt 2 von 3, Button unten */
+.ausleihe-mobil {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    /* oben 6 statt 12 px wie im Design, unten bis zur Tab-Leiste */
+    margin-top: -6px;
+    min-height: calc(100dvh - 108px - env(safe-area-inset-bottom, 0px));
+}
+
+.ausleihe-mobil-kopf {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: -2px;
+}
+
+    .ausleihe-mobil-kopf h1 {
+        margin: 4px 0 0;
+        font-size: 30px;
+    }
+
+.schritt-zeile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.schritt-text {
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
+}
+
+.fortschritt {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+    .fortschritt span {
+        height: 3px;
+        background: var(--color-neutral-300);
+    }
+
+        .fortschritt span.fertig {
+            background: var(--color-accent);
+        }
+
+.zeitraum-wahl {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+    .zeitraum-wahl .seg-opt,
+    .zeitraum-wahl .seg-opt + .seg-opt {
+        justify-content: center;
+        padding: 10px 0;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        border: 1px solid var(--color-divider);
+    }
+
+        .zeitraum-wahl .seg-opt:has(input:checked) {
+            border-color: var(--color-accent);
+        }
+
+/* Abholung und Rückgabe als zwei Kacheln mit Haarlinie dazwischen */
+.datum-kacheln {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--color-divider);
+    border: 1px solid var(--color-divider);
+}
+
+    .datum-kacheln > div {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        background: var(--color-bg);
+    }
+
+    .datum-kacheln span {
+        font-size: 11.5px;
+        color: var(--color-neutral-700);
+    }
+
+    .datum-kacheln b {
+        font: 600 24px var(--font-heading);
+    }
+
+.geraete-anzahl {
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--color-neutral-700);
+}
+
+.geraete-kurz {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    font-size: 13.5px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.ausleihe-weiter {
+    margin-top: auto;
+    margin-bottom: -12px;
+}
+
+    .ausleihe-weiter .btn {
+        width: 100%;
+        min-height: 48px;
+    }
+
 /* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
 /* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {
