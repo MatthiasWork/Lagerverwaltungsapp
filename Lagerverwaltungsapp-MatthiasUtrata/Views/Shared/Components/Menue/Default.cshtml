@@ -61,11 +61,8 @@
     {
         await Eintrag("Mein Raum", "MeinRaum", "Index", "door-open");
     }
-    @if (Model.IstAdmin)
-    {
-        await Eintrag("Katalog", "Gegenstand", "Index", "package");
-    }
     @{
+        await Eintrag("Katalog", "Gegenstand", "Index", "package");
         await Eintrag("Ausleihen", "Ausleihe", "Index", "handshake");
     }
     @if (Model.RaumID != null)

@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
-// Gegenstände verwalten darf nur ein Admin
-[Authorize(Roles = "Admin")]
 public class GegenstandController : Controller
 {
     private readonly LagerverwaltungContext _context;
@@ -21,28 +19,31 @@ public class GegenstandController : Controller
     }
 
     /// <summary>
-    /// Methode, die alle Gegenstände mit Kategorie und Hersteller anzeigt.
-    /// Die Liste kann nach Suchbegriff, Kategorie, Hersteller und mit/ohne Seriennummer gefiltert werden.
+    /// Methode, die den Katalog anzeigt: alle Gegenstände mit Standort und Status.
+    /// Die Liste kann nach Suchbegriff, Kategorie, Raum und Status gefiltert werden.
     /// </summary>
-    /// <param name="suche">Suchbegriff für Bezeichnung oder Seriennummer</param>
+    /// <param name="suche">Suchbegriff für Bezeichnung, Seriennummer oder Raum</param>
     /// <param name="kategorieID">Die ID der Kategorie, nach der gefiltert werden soll</param>
-    /// <param name="herstellerID">Die ID des Herstellers, nach dem gefiltert werden soll</param>
-    /// <param name="mitSeriennummer">True = nur mit Seriennummer, False = nur ohne Seriennummer, null = alle</param>
+    /// <param name="raumID">Die ID des Raums, in dem der Gegenstand liegen muss</param>
+    /// <param name="status">Der Status, nach dem gefiltert werden soll (siehe GegenstandUebersichtViewModel)</param>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Gegenstand
-    public async Task<IActionResult> Index(string? suche, int? kategorieID, int? herstellerID, bool? mitSeriennummer)
+    public async Task<IActionResult> Index(string? suche, int? kategorieID, string? raumID, string? status)
     {
         suche = suche?.Trim();
 
+        // Mit Bestand (Standort) und den noch nicht bestätigten Bewegungen (unterwegs)
         var abfrage = _context.Gegenstand
             .Include(g => g.Kategorie)
-            .Include(g => g.Hersteller)
+            .Include(g => g.Raumbestand).ThenInclude(r => r.Raum).ThenInclude(r => r.Raumart)
+            .Include(g => g.Lagerbewegung.Where(l => l.BestaetigtAm == null))
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(suche))
         {
             abfrage = abfrage.Where(g => g.Name.Contains(suche)
-                || (g.Seriennummer != null && g.Seriennummer.Contains(suche)));
+                || (g.Seriennummer != null && g.Seriennummer.Contains(suche))
+                || g.Raumbestand.Any(r => r.RaumID.Contains(suche)));
         }
 
         if (kategorieID != null)
@@ -50,30 +51,56 @@ public class GegenstandController : Controller
             abfrage = abfrage.Where(g => g.KategorieID == kategorieID);
         }
 
-        if (herstellerID != null)
+        if (!string.IsNullOrEmpty(raumID))
         {
-            abfrage = abfrage.Where(g => g.HerstellerID == herstellerID);
+            abfrage = abfrage.Where(g => g.Raumbestand.Any(r => r.RaumID == raumID));
         }
 
-        if (mitSeriennummer == true)
+        var eintraege = new List<KatalogEintrag>();
+        foreach (var gegenstand in await abfrage.OrderBy(g => g.Name).ThenBy(g => g.Seriennummer).ToListAsync())
         {
-            abfrage = abfrage.Where(g => g.Seriennummer != null);
+            var eintrag = new KatalogEintrag
+            {
+                Gegenstand = gegenstand,
+                // Ist nach einem Raum gefiltert, steht dieser Raum vorne, sonst der mit der größten Menge
+                Standorte = gegenstand.Raumbestand.Where(r => r.Menge > 0)
+                    .OrderByDescending(r => r.RaumID == raumID)
+                    .ThenByDescending(r => r.Menge)
+                    .ToList()
+            };
+            eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
+
+            // Unterwegs ist, was schon abgebucht, aber im Zielraum noch nicht übernommen wurde
+            var unterwegs = gegenstand.Lagerbewegung.Sum(l => l.Menge);
+            if (unterwegs > 0)
+            {
+                var ziele = string.Join(", ", gegenstand.Lagerbewegung.Select(l => l.NachRaumID).Distinct());
+                eintrag.Hinweis = gegenstand.Seriennummer != null ? $"unterwegs nach {ziele}" : $"{unterwegs} Stück unterwegs nach {ziele}";
+            }
+
+            eintrag.Status = eintrag.Stueck > 0 ? GegenstandUebersichtViewModel.Verfuegbar
+                : unterwegs > 0 ? GegenstandUebersichtViewModel.InTransfer
+                : GegenstandUebersichtViewModel.KeinBestand;
+            eintraege.Add(eintrag);
         }
-        else if (mitSeriennummer == false)
+
+        // Der Status wird erst hier berechnet, daher auch erst hier gefiltert
+        if (!string.IsNullOrEmpty(status))
         {
-            abfrage = abfrage.Where(g => g.Seriennummer == null);
+            eintraege = eintraege.Where(e => e.Status == status).ToList();
         }
 
         var uebersicht = new GegenstandUebersichtViewModel
         {
-            Gegenstaende = await abfrage.OrderBy(g => g.Name).ThenBy(g => g.Seriennummer).ToListAsync(),
+            Eintraege = eintraege,
             AnzahlGesamt = await _context.Gegenstand.CountAsync(),
+            AnzahlRaeume = await _context.Raum.CountAsync(),
             Suche = suche,
             KategorieID = kategorieID,
-            HerstellerID = herstellerID,
-            MitSeriennummer = mitSeriennummer,
-            Kategorien = new SelectList(await _context.Kategorie.OrderBy(k => k.Name).ToListAsync(), "ID", "Name", kategorieID),
-            Hersteller = new SelectList(await _context.Hersteller.OrderBy(h => h.Name).ToListAsync(), "ID", "Name", herstellerID)
+            RaumID = raumID,
+            Status = status,
+            Kategorien = await _context.Kategorie.OrderByDescending(k => k.Gegenstand.Count).ThenBy(k => k.Name).ToListAsync(),
+            Raeume = await _context.Raum.OrderBy(r => r.ID).Select(r => r.ID).ToListAsync()
         };
 
         return View(uebersicht);
@@ -115,6 +142,7 @@ public class GegenstandController : Controller
     /// </summary>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Gegenstand/Create
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
         await AuswahllistenSetzenAsync(null);
@@ -132,6 +160,7 @@ public class GegenstandController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([Bind("Name,Seriennummer,KategorieID,HerstellerID")] Gegenstand gegenstand)
     {
         // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
@@ -157,6 +186,7 @@ public class GegenstandController : Controller
     /// <param name="id">Die ID des Gegenstands, der bearbeitet werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Gegenstand/Edit/5
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -186,6 +216,7 @@ public class GegenstandController : Controller
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int? id, [Bind("ID,Name,Seriennummer,KategorieID,HerstellerID")] Gegenstand gegenstand)
     {
         // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
@@ -242,6 +273,7 @@ public class GegenstandController : Controller
     /// <param name="id">Die ID des Gegenstands, der gelöscht werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Gegenstand/Delete/5
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -270,6 +302,7 @@ public class GegenstandController : Controller
     // POST: Gegenstand/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteConfirmed(int? id)
     {
         var gegenstand = await _context.Gegenstand.FindAsync(id);

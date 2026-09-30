@@ -13,3 +13,28 @@ document.querySelectorAll('[data-tabellen-suche]').forEach(function (suchfeld) {
         });
     });
 });
+
+// Filter als Auswahlliste (data-auto-absenden): schickt das Formular sofort ab, wenn sich die Auswahl ändert
+document.querySelectorAll('[data-auto-absenden]').forEach(function (auswahl) {
+    auswahl.addEventListener('change', function () {
+        auswahl.form.submit();
+    });
+});
+
+// Auswahlliste mit Links als Werten (data-link-auswahl, z. B. "Weitere Kategorien"): öffnet den gewählten Link
+document.querySelectorAll('[data-link-auswahl]').forEach(function (auswahl) {
+    auswahl.addEventListener('change', function () {
+        if (auswahl.value) {
+            window.location.href = auswahl.value;
+        }
+    });
+});
+
+// Tabellenzeile mit data-href: ein Klick irgendwo in der Zeile öffnet den Link (Links und Buttons in der Zeile gehen vor)
+document.querySelectorAll('tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (e) {
+        if (!e.target.closest('a, button, input, select, label')) {
+            window.location.href = zeile.dataset.href;
+        }
+    });
+});

@@ -1,87 +1,156 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.GegenstandUebersichtViewModel
 
 @{
-    ViewData["Title"] = "Gegenstände";
+    ViewData["Title"] = "Katalog";
+
+    // Direkt als Schalter nur die Kategorien mit den meisten Geräten, alle übrigen in der Auswahl "Weitere"
+    const int schalterAnzahl = 3;
+    var schalter = Model.Kategorien.Take(schalterAnzahl).ToList();
+    var weitere = Model.Kategorien.Skip(schalterAnzahl).ToList();
+    var aktivInWeitere = weitere.Any(k => k.ID == Model.KategorieID);
+
+    // Link auf den Katalog mit einer anderen Kategorie; Suche, Raum und Status bleiben erhalten
+    string KategorieLink(int? kategorieID) => Url.Action("Index", new { suche = Model.Suche, kategorieID, raumID = Model.RaumID, status = Model.Status })!;
+
+    // Standort: der Raum mit der größten Menge, bei mehreren Räumen mit der Zahl der übrigen
+    string Standort(KatalogEintrag eintrag)
+    {
+        if (eintrag.Standorte.Count == 0)
+        {
+            return "–";
+        }
+        var raum = eintrag.Standorte[0].Raum;
+        var text = $"{raum.ID} · {raum.Raumart.Name}";
+        return eintrag.Standorte.Count > 1 ? $"{text} +{eintrag.Standorte.Count - 1}" : text;
+    }
+
+    // Unter dem Namen: Kategorie, bei Gegenständen ohne Seriennummer auch die Stückzahl
+    string Zusatz(KatalogEintrag eintrag) => eintrag.Gegenstand.Seriennummer == null && eintrag.Stueck > 1
+        ? $"{eintrag.Gegenstand.Kategorie.Name} · {eintrag.Stueck} Stück"
+        : eintrag.Gegenstand.Kategorie.Name;
+
+    var statusWerte = new[] { GegenstandUebersichtViewModel.Verfuegbar, GegenstandUebersichtViewModel.InTransfer, GegenstandUebersichtViewModel.KeinBestand };
 }
 
-<div class="d-flex justify-content-between align-items-center">
-    <h1>Gegenstände</h1>
-    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neuer Gegenstand</a>
-</div>
-<hr />
+<div class="seite katalog">
+    <div class="seiten-kopf">
+        <div>
+            <h1>Katalog</h1>
+            <div class="seiten-untertitel d-none d-lg-block">@Model.AnzahlGesamt Geräte in @Model.AnzahlRaeume Räumen</div>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="seiten-aktionen d-none d-lg-flex">
+                @* Beispiel aus dem Design: einen CSV-Import gibt es noch nicht *@
+                <button type="button" class="btn btn-outline-secondary">CSV importieren</button>
+                <a class="btn btn-primary" asp-action="Create"><i data-lucide="plus"></i>Gerät erfassen</a>
+            </div>
+        }
+    </div>
 
-<partial name="_Meldungen" />
+    <partial name="_Meldungen" />
 
-<form asp-action="Index" method="get" class="row g-2 mb-3">
-    <div class="col-md">
-        <input asp-for="Suche" class="form-control" placeholder="Bezeichnung oder Seriennummer" aria-label="Suche" />
-    </div>
-    <div class="col-md-2">
-        <select asp-for="KategorieID" asp-items="Model.Kategorien" class="form-select" aria-label="Kategorie">
-            <option value="">Alle Kategorien</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select asp-for="HerstellerID" asp-items="Model.Hersteller" class="form-select" aria-label="Hersteller">
-            <option value="">Alle Hersteller</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select asp-for="MitSeriennummer" class="form-select" aria-label="Seriennummer">
-            <option value="">Mit und ohne SN</option>
-            <option value="true">Nur mit SN</option>
-            <option value="false">Nur ohne SN</option>
-        </select>
-    </div>
-    <div class="col-md-auto d-flex gap-2">
-        <button type="submit" class="btn btn-outline-primary">Filtern</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Zurücksetzen</a>
-    </div>
-</form>
+    @* Suche mit Enter, Raum und Status sofort bei Änderung (site.js); die Kategorie wählt man über die Links *@
+    <form class="katalog-filter" asp-action="Index" method="get">
+        <div class="feld-mit-icon katalog-suche">
+            <input asp-for="Suche" class="form-control" placeholder="Name, Seriennummer oder Raum" aria-label="Suche" />
+            <i data-lucide="search"></i>
+        </div>
+        <input type="hidden" asp-for="KategorieID" />
 
-@if (!Model.Gegenstaende.Any())
-{
-    <p class="text-muted">Keine Gegenstände gefunden.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Bezeichnung</th>
-                    <th>Seriennummer</th>
-                    <th>Kategorie</th>
-                    <th>Hersteller</th>
-                    <th class="text-end">Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var gegenstand in Model.Gegenstaende)
-                {
+        <div class="seg d-none d-lg-inline-flex" role="group" aria-label="Kategorie">
+            <a class="seg-opt @(Model.KategorieID == null ? "active" : null)" href="@KategorieLink(null)">Alle</a>
+            @foreach (var kategorie in schalter)
+            {
+                <a class="seg-opt @(kategorie.ID == Model.KategorieID ? "active" : null)" href="@KategorieLink(kategorie.ID)">@kategorie.Name</a>
+            }
+            @if (weitere.Count > 0)
+            {
+                <select class="seg-opt seg-auswahl @(aktivInWeitere ? "active" : null)" data-link-auswahl aria-label="Weitere Kategorien">
+                    <option value="" disabled selected="@(!aktivInWeitere)">Weitere</option>
+                    @foreach (var kategorie in weitere)
+                    {
+                        <option value="@KategorieLink(kategorie.ID)" selected="@(kategorie.ID == Model.KategorieID)">@kategorie.Name</option>
+                    }
+                </select>
+            }
+        </div>
+
+        <select asp-for="RaumID" class="filter-auswahl ms-auto d-none d-lg-block" data-auto-absenden aria-label="Raum">
+            <option value="">Raum: alle</option>
+            @foreach (var raumID in Model.Raeume)
+            {
+                <option value="@raumID">Raum: @raumID</option>
+            }
+        </select>
+        <select asp-for="Status" class="filter-auswahl d-none d-lg-block" data-auto-absenden aria-label="Status">
+            <option value="">Status: alle</option>
+            @foreach (var status in statusWerte)
+            {
+                <option value="@status">Status: @status</option>
+            }
+        </select>
+    </form>
+
+    @* Mobil: Kategorien als Chips zum Wischen *@
+    <nav class="kategorie-chips d-lg-none" aria-label="Kategorie">
+        <a class="chip @(Model.KategorieID == null ? "active" : null)" href="@KategorieLink(null)">Alle</a>
+        @foreach (var kategorie in Model.Kategorien)
+        {
+            <a class="chip @(kategorie.ID == Model.KategorieID ? "active" : null)" href="@KategorieLink(kategorie.ID)">@kategorie.Name</a>
+        }
+    </nav>
+
+    @if (Model.Eintraege.Count == 0)
+    {
+        <p class="text-muted">Keine Geräte gefunden.</p>
+    }
+    else
+    {
+        @* Desktop: Tabelle, ein Klick auf die Zeile öffnet das Gerät *@
+        <div class="blueprint d-none d-lg-block">
+            <table class="table table-hover liste-tabelle katalog-tabelle">
+                <thead>
                     <tr>
-                        <td>@gegenstand.Name</td>
-                        <td>
-                            @if (gegenstand.Seriennummer != null)
-                            {
-                                @gegenstand.Seriennummer
-                            }
-                            else
-                            {
-                                <span class="text-muted">keine</span>
-                            }
-                        </td>
-                        <td>@gegenstand.Kategorie.Name</td>
-                        <td>@gegenstand.Hersteller.Name</td>
-                        <td class="text-end text-nowrap">
-                            <a asp-action="Details" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <a asp-action="Edit" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
-                            <a asp-action="Delete" asp-route-id="@gegenstand.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
-                        </td>
+                        <th class="spalte-bild"><span class="visually-hidden">Bild</span></th>
+                        <th>Gerät</th>
+                        <th>Seriennummer</th>
+                        <th>Standort</th>
+                        <th>Status</th>
+                        <th>Hinweis</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    <p class="text-muted small">@Model.Gegenstaende.Count von @Model.AnzahlGesamt Gegenständen angezeigt</p>
-}
+                </thead>
+                <tbody>
+                    @foreach (var eintrag in Model.Eintraege)
+                    {
+                        <tr data-href="@Url.Action("Details", new { id = eintrag.Gegenstand.ID })">
+                            <td><div class="geraet-bild" aria-hidden="true"></div></td>
+                            <td>
+                                <a class="zeilen-link fw-medium" asp-action="Details" asp-route-id="@eintrag.Gegenstand.ID">@eintrag.Gegenstand.Name</a>
+                                <div class="nebeninfo">@Zusatz(eintrag)</div>
+                            </td>
+                            <td class="zahlen">@(eintrag.Gegenstand.Seriennummer ?? "–")</td>
+                            <td>@Standort(eintrag)</td>
+                            <td><span class="tag @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span></td>
+                            <td>@(eintrag.Hinweis ?? "–")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* Mobil: Liste mit Bild, Status und Standort *@
+        <div class="d-lg-none">
+            @foreach (var eintrag in Model.Eintraege)
+            {
+                <a class="katalog-zeile" asp-action="Details" asp-route-id="@eintrag.Gegenstand.ID">
+                    <div class="geraet-bild" aria-hidden="true"></div>
+                    <div class="katalog-zeile-text">
+                        <span class="katalog-zeile-name">@eintrag.Gegenstand.Name</span>
+                        <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@Standort(eintrag)</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
