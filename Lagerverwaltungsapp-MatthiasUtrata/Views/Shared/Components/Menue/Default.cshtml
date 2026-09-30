@@ -1,52 +1,83 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.MenueViewModel
+@using System.Security.Claims
 
-@* Für alle angemeldeten Benutzer *@
-<li class="nav-item">
-    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
-</li>
+@{
+    // Hervorgehoben wird der erste Menüpunkt, dessen Controller zur aktuellen Seite gehört
+    var aktuellerController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var aktivGefunden = false;
 
-@* Nach Zuständigkeit: Es zählt nur, welcher Raum der Person zugewiesen ist, nicht dessen Raumart *@
-@if (Model.RaumID != null)
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="MeinRaum" asp-action="Index">Mein Raum (@Model.RaumID)</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Uebernahme" asp-action="Index">
-            Offene Übernahmen
-            @if (Model.OffeneUebernahmen > 0)
+    // Name und Rolle für den Block unten in der Seitenleiste (Claims aus dem Login)
+    var vorname = User.FindFirstValue(ClaimTypes.GivenName) ?? "";
+    var nachname = User.FindFirstValue(ClaimTypes.Surname) ?? "";
+    var initialen = (vorname.Length > 0 ? vorname.Substring(0, 1) : "") + (nachname.Length > 0 ? nachname.Substring(0, 1) : "");
+    var rolle = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    if (Model.RaumID != null)
+    {
+        rolle += $" · Raum {Model.RaumID}";
+    }
+
+    // Ein Menüpunkt mit Lucide-Icon und optionalem Badge; auchAktivBei = weitere Controller, bei denen er hervorgehoben wird
+    async Task Eintrag(string controller, string icon, string text, int badge = 0, params string[] auchAktivBei)
+    {
+        var aktiv = !aktivGefunden
+            && (string.Equals(controller, aktuellerController, StringComparison.OrdinalIgnoreCase)
+                || auchAktivBei.Contains(aktuellerController, StringComparer.OrdinalIgnoreCase));
+        aktivGefunden |= aktiv;
+
+        <a class="sidebar-link @(aktiv ? "active" : null)" asp-area="" asp-controller="@controller" asp-action="Index" aria-current="@(aktiv ? "page" : null)">
+            <i data-lucide="@icon"></i>
+            <span class="label">@text</span>
+            @if (badge > 0)
             {
-                <span class="badge rounded-pill bg-warning text-dark">@Model.OffeneUebernahmen</span>
+                <span class="sidebar-badge">@badge</span>
             }
         </a>
-    </li>
+    }
 }
 
-@* Nach Rolle: Übersichten, Stammdaten und Benutzerverwaltung nur für Admins *@
-@if (Model.IstAdmin)
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Raumbestand" asp-action="Index">Lagerbestand</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Raum" asp-action="Index">Lagerübersicht</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Lagerbewegung" asp-action="Index">Historie</a>
-    </li>
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Stammdaten</a>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" asp-area="" asp-controller="Gegenstand" asp-action="Index">Gegenstände</a></li>
-            <li><a class="dropdown-item" asp-area="" asp-controller="Kategorie" asp-action="Index">Kategorien</a></li>
-            <li><a class="dropdown-item" asp-area="" asp-controller="Hersteller" asp-action="Index">Hersteller</a></li>
-            <li><hr class="dropdown-divider" /></li>
-            <li><a class="dropdown-item" asp-area="" asp-controller="Raum" asp-action="Index">Räume</a></li>
-            <li><a class="dropdown-item" asp-area="" asp-controller="Raumart" asp-action="Index">Raumarten</a></li>
-            <li><a class="dropdown-item" asp-area="" asp-controller="Bewegungsart" asp-action="Index">Bewegungsarten</a></li>
-        </ul>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Benutzer</a>
-    </li>
-}
+<nav class="sidebar-nav" aria-label="Hauptmenü">
+    @* Für alle angemeldeten Benutzer *@
+    @{
+        await Eintrag("Home", "layout-dashboard", "Dashboard");
+    }
+
+    @* Nach Zuständigkeit: Es zählt nur, welcher Raum der Person zugewiesen ist, nicht dessen Raumart *@
+    @if (Model.RaumID != null)
+    {
+        await Eintrag("MeinRaum", "door-open", $"Mein Raum ({Model.RaumID})");
+        await Eintrag("Uebernahme", "inbox", "Offene Übernahmen", Model.OffeneUebernahmen);
+    }
+
+    @* Nach Rolle: Übersichten, Stammdaten und Benutzerverwaltung nur für Admins *@
+    @if (Model.IstAdmin)
+    {
+        <div class="sidebar-section">Übersichten</div>
+        await Eintrag("Raumbestand", "boxes", "Lagerbestand");
+        await Eintrag("Raum", "map", "Lagerübersicht");
+        await Eintrag("Lagerbewegung", "history", "Historie");
+
+        <div class="sidebar-section">Stammdaten</div>
+        await Eintrag("Gegenstand", "package", "Gegenstände");
+        await Eintrag("Kategorie", "tags", "Kategorien");
+        await Eintrag("Hersteller", "factory", "Hersteller");
+        await Eintrag("Raum", "door-closed", "Räume");
+        await Eintrag("Raumart", "layout-grid", "Raumarten");
+        await Eintrag("Bewegungsart", "arrow-right-left", "Bewegungsarten");
+
+        <div class="sidebar-section">Verwaltung</div>
+        await Eintrag("Admin", "users", "Benutzer", 0, "Person", "Rolle");
+    }
+</nav>
+
+<div class="sidebar-user">
+    <span class="avatar" aria-hidden="true">@initialen</span>
+    <span class="sidebar-user-text">
+        <span class="sidebar-user-name">@vorname @nachname</span>
+        <span class="sidebar-user-role">@rolle</span>
+    </span>
+    <form asp-area="" asp-controller="Home" asp-action="Logout" method="post">
+        <button type="submit" class="btn btn-outline-secondary btn-icon" title="Abmelden" aria-label="Abmelden">
+            <i data-lucide="log-out"></i>
+        </button>
+    </form>
+</div>

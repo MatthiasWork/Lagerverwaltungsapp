@@ -40,7 +40,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h4 mb-0">Benutzerverwaltung</h2>
-    <a asp-controller="Person" asp-action="Create" class="btn btn-primary">Neuer Benutzer</a>
+    <a asp-controller="Person" asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neuer Benutzer</a>
 </div>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
@@ -84,17 +84,18 @@ else
                             @benutzer.Vorname @benutzer.Nachname
                             @if (istAngemeldet)
                             {
-                                <span class="badge bg-info text-dark">Du</span>
+                                <span class="tag tag-outline-neutral">Du</span>
                             }
                         </td>
                         <td>@benutzer.Username</td>
                         <td><a href="mailto:@benutzer.Email">@benutzer.Email</a></td>
                         <td>
-                            <span class="badge @(benutzer.Rolle.Admin ? "bg-primary" : "bg-secondary")">@benutzer.Rolle.Name</span>
+                            <span class="tag @(benutzer.Rolle.Admin ? "tag-accent" : "tag-neutral")">@benutzer.Rolle.Name</span>
                         </td>
                         <td class="text-end text-nowrap">
                             <a asp-controller="Person" asp-action="Details" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-secondary">Details</a>
                             <a asp-controller="Person" asp-action="Edit" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            @* Das eigene Konto kann nicht gelöscht werden, daher auch kein Button *@
                             @if (!istAngemeldet)
                             {
                                 <a asp-controller="Person" asp-action="Delete" asp-route-id="@benutzer.ID" class="btn btn-sm btn-outline-danger">Löschen</a>

@@ -48,7 +48,7 @@ else
                 {
                     <tr>
                         <td>
-                            <span class="badge bg-warning text-dark">unterwegs</span>
+                            <span class="tag tag-outline-neutral">unterwegs</span>
                             von Raum @bewegung.VonRaumID nach Raum @bewegung.NachRaumID
                         </td>
                         <td>wartet auf: @(bewegung.NachRaum.Person == null ? "–" : $"{bewegung.NachRaum.Person.Vorname} {bewegung.NachRaum.Person.Nachname}")</td>
@@ -93,12 +93,12 @@ else
                         <td>
                             @if (bewegung.BestaetigtAm != null)
                             {
-                                <span class="badge bg-success">bestätigt</span>
+                                <span class="tag tag-accent">bestätigt</span>
                                 <span class="text-nowrap">@bewegung.BestaetigtAm.Value.ToString("dd.MM.yyyy HH:mm")</span>
                             }
                             else
                             {
-                                <span class="badge bg-warning text-dark">offen</span>
+                                <span class="tag tag-outline">offen</span>
                             }
                         </td>
                     </tr>

@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center">
     <h1>Räume</h1>
-    <a asp-action="Create" class="btn btn-primary">Neuer Raum</a>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neuer Raum</a>
 </div>
 <hr />
 
@@ -42,7 +42,7 @@ else
                             else
                             {
                                 @* Kann nur bei Räumen vorkommen, die angelegt wurden, bevor die verantwortliche Person Pflicht war *@
-                                <span class="badge bg-danger">keine – bitte zuweisen</span>
+                                <span class="tag tag-dark">keine – bitte zuweisen</span>
                             }
                         </td>
                         <td class="text-end text-nowrap">

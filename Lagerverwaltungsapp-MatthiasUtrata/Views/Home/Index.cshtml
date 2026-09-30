@@ -1,8 +1,14 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using System.Globalization
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Dashboard";
+
+    // Begrüßung wie im Design: Datum und Gruß je nach Tageszeit mit dem Vornamen aus dem Login
+    var jetzt = DateTime.Now;
+    var gruss = jetzt.Hour < 11 ? "Guten Morgen" : jetzt.Hour < 18 ? "Guten Tag" : "Guten Abend";
+    var vorname = User.FindFirstValue(ClaimTypes.GivenName);
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<p class="text-muted mb-1">@jetzt.ToString("dddd, d. MMMM", new CultureInfo("de-AT"))</p>
+<h1>@gruss, @vorname</h1>
+<p class="text-muted">Wähle im Menü einen Bereich aus.</p>

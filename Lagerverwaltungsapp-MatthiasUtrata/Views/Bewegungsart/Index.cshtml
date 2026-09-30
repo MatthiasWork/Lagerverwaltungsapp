@@ -1,35 +1,48 @@
 @model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Bewegungsart>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Bewegungsarten";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Bewegungsarten</h1>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neue Bewegungsart</a>
+</div>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
+<p class="text-muted">
+    Eine Bewegungsart beschreibt eine Lagerbewegung nur näher (z. B. Ausgabe oder Rückgabe) und gibt keine Regeln für den Ablauf vor.
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
+
+<partial name="_Meldungen" />
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Es gibt noch keine Bewegungsarten.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bewegungsart in Model)
+                {
+                    <tr>
+                        <td>@bewegungsart.Name</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@bewegungsart.ID" class="btn btn-sm btn-outline-secondary">Details</a>
+                            <a asp-action="Edit" asp-route-id="@bewegungsart.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            <a asp-action="Delete" asp-route-id="@bewegungsart.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

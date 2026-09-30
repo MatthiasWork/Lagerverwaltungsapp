@@ -1,4 +1,3 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
+﻿// Lucide-Icons: ersetzt alle <i data-lucide="name"></i> durch das passende SVG.
+// Strichstärke 1.5 wie im Design-System, die Größe kommt aus site.css (.lucide)
+lucide.createIcons({ attrs: { 'stroke-width': 1.5 } });
