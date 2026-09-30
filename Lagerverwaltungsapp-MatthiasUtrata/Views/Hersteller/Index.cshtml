@@ -1,35 +1,48 @@
 @model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Hersteller>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Hersteller";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Hersteller</h1>
+    <a asp-action="Create" class="btn btn-primary">Neuer Hersteller</a>
+</div>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
+<partial name="_Meldungen" />
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Es gibt noch keine Hersteller.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Gegenstände</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var hersteller in Model)
+                {
+                    <tr>
+                        <td>@hersteller.Name</td>
+                        <td>
+                            <a asp-controller="Gegenstand" asp-action="Index" asp-route-herstellerID="@hersteller.ID">@hersteller.Gegenstand.Count</a>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@hersteller.ID" class="btn btn-sm btn-outline-secondary">Details</a>
+                            <a asp-action="Edit" asp-route-id="@hersteller.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            <a asp-action="Delete" asp-route-id="@hersteller.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
