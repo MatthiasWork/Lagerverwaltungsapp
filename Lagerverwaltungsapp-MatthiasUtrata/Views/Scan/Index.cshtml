@@ -1,0 +1,92 @@
+@{
+    ViewData["Title"] = "Scannen";
+    // Mobil im Vollbild wie im Design, daher ohne Tab-Leiste
+    ViewData["TabLeisteAusblenden"] = true;
+
+    // Statische Seite: erkanntes Gerät und die zuletzt gescannten sind Beispieldaten aus dem Design
+    var zuletzt = new (string Geraet, string InventarNr, string Aktion, string Zeit)[]
+    {
+        ("MacBook Air M2", "BSV-LAP-0031", "Rückgabe gebucht", "09:02"),
+        ("Dell Latitude 5440", "BSV-LAP-0118", "Transfer: angekommen", "08:55"),
+        ("Rode Mikrofon-Set", "BSV-AUD-0005", "Details geöffnet", "08:41"),
+        ("iPad 10. Gen #03", "BSV-TAB-0031", "Ausgeliehen", "08:30")
+    };
+}
+
+@* Desktop *@
+<div class="seite seite-voll scan d-none d-lg-flex">
+    <div class="seiten-kopf">
+        <div>
+            <h1>Scannen</h1>
+            <div class="seiten-untertitel">Webcam oder USB-Handscanner. Mehrere Codes nacheinander scannen.</div>
+        </div>
+        <div class="seg"><span class="seg-opt active">Kamera</span><span class="seg-opt">USB-Scanner</span></div>
+    </div>
+
+    <div class="scan-raster seite-fuellen">
+        <div class="kamerabild">
+            <span class="kamerabild-text">kamerabild</span>
+            <div class="scan-rahmen"><span class="scan-linie"></span></div>
+            <span class="kamerabild-hinweis">QR-Code in den Rahmen halten</span>
+        </div>
+
+        <div class="scan-seite">
+            <div class="blueprint scan-treffer">
+                <div class="scan-treffer-kopf">
+                    <span class="card-kicker">Erkannt · BSV-TAB-0142</span>
+                    <span class="tag tag-neutral">Verliehen</span>
+                </div>
+                <div class="scan-geraet">
+                    <div class="geraet-bild" aria-hidden="true"></div>
+                    <div>
+                        <div class="scan-geraet-name">iPad 10. Gen #14</div>
+                        <div class="profil-info">Murat Yilmaz · fällig morgen, 01.10.</div>
+                    </div>
+                </div>
+                <div class="scan-aktionen">
+                    <button type="button" class="btn btn-primary">Rückgabe buchen</button>
+                    <button type="button" class="btn btn-outline-secondary">Transfer</button>
+                    <button type="button" class="btn btn-outline-secondary">Details</button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="liste-titel">Zuletzt gescannt</h4>
+                @foreach (var scan in zuletzt)
+                {
+                    <div class="listen-zeile scan-verlauf">
+                        <span><b class="fw-medium">@scan.Geraet</b><br /><span class="nebeninfo">@scan.InventarNr</span></span>
+                        <span class="scan-verlauf-aktion">@scan.Aktion<br /><span>@scan.Zeit</span></span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Mobil: Kamera im Vollbild, das erkannte Gerät als Blatt von unten *@
+<div class="scan-mobil d-lg-none">
+    <div class="scan-mobil-leiste">
+        <a asp-controller="Home" asp-action="Index" title="Schließen" aria-label="Schließen"><i data-lucide="x"></i></a>
+        <i data-lucide="flashlight"></i>
+    </div>
+    <span class="kamerabild-text">kamerabild</span>
+    <div class="scan-rahmen"><span class="scan-linie"></span></div>
+    <span class="kamerabild-hinweis">QR-Code auf dem Gerät scannen</span>
+
+    <div class="scan-blatt">
+        <span class="scan-blatt-griff" aria-hidden="true"></span>
+        <div class="scan-geraet">
+            <div class="geraet-bild" aria-hidden="true"></div>
+            <div>
+                <div class="scan-blatt-kennung">BSV-TAB-0142 · Verliehen</div>
+                <div class="scan-geraet-name">iPad 10. Gen #14</div>
+                <div class="raum-panel-info">Murat Yilmaz · fällig morgen</div>
+            </div>
+        </div>
+        <div class="scan-blatt-aktionen">
+            <button type="button" class="btn btn-outline-secondary">Transfer</button>
+            <button type="button" class="btn btn-primary">Rückgabe buchen</button>
+        </div>
+    </div>
+</div>
