@@ -15,7 +15,6 @@ public partial class Raum
     [Display(Name = "Raumnummer")]
     public string ID { get; set; } = null!;
 
-    // In der Datenbank optional, in der Anwendung aber Pflicht (wird im RaumController geprüft)
     [Display(Name = "Verantwortliche Person")]
     public int? PersonID { get; set; }
 

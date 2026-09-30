@@ -78,7 +78,6 @@ public class RaumController : Controller
 
     /// <summary>
     /// Methode, die einen neuen Raum anlegt, sofern die Raumnummer noch nicht vergeben ist
-    /// und eine verantwortliche Person gewählt wurde, die noch für keinen anderen Raum verantwortlich ist.
     /// </summary>
     /// <param name="raum">Der Raum mit den Daten aus dem Formular</param>
     /// <returns>Gibt eine Task zurück</returns>
@@ -281,7 +280,6 @@ public class RaumController : Controller
 
     /// <summary>
     /// Methode, die Raumart und verantwortliche Person überprüft und Fehler im ModelState einträgt.
-    /// Jeder Raum braucht eine verantwortliche Person, und eine Person kann nur für einen Raum verantwortlich sein.
     /// </summary>
     /// <param name="raum">Der Raum, der gespeichert werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
@@ -292,11 +290,14 @@ public class RaumController : Controller
             ModelState.AddModelError(nameof(Raum.RaumartID), "Bitte eine Raumart auswählen.");
         }
 
-        // Raum.PersonID ist in der Datenbank optional, in der Anwendung aber Pflicht: ohne verantwortliche Person
-        // könnte niemand Lagerbewegungen aus diesem Raum anlegen oder in diesen Raum bestätigen
-        if (raum.PersonID == null || !await _context.Person.AnyAsync(p => p.ID == raum.PersonID))
+        if (raum.PersonID == null)
         {
-            ModelState.AddModelError(nameof(Raum.PersonID), "Bitte eine verantwortliche Person auswählen. Jeder Raum braucht eine verantwortliche Person.");
+            return;
+        }
+
+        if (!await _context.Person.AnyAsync(p => p.ID == raum.PersonID))
+        {
+            ModelState.AddModelError(nameof(Raum.PersonID), "Diese Person gibt es nicht.");
             return;
         }
 
