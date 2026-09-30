@@ -17,6 +17,8 @@
         "Uebernahme" => "Freigaben",
         "Raum" => "Räume",
         "Admin" or "Person" or "Rolle" => "Benutzer",
+        // Profil einer anderen Person (mit ID, aus der Benutzerliste); das eigene hat keinen Menüpunkt
+        "Profil" when ViewContext.RouteData.Values["id"] != null => "Benutzer",
         "Kategorie" => "Kategorien",
         "Hersteller" => "Hersteller",
         "Raumart" => "Raumarten",
@@ -95,14 +97,18 @@
 </nav>
 
 <div class="sidebar-user">
-    <span class="avatar" aria-hidden="true">@initialen</span>
-    <span class="sidebar-user-text">
-        <span class="sidebar-user-name">@vorname @nachname</span>
-        <span class="sidebar-user-role">@rolle</span>
-    </span>
+    @* Name und Avatar führen zum eigenen Profil *@
+    <a class="sidebar-user-link" asp-area="" asp-controller="Profil" asp-action="Index" asp-route-id="">
+        <span class="avatar" aria-hidden="true">@initialen</span>
+        <span class="sidebar-user-text">
+            <span class="sidebar-user-name">@vorname @nachname</span>
+            <span class="sidebar-user-role">@rolle</span>
+        </span>
+    </a>
     <form asp-area="" asp-controller="Home" asp-action="Logout" method="post">
+        @* In der Seitenleiste nur das Icon, im Profil (mobil) mit Text *@
         <button type="submit" class="btn btn-outline-secondary btn-icon" title="Abmelden" aria-label="Abmelden">
-            <i data-lucide="log-out"></i>
+            <i data-lucide="log-out"></i><span class="abmelden-text">Abmelden</span>
         </button>
     </form>
 </div>

@@ -1,0 +1,148 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.ProfilViewModel
+
+@{
+    var person = Model.Person;
+    ViewData["Title"] = Model.IstEigenesProfil ? "Mein Profil" : $"{person.Vorname} {person.Nachname}";
+
+    var istAdmin = User.IsInRole("Admin");
+    var raeume = person.Raum.OrderBy(r => r.ID).ToList();
+    var raumText = raeume.Count == 0 ? null : string.Join(", ", raeume.Select(r => $"{r.ID} · {r.Raumart.Name}"));
+
+    // Verlauf: "Heute", "Gestern", sonst das Datum
+    string Datum(DateTime zeitpunkt) => zeitpunkt.Date == DateTime.Today ? "Heute"
+        : zeitpunkt.Date == DateTime.Today.AddDays(-1) ? "Gestern"
+        : zeitpunkt.ToString("dd.MM.");
+
+    // "L. Brandt" für den Tag "wartet auf ..."
+    string Kurzname(Person? p) => p == null ? "–" : $"{(p.Vorname.Length > 0 ? p.Vorname[..1] + ". " : "")}{p.Nachname}";
+
+    // Beispieldaten: Verleih an Personen gibt es noch nicht (siehe Models/Beispieldaten.cs)
+    var ausleihen = Beispieldaten.EigeneAusleihen;
+}
+
+@* Desktop *@
+<div class="seite profil d-none d-lg-flex">
+    <div class="profil-kopf">
+        <span class="avatar" aria-hidden="true">@person.Initialen</span>
+        <div class="profil-name">
+            <h1>@person.Vorname @person.Nachname</h1>
+            <div class="seiten-untertitel">@person.Rolle.Name · @(raumText ?? "kein Raum") · @person.Email</div>
+        </div>
+        @* Rolle und Konto ändert nur ein Admin; das eigene Konto kann er nicht löschen *@
+        @if (istAdmin)
+        {
+            <a class="btn btn-outline-secondary" asp-controller="Person" asp-action="Edit" asp-route-id="@person.ID">Rolle ändern</a>
+            @if (!Model.IstEigenesProfil)
+            {
+                <a class="btn btn-outline-secondary" asp-controller="Person" asp-action="Delete" asp-route-id="@person.ID">Löschen</a>
+            }
+        }
+    </div>
+
+    <div class="profil-raster">
+        @* Beispiel aus dem Design *@
+        <div class="blueprint profil-karte breit">
+            <span class="card-kicker">Aktuelle Ausleihen · @ausleihen.Count</span>
+            @foreach (var ausleihe in ausleihen)
+            {
+                <div class="ausleihe-zeile">
+                    <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">@ausleihe.InventarNr</span></span>
+                    <span class="ausleihe-bis">bis @ausleihe.Bis</span>
+                    <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+                </div>
+            }
+        </div>
+
+        <div class="blueprint profil-karte">
+            <span class="card-kicker">Raumverantwortung</span>
+            <div class="raum-titel">@(raumText ?? "Kein Raum")</div>
+            <div class="profil-info">
+                @(raeume.Count == 0
+                    ? "Nicht für einen Raum verantwortlich"
+                    : $"{Model.StueckJeRaum.Values.Sum()} Geräte · gibt eingehende Transfers für {(raeume.Count == 1 ? "diesen Raum" : "diese Räume")} frei")
+            </div>
+        </div>
+
+        @* Beispiel aus dem Design: Benachrichtigungen gibt es noch nicht *@
+        <div class="blueprint profil-karte benachrichtigungen">
+            <span class="card-kicker">Benachrichtigungen</span>
+            <div class="recht">Push aufs Handy<span class="schalter an" role="img" aria-label="an"></span></div>
+            <div class="recht">In-App-Postfach<span class="schalter an" role="img" aria-label="an"></span></div>
+            <div class="profil-info">Das Postfach ist immer aktiv.</div>
+        </div>
+
+        <div class="blueprint profil-karte profil-verlauf breit">
+            <span class="card-kicker">Verlauf</span>
+            @foreach (var eintrag in Model.Verlauf)
+            {
+                <div class="profil-verlauf-zeile">
+                    <span class="verlauf-datum">@Datum(eintrag.Zeitpunkt)</span>
+                    <span>@eintrag.Text</span>
+                </div>
+            }
+            @if (Model.Verlauf.Count == 0)
+            {
+                <p class="aktivitaet-leer">Noch keine Buchungen.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@* Mobil *@
+<div class="seite profil-mobil d-lg-none">
+    <div class="profil-kopf">
+        <span class="avatar" aria-hidden="true">@person.Initialen</span>
+        <div>
+            <h1>@person.Vorname @person.Nachname</h1>
+            <div class="profil-rolle">@person.Rolle.Name@(raeume.Count > 0 ? $" · verantwortlich für {string.Join(", ", raeume.Select(r => r.ID))}" : "")</div>
+        </div>
+    </div>
+
+    @* Beispiel aus dem Design *@
+    <section>
+        <h6>@(Model.IstEigenesProfil ? "Meine Ausleihen" : "Ausleihen")</h6>
+        @foreach (var ausleihe in ausleihen)
+        {
+            <div class="profil-zeile">
+                <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">bis @ausleihe.BisMobil</span></span>
+                <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+            </div>
+        }
+    </section>
+
+    @* Offene Transfers, die die Person angelegt hat, je Zielraum zusammengefasst *@
+    <section>
+        <h6>@(Model.IstEigenesProfil ? "Meine Anfragen" : "Anfragen")</h6>
+        @foreach (var anfrage in Model.OffeneTransfers.GroupBy(l => l.NachRaumID))
+        {
+            var erste = anfrage.First();
+            <div class="profil-zeile">
+                <span>
+                    <b class="fw-medium">Transfer nach @anfrage.Key</b><br />
+                    <span class="nebeninfo">@erste.Gegenstand.Name@(anfrage.Count() > 1 ? $" + {anfrage.Count() - 1} Pos." : "")</span>
+                </span>
+                <span class="tag tag-outline">wartet auf @Kurzname(erste.NachRaum.Person)</span>
+            </div>
+        }
+        @if (Model.OffeneTransfers.Count == 0)
+        {
+            <p class="aktivitaet-leer">Keine offenen Anfragen.</p>
+        }
+    </section>
+
+    @* Beispiel aus dem Design: Benachrichtigungen gibt es noch nicht *@
+    <section class="benachrichtigungen">
+        <h6>Benachrichtigungen</h6>
+        <div class="recht">Push<span class="schalter an" role="img" aria-label="an"></span></div>
+        <div class="recht">In-App-Postfach<span class="schalter an" role="img" aria-label="an"></span></div>
+    </section>
+
+    @* Nicht im Design: Mobil gibt es keine Seitenleiste, daher hier alle Bereiche und Abmelden *@
+    @if (Model.IstEigenesProfil)
+    {
+        <section class="profil-menue">
+            <h6>Alle Bereiche</h6>
+            @await Component.InvokeAsync("Menue")
+        </section>
+    }
+</div>

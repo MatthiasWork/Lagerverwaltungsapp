@@ -2238,6 +2238,225 @@ a.tag-outline {
         }
 }
 
+/* Profil */
+.profil-kopf {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+    .profil-kopf .avatar {
+        width: 76px;
+        height: 76px;
+        font-size: 24px;
+        font-weight: 400;
+    }
+
+    .profil-kopf h1 {
+        margin: 0;
+    }
+
+.profil-name {
+    flex: 1;
+}
+
+.profil-raster {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.profil-karte {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+}
+
+    .profil-karte.breit {
+        grid-column: span 2;
+    }
+
+    /* Tags in den Karten ohne Rahmen wie im Design */
+    .profil-karte .tag {
+        border-width: 0;
+    }
+
+.ausleihe-zeile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 8px 0;
+}
+
+    .ausleihe-zeile:not(:last-child) {
+        border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+
+.ausleihe-bis {
+    font-size: 13px;
+}
+
+.raum-titel {
+    font: 600 24px var(--font-heading);
+}
+
+.profil-info {
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+.benachrichtigungen {
+    gap: 12px;
+}
+
+    .benachrichtigungen .profil-info {
+        font-size: 12.5px;
+    }
+
+.profil-verlauf {
+    gap: 6px;
+}
+
+.profil-verlauf-zeile {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 13.5px;
+}
+
+/* Profil mobil: Abschnitte mit kleiner Überschrift und Zeilen */
+.profil-mobil section {
+    display: flex;
+    flex-direction: column;
+}
+
+.profil-mobil h6 {
+    margin: 0 0 4px;
+    color: var(--color-neutral-700);
+}
+
+.profil-mobil .profil-kopf {
+    gap: 14px;
+}
+
+    .profil-mobil .profil-kopf .avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 19px;
+    }
+
+    .profil-mobil .profil-kopf h1 {
+        font-size: 26px;
+    }
+
+.profil-rolle {
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
+}
+
+.profil-zeile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+    .profil-zeile .tag:not(.tag-outline) {
+        border-width: 0;
+    }
+
+.profil-mobil .benachrichtigungen {
+    gap: 12px;
+}
+
+    .profil-mobil .benachrichtigungen h6 {
+        margin: 0;
+    }
+
+    .profil-mobil .benachrichtigungen .recht {
+        min-height: 28px;
+        font-size: 14px;
+    }
+
+    /* Größere Schalter zum Tippen */
+    .profil-mobil .benachrichtigungen .schalter {
+        width: 40px;
+        height: 22px;
+    }
+
+        .profil-mobil .benachrichtigungen .schalter::after {
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .profil-mobil .benachrichtigungen .schalter.an::after {
+            left: auto;
+            right: 3px;
+        }
+
+/* Alle Bereiche: das Menü der Seitenleiste als Liste, darunter Abmelden über die ganze Breite */
+.profil-menue .sidebar-nav {
+    gap: 0;
+}
+
+.profil-menue .sidebar-link {
+    padding: 11px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+    .profil-menue .sidebar-link:hover,
+    .profil-menue .sidebar-link.active {
+        color: var(--color-text);
+        background: none;
+    }
+
+.profil-menue .sidebar-section {
+    margin: 18px 0 4px;
+}
+
+.profil-menue .sidebar-user {
+    margin-top: 16px;
+    padding: 0;
+    border-top: 0;
+}
+
+    .profil-menue .sidebar-user-link {
+        display: none;
+    }
+
+    .profil-menue .sidebar-user form {
+        flex: 1;
+    }
+
+    .profil-menue .sidebar-user .btn-icon {
+        width: 100%;
+        height: 44px;
+        border-color: var(--color-divider);
+    }
+
+.abmelden-text {
+    display: none;
+}
+
+.profil-menue .abmelden-text {
+    display: inline;
+}
+
+@media (max-width: 991.98px) {
+    /* Oben 16 statt 12 px wie im Design */
+    .profil-mobil {
+        margin-top: 4px;
+    }
+}
+
 /* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
 /* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {
@@ -2355,6 +2574,25 @@ a.tag-outline {
     padding: 12px 8px 0;
     border-top: 1px solid var(--color-divider);
 }
+
+/* Avatar und Name führen zum eigenen Profil */
+.sidebar-user-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+    .sidebar-user-link:hover {
+        color: var(--color-text);
+    }
+
+        .sidebar-user-link:hover .sidebar-user-name {
+            text-decoration: underline;
+        }
 
 .avatar {
     display: grid;

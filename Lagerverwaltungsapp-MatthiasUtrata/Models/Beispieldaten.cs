@@ -26,8 +26,18 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
             new("iPad 10. Gen #14", "BSV-TAB-0142", "Murat Yilmaz", "morgen", null, "Erinnert"),
             new("Rode Mikrofon-Set", "BSV-AUD-0005", "Karin Vogel", "morgen", null, "Erinnert")
         };
+
+        // Aktuelle Ausleihen einer Person (Profil)
+        public static readonly IReadOnlyList<EigeneAusleihe> EigeneAusleihen = new List<EigeneAusleihe>
+        {
+            new("iPad 10. Gen #14", "BSV-TAB-0142", "01.10.", "morgen, 01.10.", "Erinnert"),
+            new("Dokumentenkamera Elmo", "BSV-DOK-0015", "14.10.", "14.10.", "Verliehen")
+        };
     }
 
     // Eine Ausleihe mit Rückgabefrist; Faellig ist schon so formatiert, wie es angezeigt wird ("24.09.", "morgen")
     public record FaelligeAusleihe(string Geraet, string InventarNr, string Ausleiher, string Faellig, string? Ueberfaellig, string Status);
+
+    // Eine eigene Ausleihe; Bis ist das Rückgabedatum, BisMobil die längere Angabe der Mobilansicht ("morgen, 01.10.")
+    public record EigeneAusleihe(string Geraet, string InventarNr, string Bis, string BisMobil, string Status);
 }

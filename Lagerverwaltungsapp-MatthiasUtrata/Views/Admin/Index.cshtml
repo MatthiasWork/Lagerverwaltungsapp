@@ -141,7 +141,7 @@
                         }
                     </div>
                     <div class="panel-aktionen">
-                        <a class="btn btn-outline-secondary" asp-controller="Person" asp-action="Details" asp-route-id="@ausgewaehlt.ID">Profil öffnen</a>
+                        <a class="btn btn-outline-secondary" asp-controller="Profil" asp-action="Index" asp-route-id="@ausgewaehlt.ID">Profil öffnen</a>
                         <a class="btn btn-outline-secondary btn-icon" asp-controller="Person" asp-action="Edit" asp-route-id="@ausgewaehlt.ID" title="Bearbeiten" aria-label="Bearbeiten"><i data-lucide="pencil"></i></a>
                         @* Das eigene Konto kann nicht gelöscht werden, daher auch kein Button *@
                         @if (ausgewaehlt.ID != Model.AngemeldeteBenutzerID)
@@ -158,7 +158,7 @@
             @foreach (var person in Model.Benutzer)
             {
                 var raeume = Raeume(person);
-                <a class="benutzer-zeile" asp-controller="Person" asp-action="Details" asp-route-id="@person.ID">
+                <a class="benutzer-zeile" asp-controller="Profil" asp-action="Index" asp-route-id="@person.ID">
                     <span class="avatar" aria-hidden="true">@person.Initialen</span>
                     <span class="benutzer-zeile-text">
                         <b class="fw-medium">@person.Vorname @person.Nachname</b><br />
