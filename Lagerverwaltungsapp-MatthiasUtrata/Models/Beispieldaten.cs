@@ -11,6 +11,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         public const int Ueberfaellig = 6;
         public const int Eskaliert = 2;
 
+        // Rückgaben: Anzahl der Ausleihen, die diese Woche fällig werden, und die Regeln für Erinnerung und Eskalation
+        public const int DieseWocheFaellig = 23;
+        public const int ErinnerungTageVorher = 1;
+        public const int EskalationNachTagen = 5;
+
         // Gerätedetail: QR-Etiketten gibt es noch nicht
         public const string EtikettGedrucktAm = "12.08.2025";
 

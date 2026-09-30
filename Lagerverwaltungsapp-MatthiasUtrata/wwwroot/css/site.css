@@ -2732,6 +2732,126 @@ a.tag-outline {
         min-height: 48px;
     }
 
+/* Segment-Optionen ohne Link oder Radiobutton sind nur Anzeige (z. B. auf statischen Seiten) */
+span.seg-opt {
+    cursor: default;
+}
+
+    span.seg-opt:not(.active):hover {
+        background-color: transparent;
+    }
+
+/* Button, der wie ein Link aussieht */
+.link-knopf {
+    padding: 0;
+    font: inherit;
+    color: var(--color-accent-700);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+    .link-knopf:hover {
+        text-decoration: underline;
+    }
+
+/* Rückgaben (statisch) */
+.rueckgaben {
+    gap: 20px;
+}
+
+/* Regeln für Erinnerung und Eskalation in einer gerahmten Zeile */
+.regel-leiste {
+    align-items: center;
+    gap: 32px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    border: 1px solid var(--color-divider);
+}
+
+.regel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .regel .lucide {
+        width: 16px;
+        height: 16px;
+        color: var(--color-accent-700);
+    }
+
+    .regel b {
+        font-weight: 500;
+    }
+
+.rueckgaben-filter {
+    align-self: flex-start;
+}
+
+.rueckgaben-tabelle {
+    --zelle-y: 11px;
+}
+
+    .rueckgaben-tabelle > tbody > tr > td:last-child {
+        padding-right: 16px;
+        text-align: right;
+    }
+
+/* Mobil: zwei Filter nebeneinander, Hinweis und Liste */
+.rueckgaben-filter-mobil {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+    .rueckgaben-filter-mobil .seg-opt {
+        justify-content: center;
+        min-height: 40px;
+    }
+
+.regel-mobil {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
+}
+
+    .regel-mobil .lucide {
+        width: 14px;
+        height: 14px;
+    }
+
+.rueckgabe-zeile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+    .rueckgabe-zeile > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+        .rueckgabe-zeile > div:last-child {
+            font-size: 12.5px;
+            color: var(--color-neutral-700);
+        }
+
+    .rueckgabe-zeile b {
+        font-size: 14px;
+    }
+
+@media (max-width: 991.98px) {
+    .rueckgaben {
+        gap: 12px;
+    }
+}
+
 /* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
 /* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {

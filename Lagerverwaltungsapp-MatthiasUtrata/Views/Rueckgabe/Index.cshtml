@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Rückgaben";
+
+    // Statische Seite: Beispieldaten aus dem Design, dieselben wie auf der Übersicht (siehe Models/Beispieldaten.cs)
+    var faellig = Beispieldaten.FaelligeAusleihen;
+}
+
+<div class="seite rueckgaben">
+    <div class="seiten-kopf">
+        <h1>Rückgaben</h1>
+        <a class="btn btn-primary d-none d-lg-inline-flex" asp-controller="Scan" asp-action="Index"><i data-lucide="scan-line"></i>Rückgabe scannen</a>
+    </div>
+
+    @* Desktop: Regeln, Filter und Tabelle *@
+    <div class="regel-leiste d-none d-lg-flex">
+        <span class="regel"><i data-lucide="bell"></i>Automatische Erinnerung <b>@Beispieldaten.ErinnerungTageVorher Tag vor Fälligkeit</b></span>
+        <span class="regel"><i data-lucide="shield-alert"></i>Eskalation an IT-Admins nach <b>@Beispieldaten.EskalationNachTagen Tagen</b></span>
+        <button type="button" class="btn btn-ghost ms-auto">Regeln bearbeiten</button>
+    </div>
+
+    <div class="seg rueckgaben-filter d-none d-lg-inline-flex">
+        <span class="seg-opt active">Überfällig · @Beispieldaten.Ueberfaellig</span>
+        <span class="seg-opt">Heute &amp; morgen · @Beispieldaten.HeuteFaellig</span>
+        <span class="seg-opt">Diese Woche · @Beispieldaten.DieseWocheFaellig</span>
+    </div>
+
+    <div class="blueprint d-none d-lg-block">
+        <table class="table table-hover liste-tabelle rueckgaben-tabelle">
+            <thead>
+                <tr>
+                    <th>Gerät</th>
+                    <th>Ausgeliehen an</th>
+                    <th>Fällig am</th>
+                    <th>Überfällig</th>
+                    <th>Status</th>
+                    <th><span class="visually-hidden">Aktion</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ausleihe in faellig)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-medium">@ausleihe.Geraet</div>
+                            <div class="nebeninfo">@ausleihe.InventarNr</div>
+                        </td>
+                        <td>@ausleihe.Ausleiher</td>
+                        <td>@ausleihe.Faellig</td>
+                        <td>@ausleihe.Ueberfaellig</td>
+                        <td><span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span></td>
+                        <td><button type="button" class="btn btn-outline-secondary">Rückgabe buchen</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* Mobil: zwei Filter, Hinweis zur Eskalation und die Ausleihen als Liste *@
+    <div class="seg rueckgaben-filter-mobil d-lg-none">
+        <span class="seg-opt active">Überfällig · @Beispieldaten.Ueberfaellig</span>
+        <span class="seg-opt">Bald fällig · @Beispieldaten.HeuteFaellig</span>
+    </div>
+    <div class="regel-mobil d-lg-none"><i data-lucide="shield-alert"></i>Eskalation an IT-Admins nach @Beispieldaten.EskalationNachTagen Tagen</div>
+    @foreach (var ausleihe in faellig)
+    {
+        <div class="rueckgabe-zeile d-lg-none">
+            <div>
+                <b class="fw-medium">@ausleihe.Geraet</b>
+                <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+            </div>
+            <div>
+                <span>@ausleihe.Ausleiher · fällig @ausleihe.Faellig</span>
+                <button type="button" class="link-knopf">Erinnern</button>
+            </div>
+        </div>
+    }
+</div>
