@@ -4,24 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 {
-    /// <summary>
-    /// Kern der Geschäftslogik der Lagerverwaltung: Lagerbewegungen anlegen und bestätigen und dabei den Raumbestand führen.
-    /// Wer eine Bewegung anlegen oder bestätigen darf, hängt nur von Raum.PersonID ab, nicht von der Admin-Rolle,
-    /// der Raumart oder der Bewegungsart.
-    ///
-    /// Zuständigkeitsregel: Anlegen darf eine Bewegung nur die für den Von-Raum verantwortliche Person,
-    /// bestätigen nur die für den Nach-Raum verantwortliche Person.
-    ///
-    /// Bestandsregel: Beim Anlegen wird im Von-Raum sofort abgebucht, beim Bestätigen im Nach-Raum zugebucht.
-    /// Dazwischen ist die Menge "unterwegs" (offene Lagerbewegung, BestaetigtAm = null).
-    /// Sonderfall Wareneingang (Von-Raum = Nach-Raum): Es wird nichts abgebucht, nur zugebucht.
-    ///
-    /// Seriennummerregel: Nur ein Gegenstand mit Seriennummer wird als einzelnes Gerät gebucht (immer Menge 1, nur an einem Ort).
-    /// Alles ohne Seriennummer, auch ein einzelnes Gerät ohne Seriennummer, wird über die Menge geführt.
-    ///
-    /// Die Buchungsmethoden geben wie LoeschHindernisAsync in den Controllern eine Fehlermeldung zurück oder null, wenn alles geklappt hat.
-    /// Gespeichert wird immer über BuchenAsync (eine Transaktion, ein SaveChangesAsync).
-    /// </summary>
     public class LagerService
     {
         private readonly LagerverwaltungContext _context;
@@ -37,7 +19,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die überprüft, ob eine Person für einen Raum verantwortlich ist.
-        /// Es wird immer die aktuelle Zuständigkeit aus der Datenbank verwendet.
         /// </summary>
         /// <param name="raumID">Die ID des Raums</param>
         /// <param name="personID">Die ID der Person</param>
@@ -63,7 +44,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die sucht, ob eine Person schon für einen anderen Raum verantwortlich ist.
-        /// Wird vor dem Zuweisen eines Raums aufgerufen, da eine Person nur für einen Raum verantwortlich sein kann.
         /// </summary>
         /// <param name="personID">Die ID der Person</param>
         /// <param name="raumID">Die ID des Raums, der der Person zugewiesen werden soll</param>
@@ -78,8 +58,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die einen Wareneingang bucht: Gegenstände kommen von außen in einen Raum.
-        /// Da VonRaumID in der Datenbank Pflicht ist, sind Von- und Nach-Raum derselbe Raum. Es wird daher nichts abgebucht,
-        /// und die Lagerbewegung ist sofort bestätigt, da dieselbe Person für Von- und Nach-Raum verantwortlich ist.
         /// </summary>
         /// <param name="gegenstandID">Die ID des Gegenstands, der eingeht</param>
         /// <param name="menge">Die Menge, die eingeht (bei einem Gerät mit Seriennummer immer 1)</param>
@@ -94,9 +72,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die eine Lagerbewegung anlegt und die Menge sofort im Von-Raum abbucht.
-        /// Die Bewegung bleibt offen, bis die für den Nach-Raum verantwortliche Person sie bestätigt (siehe BestaetigenAsync).
-        /// Ist dieselbe Person für beide Räume verantwortlich, gilt sie sofort als bestätigt.
-        /// Sind Von- und Nach-Raum derselbe Raum, ist es ein Wareneingang (siehe WareneingangAsync).
         /// </summary>
         /// <param name="gegenstandID">Die ID des Gegenstands, der bewegt wird</param>
         /// <param name="menge">Die Menge, die bewegt wird (bei einem Gerät mit Seriennummer immer 1)</param>
@@ -107,92 +82,43 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung angelegt wurde</returns>
         public async Task<string?> BewegungAnlegenAsync(int gegenstandID, int menge, string vonRaumID, string nachRaumID, int bewegungsartID, int personID)
         {
+            return await BuchenAsync(() => BewegungBuchenAsync(gegenstandID, menge, vonRaumID, nachRaumID, bewegungsartID, personID));
+        }
+
+        /// <summary>
+        /// Methode, mit der die für einen Raum verantwortliche Person Gegenstände aus ihrem Raum an einen anderen Raum ausborgt.
+        /// </summary>
+        /// <param name="positionen">Die Gegenstände, die ausgeborgt werden (Schlüssel = GegenstandID, Wert = Menge)</param>
+        /// <param name="vonRaumID">Die ID des Raums, aus dem ausgeborgt wird (der Raum der angemeldeten Person)</param>
+        /// <param name="nachRaumID">Die ID des Raums, an den ausgeborgt wird</param>
+        /// <param name="bewegungsartID">Die ID der Bewegungsart, die die Lagerbewegungen beschreibt (normalerweise "Ausgabe")</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die ausborgt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn alle Gegenstände ausgeborgt wurden</returns>
+        public async Task<string?> AusborgenAsync(IReadOnlyDictionary<int, int> positionen, string vonRaumID, string nachRaumID, int bewegungsartID, int personID)
+        {
             return await BuchenAsync(async () =>
             {
-                if (menge < 1)
+                if (positionen.Count == 0)
                 {
-                    return "Die Menge muss mindestens 1 sein.";
+                    return "Bitte mindestens einen Gegenstand zum Ausborgen auswählen.";
                 }
 
-                var gegenstand = await _context.Gegenstand.FindAsync(gegenstandID);
-                if (gegenstand == null)
-                {
-                    return "Diesen Gegenstand gibt es nicht.";
-                }
-
-                // Ein Gerät mit Seriennummer gibt es genau einmal, daher wird es immer einzeln gebucht
-                if (gegenstand.Seriennummer != null && menge != 1)
-                {
-                    return $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) ist ein einzelnes Gerät und kann nur mit der Menge 1 gebucht werden.";
-                }
-
-                if (!await _context.Bewegungsart.AnyAsync(b => b.ID == bewegungsartID))
-                {
-                    return "Bitte eine Bewegungsart auswählen.";
-                }
-
+                // Derselbe Raum wäre ein Wareneingang, dabei wird nichts abgebucht und der Bestand würde sich verdoppeln.
+                // Die IDs der geladenen Räume vergleichen, da SQL Server bei der Suche nicht auf Groß-/Kleinschreibung achtet
                 var vonRaum = await _context.Raum.FindAsync(vonRaumID);
                 var nachRaum = await _context.Raum.FindAsync(nachRaumID);
-                if (vonRaum == null || nachRaum == null)
+                if (vonRaum != null && nachRaum != null && vonRaum.ID == nachRaum.ID)
                 {
-                    return "Diesen Raum gibt es nicht.";
+                    return "Bitte einen anderen Raum als den eigenen auswählen.";
                 }
 
-                // Zuständigkeitsregel: Anlegen darf nur die Person, die für den Von-Raum verantwortlich ist (auch ein Admin nicht)
-                if (vonRaum.PersonID != personID)
+                foreach (var (gegenstandID, menge) in positionen)
                 {
-                    return $"Nur die für den Raum {vonRaum.ID} verantwortliche Person darf Gegenstände aus diesem Raum buchen.";
-                }
-
-                // Ohne verantwortliche Person könnte niemand die Übernahme bestätigen und die Menge bliebe für immer unterwegs
-                if (nachRaum.PersonID == null)
-                {
-                    return $"Für den Raum {nachRaum.ID} ist niemand verantwortlich, der die Übernahme bestätigen könnte. Weise dem Raum zuerst eine verantwortliche Person zu.";
-                }
-
-                // Die IDs der geladenen Räume verwenden, da SQL Server bei der Suche nicht auf Groß-/Kleinschreibung achtet
-                if (vonRaum.ID == nachRaum.ID)
-                {
-                    // Wareneingang: nichts abbuchen, aber ein Gerät mit Seriennummer darf es danach nicht zweimal geben
-                    if (gegenstand.Seriennummer != null)
-                    {
-                        var hindernis = await GeraetVorhandenAsync(gegenstand);
-                        if (hindernis != null)
-                        {
-                            return hindernis;
-                        }
-                    }
-                }
-                else
-                {
-                    // Sofort abbuchen, damit dieselbe Menge nicht ein zweites Mal gebucht werden kann, solange sie unterwegs ist.
-                    // Das ist die letzte Prüfung, danach wird nur noch gespeichert
-                    var fehler = await AbbuchenAsync(gegenstand, vonRaum.ID, menge);
+                    var fehler = await BewegungBuchenAsync(gegenstandID, menge, vonRaumID, nachRaumID, bewegungsartID, personID);
                     if (fehler != null)
                     {
                         return fehler;
                     }
-                }
-
-                var jetzt = DateTime.Now;
-                var lagerbewegung = new Lagerbewegung
-                {
-                    Menge = menge,
-                    ErstelltAm = jetzt,
-                    BewegungsartID = bewegungsartID,
-                    VonRaumID = vonRaum.ID,
-                    NachRaumID = nachRaum.ID,
-                    GegenstandID = gegenstand.ID,
-                    PersonID = personID
-                };
-                _context.Lagerbewegung.Add(lagerbewegung);
-
-                // Ist die Person auch für den Nach-Raum verantwortlich (beim Wareneingang immer), müsste sie sich die Bewegung
-                // selbst bestätigen. Daher gilt sie sofort als bestätigt und wird gleich im Nach-Raum zugebucht
-                if (nachRaum.PersonID == personID)
-                {
-                    lagerbewegung.BestaetigtAm = jetzt;
-                    await ZubuchenAsync(gegenstand.ID, nachRaum.ID, menge);
                 }
 
                 return null;
@@ -201,46 +127,184 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, mit der die für den Nach-Raum verantwortliche Person eine offene Lagerbewegung bestätigt (digitale Übernahme).
-        /// Erst jetzt wird die Menge im Nach-Raum zugebucht.
         /// </summary>
         /// <param name="lagerbewegungID">Die ID der Lagerbewegung, die bestätigt werden soll</param>
         /// <param name="personID">Die ID der angemeldeten Person, die bestätigt</param>
         /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung bestätigt wurde</returns>
         public async Task<string?> BestaetigenAsync(int lagerbewegungID, int personID)
         {
+            return await BuchenAsync(() => BewegungBestaetigenAsync(lagerbewegungID, personID));
+        }
+
+        /// <summary>
+        /// Methode, mit der die für den Nach-Raum verantwortliche Person mehrere offene Lagerbewegungen auf einmal bestätigt
+        /// </summary>
+        /// <param name="lagerbewegungIDs">Die IDs der Lagerbewegungen, die bestätigt werden sollen</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die bestätigt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn alle Lagerbewegungen bestätigt wurden</returns>
+        public async Task<string?> BestaetigenAsync(IEnumerable<int> lagerbewegungIDs, int personID)
+        {
             return await BuchenAsync(async () =>
             {
-                var lagerbewegung = await _context.Lagerbewegung
-                    .Include(l => l.NachRaum)
-                    .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
-                if (lagerbewegung == null)
+                // Doppelte IDs nur einmal bestätigen, sonst würde die zweite als "bereits bestätigt" die ganze Buchung abbrechen
+                var ids = lagerbewegungIDs.Distinct().ToList();
+                if (ids.Count == 0)
                 {
-                    return "Diese Lagerbewegung gibt es nicht.";
+                    return "Bitte mindestens eine Übernahme zum Bestätigen auswählen.";
                 }
 
-                // Sonst würde dieselbe Menge ein zweites Mal zugebucht
-                if (lagerbewegung.BestaetigtAm != null)
+                foreach (var id in ids)
                 {
-                    return $"Diese Lagerbewegung wurde bereits am {lagerbewegung.BestaetigtAm.Value:dd.MM.yyyy HH:mm} bestätigt.";
+                    var fehler = await BewegungBestaetigenAsync(id, personID);
+                    if (fehler != null)
+                    {
+                        return fehler;
+                    }
                 }
-
-                // Zuständigkeitsregel: Bestätigen darf nur die Person, die jetzt für den Nach-Raum verantwortlich ist.
-                // Wechselt die Zuständigkeit, während die Bewegung offen ist, bestätigt also die neue Person
-                if (lagerbewegung.NachRaum.PersonID != personID)
-                {
-                    return $"Nur die für den Raum {lagerbewegung.NachRaumID} verantwortliche Person darf diese Lagerbewegung bestätigen.";
-                }
-
-                lagerbewegung.BestaetigtAm = DateTime.Now;
-                await ZubuchenAsync(lagerbewegung.GegenstandID, lagerbewegung.NachRaumID, lagerbewegung.Menge);
 
                 return null;
             });
         }
 
         /// <summary>
+        /// Methode, die eine Lagerbewegung prüft, anlegt und im Raumbestand bucht, ohne zu speichern.
+        /// </summary>
+        /// <param name="gegenstandID">Die ID des Gegenstands, der bewegt wird</param>
+        /// <param name="menge">Die Menge, die bewegt wird (bei einem Gerät mit Seriennummer immer 1)</param>
+        /// <param name="vonRaumID">Die ID des Raums, aus dem der Gegenstand kommt</param>
+        /// <param name="nachRaumID">Die ID des Raums, in den der Gegenstand kommt</param>
+        /// <param name="bewegungsartID">Die ID der Bewegungsart, die die Lagerbewegung beschreibt</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die die Bewegung anlegt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung angelegt wurde</returns>
+        private async Task<string?> BewegungBuchenAsync(int gegenstandID, int menge, string vonRaumID, string nachRaumID, int bewegungsartID, int personID)
+        {
+            var gegenstand = await _context.Gegenstand.FindAsync(gegenstandID);
+            if (gegenstand == null)
+            {
+                return "Diesen Gegenstand gibt es nicht.";
+            }
+
+            // Mit Namen, da beim Ausborgen mehrere Gegenstände auf einmal gebucht werden
+            if (menge < 1)
+            {
+                return $"Die Menge von \"{gegenstand.Name}\" muss mindestens 1 sein.";
+            }
+
+            // Ein Gerät mit Seriennummer gibt es genau einmal, daher wird es immer einzeln gebucht
+            if (gegenstand.Seriennummer != null && menge != 1)
+            {
+                return $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) ist ein einzelnes Gerät und kann nur mit der Menge 1 gebucht werden.";
+            }
+
+            if (!await _context.Bewegungsart.AnyAsync(b => b.ID == bewegungsartID))
+            {
+                return "Bitte eine Bewegungsart auswählen.";
+            }
+
+            var vonRaum = await _context.Raum.FindAsync(vonRaumID);
+            var nachRaum = await _context.Raum.FindAsync(nachRaumID);
+            if (vonRaum == null || nachRaum == null)
+            {
+                return "Diesen Raum gibt es nicht.";
+            }
+
+            // Zuständigkeitsregel: Anlegen darf nur die Person, die für den Von-Raum verantwortlich ist (auch ein Admin nicht)
+            if (vonRaum.PersonID != personID)
+            {
+                return $"Nur die für den Raum {vonRaum.ID} verantwortliche Person darf Gegenstände aus diesem Raum buchen.";
+            }
+
+            // Ohne verantwortliche Person könnte niemand die Übernahme bestätigen und die Menge bliebe für immer unterwegs
+            if (nachRaum.PersonID == null)
+            {
+                return $"Für den Raum {nachRaum.ID} ist niemand verantwortlich, der die Übernahme bestätigen könnte. Weise dem Raum zuerst eine verantwortliche Person zu.";
+            }
+
+            // Die IDs der geladenen Räume verwenden, da SQL Server bei der Suche nicht auf Groß-/Kleinschreibung achtet
+            if (vonRaum.ID == nachRaum.ID)
+            {
+                // Wareneingang: nichts abbuchen, aber ein Gerät mit Seriennummer darf es danach nicht zweimal geben
+                if (gegenstand.Seriennummer != null)
+                {
+                    var hindernis = await GeraetVorhandenAsync(gegenstand);
+                    if (hindernis != null)
+                    {
+                        return hindernis;
+                    }
+                }
+            }
+            else
+            {
+                // Sofort abbuchen, damit dieselbe Menge nicht ein zweites Mal gebucht werden kann, solange sie unterwegs ist.
+                // Das ist die letzte Prüfung, danach wird nur noch gespeichert
+                var fehler = await AbbuchenAsync(gegenstand, vonRaum.ID, menge);
+                if (fehler != null)
+                {
+                    return fehler;
+                }
+            }
+
+            var jetzt = DateTime.Now;
+            var lagerbewegung = new Lagerbewegung
+            {
+                Menge = menge,
+                ErstelltAm = jetzt,
+                BewegungsartID = bewegungsartID,
+                VonRaumID = vonRaum.ID,
+                NachRaumID = nachRaum.ID,
+                GegenstandID = gegenstand.ID,
+                PersonID = personID
+            };
+            _context.Lagerbewegung.Add(lagerbewegung);
+
+            // Ist die Person auch für den Nach-Raum verantwortlich (beim Wareneingang immer), müsste sie sich die Bewegung
+            // selbst bestätigen. Daher gilt sie sofort als bestätigt und wird gleich im Nach-Raum zugebucht
+            if (nachRaum.PersonID == personID)
+            {
+                lagerbewegung.BestaetigtAm = jetzt;
+                await ZubuchenAsync(gegenstand.ID, nachRaum.ID, menge);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Methode, die eine offene Lagerbewegung prüft, bestätigt und im Nach-Raum zubucht, ohne zu speichern.
+        /// </summary>
+        /// <param name="lagerbewegungID">Die ID der Lagerbewegung, die bestätigt werden soll</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die bestätigt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung bestätigt wurde</returns>
+        private async Task<string?> BewegungBestaetigenAsync(int lagerbewegungID, int personID)
+        {
+            var lagerbewegung = await _context.Lagerbewegung
+                .Include(l => l.NachRaum)
+                .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+            if (lagerbewegung == null)
+            {
+                return "Diese Lagerbewegung gibt es nicht.";
+            }
+
+            // Sonst würde dieselbe Menge ein zweites Mal zugebucht
+            if (lagerbewegung.BestaetigtAm != null)
+            {
+                return $"Diese Lagerbewegung wurde bereits am {lagerbewegung.BestaetigtAm.Value:dd.MM.yyyy HH:mm} bestätigt.";
+            }
+
+            // Zuständigkeitsregel: Bestätigen darf nur die Person, die jetzt für den Nach-Raum verantwortlich ist.
+            // Wechselt die Zuständigkeit, während die Bewegung offen ist, bestätigt also die neue Person
+            if (lagerbewegung.NachRaum.PersonID != personID)
+            {
+                return $"Nur die für den Raum {lagerbewegung.NachRaumID} verantwortliche Person darf diese Lagerbewegung bestätigen.";
+            }
+
+            lagerbewegung.BestaetigtAm = DateTime.Now;
+            await ZubuchenAsync(lagerbewegung.GegenstandID, lagerbewegung.NachRaumID, lagerbewegung.Menge);
+
+            return null;
+        }
+
+        /// <summary>
         /// Methode, die eine Menge im Raumbestand eines Raums abbucht, sofern dort genug vorhanden ist.
-        /// Ist danach nichts mehr übrig, wird die Zeile gelöscht, damit der Raumbestand nur zeigt, was wirklich im Raum ist.
         /// </summary>
         /// <param name="gegenstand">Der Gegenstand, der abgebucht wird</param>
         /// <param name="raumID">Die ID des Raums, aus dem abgebucht wird</param>
@@ -267,8 +331,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die eine Menge im Raumbestand eines Raums zubucht. Gibt es für den Gegenstand in diesem Raum
-        /// noch keine Zeile, wird sie angelegt.
+        /// Methode, die eine Menge im Raumbestand eines Raums zubucht. 
+        /// Gibt es für den Gegenstand in diesem Raum noch keine Zeile, wird sie angelegt.
         /// </summary>
         /// <param name="gegenstandID">Die ID des Gegenstands, der zugebucht wird</param>
         /// <param name="raumID">Die ID des Raums, in den zugebucht wird</param>
@@ -289,7 +353,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die überprüft, ob es ein Gerät mit Seriennummer schon gibt, also ob es in einem Raum liegt oder unterwegs ist.
-        /// Ein Gerät mit Seriennummer gibt es nur einmal, daher darf es dann nicht noch einmal eingebucht werden.
         /// </summary>
         /// <param name="gegenstand">Das Gerät mit Seriennummer, das eingebucht werden soll</param>
         /// <returns>Die Fehlermeldung oder null, wenn es das Gerät noch nicht gibt</returns>
@@ -319,15 +382,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die eine Buchung in einer Transaktion ausführt und speichert, sofern die Buchung keine Fehlermeldung liefert.
-        /// Gespeichert wird mit genau einem SaveChangesAsync, daher werden Abbuchung, Zubuchung und Lagerbewegung ganz oder gar nicht gespeichert.
-        ///
-        /// Isolationsstufe Serializable: Was die Buchung gelesen hat (z. B. den Bestand oder ob eine Bewegung noch offen ist),
-        /// kann bis zum Ende der Transaktion niemand anderer ändern. Laufen zwei Buchungen gleichzeitig auf dieselben Daten
-        /// (z. B. durch einen Doppelklick), bricht SQL Server eine davon ab, statt dieselbe Menge doppelt zu buchen.
-        /// Die abgebrochene Buchung wird nicht wiederholt, sondern liefert eine Fehlermeldung.
-        ///
-        /// Achtung: Objekte, die vorher über denselben Kontext geladen wurden, werden dabei verworfen (ChangeTracker.Clear).
-        /// Nach einer Buchung daher neu laden, was angezeigt werden soll.
         /// </summary>
         /// <param name="buchung">Prüft und ändert die Daten (ohne zu speichern) und liefert eine Fehlermeldung oder null</param>
         /// <returns>Die Fehlermeldung oder null, wenn die Buchung gespeichert wurde</returns>

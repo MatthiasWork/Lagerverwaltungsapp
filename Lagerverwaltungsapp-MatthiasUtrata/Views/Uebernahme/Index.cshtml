@@ -1,0 +1,114 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.UebernahmeViewModel
+
+@{
+    ViewData["Title"] = "Offene Übernahmen";
+
+    // Zeitangabe wie im Design: "vor 20 Min.", "heute 07:48", "gestern 16:10", sonst das Datum
+    string Wann(DateTime zeitpunkt)
+    {
+        var vergangen = DateTime.Now - zeitpunkt;
+        if (vergangen.TotalMinutes < 1)
+        {
+            return "gerade eben";
+        }
+        if (vergangen.TotalMinutes < 60)
+        {
+            return $"vor {(int)vergangen.TotalMinutes} Min.";
+        }
+        if (zeitpunkt.Date == DateTime.Today)
+        {
+            return $"heute {zeitpunkt:HH:mm}";
+        }
+        if (zeitpunkt.Date == DateTime.Today.AddDays(-1))
+        {
+            return $"gestern {zeitpunkt:HH:mm}";
+        }
+        return zeitpunkt.ToString("dd.MM.yyyy HH:mm");
+    }
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+        <h1 class="mb-0">Offene Übernahmen</h1>
+        @if (Model.Raum != null)
+        {
+            <div class="text-muted">Für deinen Raum @Model.Raum.ID · @Model.Raum.Raumart.Name · @Model.Offen.Count offen</div>
+        }
+    </div>
+    @if (Model.Offen.Count > 1)
+    {
+        <form asp-action="Bestaetigen" method="post">
+            @foreach (var bewegung in Model.Offen)
+            {
+                <input type="hidden" name="ids" value="@bewegung.ID" />
+            }
+            <button type="submit" class="btn btn-outline-primary"><i data-lucide="check-check"></i>Alle bestätigen (@Model.Offen.Count)</button>
+        </form>
+    }
+</div>
+<hr />
+
+<partial name="_Meldungen" />
+
+@if (Model.Raum == null)
+{
+    <p class="text-muted">Du bist derzeit für keinen Raum verantwortlich, daher kann dir nichts ausgeborgt werden.</p>
+}
+else if (!Model.Offen.Any())
+{
+    <p class="text-muted">Es warten keine Übernahmen auf deine Bestätigung.</p>
+}
+else
+{
+    <p class="text-muted">
+        Diese Gegenstände wurden an deinen Raum ausgeborgt und sind unterwegs. Bestätige die Übernahme, sobald du sie erhalten hast.
+        Erst dann werden sie im Bestand von Raum @Model.Raum.ID gebucht.
+    </p>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+        @foreach (var bewegung in Model.Offen)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span class="tag tag-outline">@bewegung.Bewegungsart.Name</span>
+                            <span class="small text-muted">@Wann(bewegung.ErstelltAm)</span>
+                        </div>
+                        <h2 class="uebernahme-titel">@bewegung.Gegenstand.Name@(bewegung.Menge > 1 ? $" × {bewegung.Menge}" : "")</h2>
+                        <div class="route">
+                            <i data-lucide="map-pin"></i>
+                            <span>@bewegung.VonRaumID · @bewegung.VonRaum.Raumart.Name → @bewegung.NachRaumID · @bewegung.NachRaum.Raumart.Name</span>
+                        </div>
+                        <div class="small">@(bewegung.Gegenstand.Seriennummer == null ? $"{bewegung.Menge} Stück, ohne Seriennummer" : $"Seriennummer {bewegung.Gegenstand.Seriennummer}")</div>
+                        <div class="karte-fuss">
+                            <span class="avatar avatar-sm" aria-hidden="true">@bewegung.Person.Initialen</span>
+                            <span class="small">Ausgeborgt von @bewegung.Person.Vorname @bewegung.Person.Nachname</span>
+                        </div>
+                        <form asp-action="Bestaetigen" method="post">
+                            <input type="hidden" name="ids" value="@bewegung.ID" />
+                            <button type="submit" class="btn btn-primary btn-cta w-100"><i data-lucide="check"></i>Übernahme bestätigen</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (Model.Erledigt.Any())
+{
+    <h2 class="h4 mt-2">Erledigt</h2>
+    <ul class="erledigt-liste">
+        @foreach (var bewegung in Model.Erledigt)
+        {
+            <li>
+                <i data-lucide="check"></i>
+                <span class="flex-grow-1">
+                    @bewegung.Gegenstand.Name@(bewegung.Menge > 1 ? $" × {bewegung.Menge}" : "") · @bewegung.Bewegungsart.Name aus Raum @bewegung.VonRaumID
+                </span>
+                <span class="small text-muted text-nowrap">@Wann(bewegung.BestaetigtAm!.Value)</span>
+            </li>
+        }
+    </ul>
+}

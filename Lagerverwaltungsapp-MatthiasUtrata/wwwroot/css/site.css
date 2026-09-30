@@ -140,7 +140,8 @@ hr {
 
     /* Die vier Marken werden über ein Pseudo-Element gezeichnet, damit kein zusätzliches Markup nötig ist */
     .blueprint::before,
-    .card::before {
+    .card::before,
+    .btn-cta::before {
         content: "";
         position: absolute;
         inset: -6px;
@@ -507,6 +508,192 @@ dl.row dd {
 
     .alert-danger .btn-close {
         filter: var(--bs-btn-close-white-filter);
+    }
+
+/* ══════════ Ausleihe und Übernahme ══════════ */
+/* Nach den Screens "Neue Ausleihe" und "Freigaben" aus dem Design */
+
+/* Große Primär-Buttons (Call to Action) mit Eckmarken */
+.btn-cta {
+    position: relative;
+    --bs-btn-padding-y: 10px;
+}
+
+/* Kleine Überschrift in Großbuchstaben über dem Inhalt einer Karte */
+.card-kicker {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+}
+
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+}
+
+/* Validierungszusammenfassung als Meldung (z. B. Fehler vom LagerService): ohne Fehler ausblenden */
+.alert.validation-summary-valid {
+    display: none;
+}
+
+.alert.validation-summary-errors ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Neue Ausleihe: links die Auswahl, rechts die Zusammenfassung (auf schmalen Bildschirmen untereinander) */
+.ausleihe-raster {
+    display: grid;
+    gap: 28px;
+}
+
+.ausleihe-auswahl {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+@media (min-width: 1200px) {
+    .ausleihe-raster {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        align-items: start;
+    }
+
+    .ausleihe-zusammenfassung {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+/* Beschriftung und Wert untereinander (Zusammenfassung) */
+.angabe {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 14px;
+}
+
+.angabe-label {
+    font-size: 12px;
+    color: var(--color-neutral-700);
+}
+
+.angabe.trenner {
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-divider);
+}
+
+/* Hinweis mit Icon (z. B. was beim Ausborgen passiert) */
+.hinweis {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--color-neutral-800);
+}
+
+    .hinweis .lucide {
+        width: 15px;
+        height: 15px;
+        margin-top: 2px;
+    }
+
+/* Suchfeld über einer Liste: gestrichelt wie das Scan-Feld im Design, mit Lupe */
+.suchfeld {
+    position: relative;
+}
+
+    .suchfeld > .lucide {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+        color: var(--color-neutral-700);
+        pointer-events: none;
+    }
+
+    .suchfeld > .form-control {
+        padding-left: 36px;
+        border-style: dashed;
+        border-color: var(--color-neutral-500);
+        background-color: transparent;
+    }
+
+/* Mengenfeld in einer Tabellenzeile, rechtsbündig wie die Zahlen daneben */
+.menge-feld {
+    display: inline-block;
+    width: 96px;
+    text-align: right;
+}
+
+@media (max-width: 575.98px) {
+    .menge-feld {
+        width: 76px;
+    }
+}
+
+/* Ausgewählte Zeile beim Ausborgen */
+.table > tbody > tr.ausgewaehlt > * {
+    --bs-table-bg-state: var(--color-accent-100);
+}
+
+/* Übernahme-Karten */
+.uebernahme-titel {
+    margin: 0;
+    font: 600 22px/1.15 var(--font-heading);
+    letter-spacing: -0.015em;
+}
+
+.route {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--color-accent-800);
+}
+
+    .route .lucide {
+        width: 14px;
+        height: 14px;
+    }
+
+.karte-fuss {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-divider);
+}
+
+/* Liste der zuletzt erledigten Übernahmen */
+.erledigt-liste {
+    max-width: 760px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .erledigt-liste li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        font-size: 13.5px;
+        color: var(--color-neutral-800);
+        border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+
+    .erledigt-liste .lucide {
+        width: 15px;
+        height: 15px;
+        color: var(--color-accent-700);
     }
 
 /* ══════════ App-Hülle: Seitenleiste ══════════ */

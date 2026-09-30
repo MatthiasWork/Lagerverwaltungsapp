@@ -1,0 +1,188 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.AusborgenViewModel
+
+@{
+    ViewData["Title"] = "Neue Ausleihe";
+
+    // Werte für die Zusammenfassung rechts. Das Skript unten aktualisiert sie bei jeder Eingabe,
+    // hier werden sie nur für die erste Anzeige (z. B. nach einem Fehler) berechnet
+    var zielraum = Model.Raeume.FirstOrDefault(r => r.ID == Model.NachRaumID);
+    var ausgewaehlt = Model.Mengen.Values.Where(m => m > 0).ToList();
+}
+
+<div class="mb-1 text-muted">Aus Raum @Model.VonRaum.ID · @Model.VonRaum.Raumart.Name</div>
+<h1>Neue Ausleihe</h1>
+<hr />
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+@* Ohne _ValidationScriptsPartial: Die Pflichtfelder und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
+<form asp-action="Ausborgen" method="post" id="ausleiheFormular" class="ausleihe-raster">
+    <div class="ausleihe-auswahl">
+        <section>
+            <h2 class="h4">Wohin?</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="NachRaumID" class="control-label"></label>
+                        @* Optionen von Hand, damit die Zusammenfassung die verantwortliche Person aus data-* lesen kann *@
+                        <select asp-for="NachRaumID" class="form-select" required>
+                            <option value="">Raum auswählen</option>
+                            @foreach (var raum in Model.Raeume)
+                            {
+                                // Der Controller lädt nur Räume mit verantwortlicher Person
+                                var person = raum.Person!;
+                                <option value="@raum.ID" data-raum="@raum.ID · @raum.Raumart.Name"
+                                        data-person="@person.Vorname @person.Nachname" data-initialen="@person.Initialen">
+                                    @raum.ID · @raum.Raumart.Name · @person.Vorname @person.Nachname
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="NachRaumID" class="text-danger"></span>
+                        <div class="form-text">Nur Räume mit verantwortlicher Person, da diese die Übernahme bestätigt.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="BewegungsartID" class="control-label"></label>
+                        <select asp-for="BewegungsartID" asp-items="Model.Bewegungsarten" class="form-select" required>
+                            <option value="">Bewegungsart auswählen</option>
+                        </select>
+                        <span asp-validation-for="BewegungsartID" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="h4">Gegenstände</h2>
+
+            @if (!Model.Bestand.Any())
+            {
+                <p class="text-muted">Im Raum @Model.VonRaum.ID liegt derzeit nichts, das ausgeborgt werden kann.</p>
+            }
+            else
+            {
+                <div class="suchfeld mb-3">
+                    <i data-lucide="search"></i>
+                    <input type="search" class="form-control" placeholder="Liste durchsuchen: Bezeichnung, Seriennummer oder Kategorie"
+                           aria-label="Liste durchsuchen" data-tabellen-suche="#ausleiheTabelle" />
+                </div>
+
+                <div class="table-responsive">
+                    @* Auf dem Handy ohne Kategorie, damit die Tabelle ohne seitliches Scrollen passt *@
+                    <table class="table table-hover align-middle" id="ausleiheTabelle">
+                        <thead>
+                            <tr>
+                                <th>Gegenstand</th>
+                                <th class="d-none d-md-table-cell">Kategorie</th>
+                                <th class="text-end">Bestand</th>
+                                <th class="text-end">Auswahl</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bestand in Model.Bestand)
+                            {
+                                var gegenstand = bestand.Gegenstand;
+                                // Nach einem Fehler die bisher eingegebene Menge wieder anzeigen
+                                Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
+                                <tr class="@(menge > 0 ? "ausgewaehlt" : null)">
+                                    <td>
+                                        <div class="fw-medium">@gegenstand.Name</div>
+                                        <div class="small text-muted">@(gegenstand.Seriennummer ?? "ohne Seriennummer")</div>
+                                    </td>
+                                    <td class="d-none d-md-table-cell">@gegenstand.Kategorie.Name</td>
+                                    <td class="text-end">@bestand.Menge</td>
+                                    <td class="text-end">
+                                        @* Ein Gerät mit Seriennummer wird immer einzeln ausgeborgt, daher nur eine Checkbox (Menge 1) *@
+                                        @if (gegenstand.Seriennummer != null)
+                                        {
+                                            <input type="checkbox" class="form-check-input" name="Mengen[@gegenstand.ID]" value="1" checked="@(menge == 1)"
+                                                   aria-label="@gegenstand.Name (@gegenstand.Seriennummer) ausborgen" />
+                                        }
+                                        else
+                                        {
+                                            <input type="number" class="form-control menge-feld" name="Mengen[@gegenstand.ID]" value="@menge"
+                                                   min="0" max="@bestand.Menge" step="1" placeholder="0" aria-label="Menge von @gegenstand.Name" />
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+    <aside class="card ausleihe-zusammenfassung">
+        <div class="card-body d-flex flex-column gap-3">
+            <span class="card-kicker">Zusammenfassung</span>
+            <div class="angabe">
+                <span class="angabe-label">Aus Raum</span>
+                <span>@Model.VonRaum.ID · @Model.VonRaum.Raumart.Name</span>
+            </div>
+            <div class="angabe">
+                <span class="angabe-label">An Raum</span>
+                <span data-zusammenfassung="raum">@(zielraum == null ? "–" : $"{zielraum.ID} · {zielraum.Raumart.Name}")</span>
+            </div>
+            <div class="angabe">
+                <span class="angabe-label">Ausgewählt</span>
+                <span data-zusammenfassung="auswahl">
+                    @(ausgewaehlt.Count == 0 ? "Noch nichts ausgewählt" : $"{ausgewaehlt.Count} {(ausgewaehlt.Count == 1 ? "Gegenstand" : "Gegenstände")} · {ausgewaehlt.Sum()} Stück")
+                </span>
+            </div>
+            <div class="angabe trenner">
+                <span class="angabe-label">Übernahme bestätigt</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="avatar avatar-sm" aria-hidden="true" data-zusammenfassung="initialen">@(zielraum?.Person?.Initialen ?? "?")</span>
+                    <span data-zusammenfassung="person">@(zielraum?.Person == null ? "Zielraum auswählen" : $"{zielraum.Person.Vorname} {zielraum.Person.Nachname}")</span>
+                </div>
+            </div>
+            <p class="hinweis">
+                <i data-lucide="info"></i>
+                <span>Die Gegenstände werden sofort aus Raum @Model.VonRaum.ID abgebucht und sind unterwegs, bis die Übernahme bestätigt ist.</span>
+            </p>
+            <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())"><i data-lucide="handshake"></i>Ausborgen</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
+        </div>
+    </aside>
+</form>
+
+@section Scripts {
+    <script>
+        // Zusammenfassung rechts: Zielraum, verantwortliche Person und Auswahl bei jeder Eingabe neu anzeigen
+        (function () {
+            var formular = document.getElementById('ausleiheFormular');
+            var raumAuswahl = formular.querySelector('select[name="NachRaumID"]');
+
+            function anzeigen(name, text) {
+                formular.querySelector('[data-zusammenfassung="' + name + '"]').textContent = text;
+            }
+
+            function aktualisieren() {
+                var raum = raumAuswahl.selectedOptions[0];
+                var gewaehlt = raum && raum.value !== '';
+                anzeigen('raum', gewaehlt ? raum.dataset.raum : '–');
+                anzeigen('person', gewaehlt ? raum.dataset.person : 'Zielraum auswählen');
+                anzeigen('initialen', gewaehlt ? raum.dataset.initialen : '?');
+
+                var anzahl = 0, stueck = 0;
+                formular.querySelectorAll('input[name^="Mengen["]').forEach(function (feld) {
+                    var menge = feld.type === 'checkbox' ? (feld.checked ? 1 : 0) : (parseInt(feld.value, 10) || 0);
+                    feld.closest('tr').classList.toggle('ausgewaehlt', menge > 0);
+                    if (menge > 0) {
+                        anzahl++;
+                        stueck += menge;
+                    }
+                });
+                anzeigen('auswahl', anzahl === 0
+                    ? 'Noch nichts ausgewählt'
+                    : anzahl + (anzahl === 1 ? ' Gegenstand' : ' Gegenstände') + ' · ' + stueck + ' Stück');
+            }
+
+            formular.addEventListener('input', aktualisieren);
+            formular.addEventListener('change', aktualisieren);
+            aktualisieren();
+        })();
+    </script>
+}

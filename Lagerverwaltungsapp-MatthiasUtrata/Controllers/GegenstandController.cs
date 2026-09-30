@@ -93,7 +93,6 @@ public class GegenstandController : Controller
             return NotFound();
         }
 
-        // AsSplitQuery, da sonst alle Bestände mit allen Lagerbewegungen in einer einzigen Abfrage kombiniert würden
         var gegenstand = await _context.Gegenstand
             .Include(g => g.Kategorie)
             .Include(g => g.Hersteller)
@@ -102,7 +101,6 @@ public class GegenstandController : Controller
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.Bewegungsart)
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.NachRaum).ThenInclude(r => r.Person)
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.Person)
-            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.ID == id);
         if (gegenstand == null)
         {

@@ -1,0 +1,142 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.MeinRaumViewModel
+
+@{
+    ViewData["Title"] = $"Mein Raum ({Model.Raum.ID})";
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+    <div>
+        <div class="mb-1 text-muted">@Model.Raum.Raumart.Name</div>
+        <h1 class="mb-0">Mein Raum @Model.Raum.ID</h1>
+    </div>
+    <a asp-action="Ausborgen" class="btn btn-primary"><i data-lucide="plus"></i>Neue Ausleihe</a>
+</div>
+<hr />
+
+<partial name="_Meldungen" />
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 card-subtitle text-muted">Im Bestand</h2>
+                <p class="display-6 mb-1">@Model.StueckGesamt</p>
+                <p class="small text-muted mb-0">Stück in @Model.AnzahlGesamt @(Model.AnzahlGesamt == 1 ? "Eintrag" : "Einträgen")</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 card-subtitle text-muted">Ausgeborgt</h2>
+                <p class="display-6 mb-1">@Model.Unterwegs.Sum(l => l.Menge)</p>
+                <p class="small text-muted mb-0">Stück warten auf die Übernahme</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 card-subtitle text-muted">Offene Übernahmen</h2>
+                <p class="display-6 mb-1">@Model.OffeneUebernahmen</p>
+                @if (Model.OffeneUebernahmen > 0)
+                {
+                    <a asp-controller="Uebernahme" asp-action="Index" class="card-link small">Jetzt bestätigen</a>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">Nichts zu bestätigen</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Unterwegs.Any())
+{
+    <h2 class="h4">Ausgeborgt, noch nicht übernommen</h2>
+    <p class="text-muted">
+        Diese Gegenstände sind schon aus Raum @Model.Raum.ID abgebucht. Im Zielraum kommen sie an, sobald die dort verantwortliche Person die Übernahme bestätigt.
+    </p>
+    <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Gegenstand</th>
+                    <th class="text-end">Menge</th>
+                    <th>An Raum</th>
+                    <th>Ausgeborgt am</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bewegung in Model.Unterwegs)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-medium">@bewegung.Gegenstand.Name</div>
+                            <div class="small text-muted">@(bewegung.Gegenstand.Seriennummer ?? "ohne Seriennummer") · @bewegung.Bewegungsart.Name</div>
+                        </td>
+                        <td class="text-end">@bewegung.Menge</td>
+                        <td>@bewegung.NachRaumID</td>
+                        <td class="text-nowrap">@bewegung.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            <span class="tag tag-outline">Übernahme offen</span>
+                            <div class="small text-muted">wartet auf @(bewegung.NachRaum.Person == null ? "–" : $"{bewegung.NachRaum.Person.Vorname} {bewegung.NachRaum.Person.Nachname}")</div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h2 class="h4">Bestand</h2>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-md">
+        <input asp-for="Suche" class="form-control" placeholder="Bezeichnung oder Seriennummer" aria-label="Suche" />
+    </div>
+    <div class="col-md-3">
+        <select asp-for="KategorieID" asp-items="Model.Kategorien" class="form-select" aria-label="Kategorie">
+            <option value="">Alle Kategorien</option>
+        </select>
+    </div>
+    <div class="col-md-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtern</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Zurücksetzen</a>
+    </div>
+</form>
+
+@if (!Model.Bestand.Any())
+{
+    <p class="text-muted">@(Model.AnzahlGesamt == 0 ? $"Im Raum {Model.Raum.ID} liegt derzeit nichts." : "Keine Gegenstände gefunden.")</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Gegenstand</th>
+                    <th>Kategorie</th>
+                    <th class="text-end">Menge</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bestand in Model.Bestand)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-medium">@bestand.Gegenstand.Name</div>
+                            <div class="small text-muted">@(bestand.Gegenstand.Seriennummer ?? "ohne Seriennummer")</div>
+                        </td>
+                        <td>@bestand.Gegenstand.Kategorie.Name</td>
+                        <td class="text-end">@bestand.Menge</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <p class="text-muted small">@Model.Bestand.Count von @Model.AnzahlGesamt Einträgen angezeigt</p>
+}
