@@ -338,6 +338,11 @@ hr {
     border-color: var(--color-accent-900) !important;
 }
 
+/* Leere Meldungen (ohne Fehler) nehmen keinen Platz ein, z. B. in Flex-Spalten mit gap */
+.field-validation-valid {
+    display: none;
+}
+
 .field-validation-error {
     display: flex;
     align-items: flex-start;
@@ -513,8 +518,7 @@ dl.row dd {
         filter: var(--bs-btn-close-white-filter);
     }
 
-/* ══════════ Ausleihe und Übernahme ══════════ */
-/* Nach den Screens "Neue Ausleihe" und "Freigaben" aus dem Design */
+/* ══════════ Karten, Buttons und Meldungen aus dem Design ══════════ */
 
 /* Große Primär-Buttons (Call to Action) mit Eckmarken */
 .btn-cta {
@@ -547,32 +551,7 @@ dl.row dd {
     list-style: none;
 }
 
-/* Neue Ausleihe: links die Auswahl, rechts die Zusammenfassung (auf schmalen Bildschirmen untereinander) */
-.ausleihe-raster {
-    display: grid;
-    gap: 28px;
-}
-
-.ausleihe-auswahl {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    min-width: 0;
-}
-
-@media (min-width: 1200px) {
-    .ausleihe-raster {
-        grid-template-columns: minmax(0, 1fr) 340px;
-        align-items: start;
-    }
-
-    .ausleihe-zusammenfassung {
-        position: sticky;
-        top: 24px;
-    }
-}
-
-/* Beschriftung und Wert untereinander (Zusammenfassung) */
+/* Beschriftung und Wert untereinander */
 .angabe {
     display: flex;
     flex-direction: column;
@@ -583,67 +562,6 @@ dl.row dd {
 .angabe-label {
     font-size: 12px;
     color: var(--color-neutral-700);
-}
-
-.angabe.trenner {
-    gap: 8px;
-    padding-top: 14px;
-    border-top: 1px solid var(--color-divider);
-}
-
-/* Hinweis mit Icon (z. B. was beim Ausborgen passiert) */
-.hinweis {
-    display: flex;
-    gap: 8px;
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.45;
-    color: var(--color-neutral-800);
-}
-
-    .hinweis .lucide {
-        width: 15px;
-        height: 15px;
-        margin-top: 2px;
-    }
-
-/* Suchfeld über einer Liste: gestrichelt wie das Scan-Feld im Design, mit Lupe */
-.suchfeld {
-    position: relative;
-}
-
-    .suchfeld > .lucide {
-        position: absolute;
-        top: 50%;
-        left: 12px;
-        transform: translateY(-50%);
-        color: var(--color-neutral-700);
-        pointer-events: none;
-    }
-
-    .suchfeld > .form-control {
-        padding-left: 36px;
-        border-style: dashed;
-        border-color: var(--color-neutral-500);
-        background-color: transparent;
-    }
-
-/* Mengenfeld in einer Tabellenzeile, rechtsbündig wie die Zahlen daneben */
-.menge-feld {
-    display: inline-block;
-    width: 96px;
-    text-align: right;
-}
-
-@media (max-width: 575.98px) {
-    .menge-feld {
-        width: 76px;
-    }
-}
-
-/* Ausgewählte Zeile beim Ausborgen */
-.table > tbody > tr.ausgewaehlt > * {
-    --bs-table-bg-state: var(--color-accent-100);
 }
 
 /* Übernahme-Karten */
@@ -744,6 +662,10 @@ dl.row dd {
 .seiten-untertitel {
     font-size: 13px;
     color: var(--color-neutral-700);
+}
+
+.seiten-untertitel {
+    font-size: 13.5px;
 }
 
     .seiten-datum + h1 {
@@ -890,9 +812,24 @@ dl.row dd {
         background-color: color-mix(in srgb, var(--color-text) 7%, transparent);
     }
 
-    .seg-opt.active {
+    .seg-opt.active,
+    .seg-opt:has(input:checked) {
         color: var(--color-bg);
         background-color: var(--color-accent);
+    }
+
+    /* Mit Radiobuttons: der Punkt ist versteckt, die Option selbst zeigt die Auswahl */
+    .seg-opt input {
+        position: absolute;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .seg-opt:has(input:focus-visible) {
+        outline: 2px solid var(--color-accent);
+        outline-offset: -2px;
     }
 
 /* Auswahllisten so breit wie der gewählte Eintrag statt wie der längste (wo der Browser es kann) */
@@ -970,6 +907,10 @@ dl.row dd {
 .katalog-suche {
     flex: none;
     width: 300px;
+}
+
+.katalog .seiten-untertitel {
+    font-size: 13px;
 }
 
 .katalog-tabelle {
@@ -1342,6 +1283,10 @@ dl.row dd {
         margin: 0;
     }
 
+    .detail-mobil-inhalt .seiten-untertitel {
+        font-size: 13px;
+    }
+
 .hinweis-flaeche {
     padding: 12px;
     font-size: 13.5px;
@@ -1385,6 +1330,455 @@ dl.row dd {
         flex: none;
         width: 44px;
     }
+
+/* Transfer anfragen */
+.transfer,
+.transfer-formular {
+    gap: 22px;
+}
+
+.transfer-formular {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Von → Nach: zwei Karten mit Pfeil dazwischen, "Nach" mit Akzentrahmen */
+.transfer-route {
+    display: grid;
+    grid-template-columns: 1fr 64px 1fr;
+}
+
+.route-karte {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+}
+
+    .route-karte.ziel {
+        border-color: var(--color-accent);
+    }
+
+.route-raum {
+    font: 600 26px var(--font-heading);
+}
+
+.route-info {
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+.ziel .route-info {
+    color: var(--color-accent-800);
+}
+
+.route-pfeil {
+    place-items: center;
+    color: var(--color-accent-700);
+}
+
+    .route-pfeil .lucide {
+        width: 28px;
+        height: 28px;
+    }
+
+/* Zielraum als Auswahlliste, die wie die Überschrift der Karte aussieht */
+.raum-auswahl {
+    appearance: none;
+    width: 100%;
+    padding: 0 28px 0 0;
+    color: var(--color-text);
+    border: 0;
+    border-radius: 0;
+    background: var(--chevron) no-repeat right center / 20px;
+    cursor: pointer;
+}
+
+    .raum-auswahl:hover {
+        color: var(--color-accent-800);
+    }
+
+.transfer-raster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+}
+
+.transfer-auswahl {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+.transfer-seite {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Ausgewählte Geräte: Bild, Name, Status bzw. Menge und Entfernen */
+.geraete-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .geraete-liste h4 {
+        margin: 0;
+    }
+
+.geraet-zeile {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--color-divider);
+}
+
+    .geraet-zeile .geraet-bild {
+        width: 44px;
+        height: 44px;
+    }
+
+.geraet-zeile-info {
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
+}
+
+.menge-auswahl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
+}
+
+    .menge-auswahl .form-control {
+        width: 72px;
+        min-height: 32px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        text-align: right;
+    }
+
+.entfernen {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--color-neutral-600);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+    .entfernen:hover {
+        color: var(--color-text);
+    }
+
+.geraete-leer {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--color-neutral-700);
+}
+
+/* Gerät hinzufügen: gestrichelt wie das Scan-Feld im Design, Vorschläge klappen darunter auf */
+.geraet-hinzufuegen {
+    position: relative;
+}
+
+    .geraet-hinzufuegen > .lucide {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+        color: var(--color-neutral-700);
+        pointer-events: none;
+    }
+
+    .geraet-hinzufuegen > input {
+        appearance: none;
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: var(--color-text);
+        background: transparent;
+        border: 1px dashed var(--color-neutral-500);
+        border-radius: 0;
+    }
+
+        .geraet-hinzufuegen > input::placeholder {
+            color: var(--color-neutral-700);
+        }
+
+        .geraet-hinzufuegen > input:focus {
+            border-color: var(--color-accent);
+            outline: 2px solid var(--color-accent);
+            outline-offset: 0;
+        }
+
+.vorschlaege {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-divider);
+    border-top: 0;
+    box-shadow: var(--shadow-md);
+}
+
+.vorschlag {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    text-align: left;
+    color: var(--color-text);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    cursor: pointer;
+}
+
+    .vorschlag:hover,
+    .vorschlag:focus-visible {
+        background: color-mix(in srgb, var(--color-text) 6%, transparent);
+    }
+
+.vorschlag-leer {
+    padding: 8px 12px;
+    font-size: 13.5px;
+    color: var(--color-neutral-700);
+}
+
+.transfer-optionen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 28px;
+}
+
+.datum-feld {
+    width: 200px;
+}
+
+.grund-feld {
+    max-width: 600px;
+}
+
+    .grund-feld textarea {
+        min-height: 60px;
+    }
+
+/* Ablauf in nummerierten Schritten, der aktuelle gefüllt */
+.ablauf {
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+}
+
+.ablauf-schritt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+
+.schritt-nummer {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    font-size: 11px;
+    color: var(--color-accent-800);
+    border: 1px solid var(--color-accent);
+}
+
+    .schritt-nummer.aktuell {
+        color: var(--color-bg);
+        background: var(--color-accent);
+    }
+
+@media (max-width: 991.98px) {
+    /* Mobil: eine Spalte bis zur Tab-Leiste, der Button sitzt unten */
+    /* .seite.transfer, damit der allgemeine Abstand von .seite (weiter unten) nicht gewinnt */
+    .seite.transfer {
+        gap: 12px;
+        min-height: calc(100dvh - 114px - env(safe-area-inset-bottom, 0px));
+    }
+
+    /* "Abbrechen" sitzt im Design 6 px unter dem oberen Rand statt 12 */
+    .transfer-kopf-mobil {
+        margin-top: -6px;
+    }
+
+    .transfer-formular {
+        flex: 1;
+        gap: 14px;
+    }
+
+    .abbrechen-link {
+        font-size: 14px;
+        color: var(--color-accent-700);
+        text-decoration: none;
+    }
+
+    .transfer-titel-mobil {
+        margin: 8px 0 0;
+        font-size: 30px;
+    }
+
+    /* Von und Nach untereinander in einer gerahmten Karte, "Nach" auf hellem Akzentgrund */
+    .transfer-route {
+        position: relative;
+        grid-template-columns: 1fr;
+        border: 1px solid var(--color-divider);
+    }
+
+        .transfer-route::before {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            pointer-events: none;
+            background-image: var(--corner-mark), var(--corner-mark), var(--corner-mark), var(--corner-mark);
+            background-position: left top, right top, left bottom, right bottom;
+            background-repeat: no-repeat;
+        }
+
+    .route-karte {
+        gap: 0;
+        padding: 12px 14px;
+        border: 0;
+    }
+
+        .route-karte::before {
+            display: none;
+        }
+
+        .route-karte:first-child {
+            border-bottom: 1px solid var(--color-divider);
+        }
+
+        .route-karte.ziel {
+            background: var(--color-accent-100);
+        }
+
+        .route-karte .card-kicker {
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            color: var(--color-neutral-700);
+        }
+
+        .route-karte.ziel .card-kicker {
+            color: var(--color-accent-800);
+        }
+
+    .route-raum {
+        font-size: 22px;
+    }
+
+    .ziel .route-raum,
+    .ziel .route-info {
+        color: var(--color-accent-900);
+    }
+
+    .ziel .route-info {
+        font-size: 12.5px;
+    }
+
+    .transfer-raster {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 14px;
+    }
+
+    .transfer-auswahl {
+        gap: 14px;
+    }
+
+    /* Geräte als Liste mit Trennlinien statt einzeln gerahmt */
+    .geraete-liste {
+        gap: 0;
+    }
+
+    .geraet-zeile {
+        grid-template-columns: 40px minmax(0, 1fr) auto auto;
+        gap: 12px;
+        padding: 8px 0;
+        font-size: 14px;
+        border: 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+
+        .geraet-zeile .geraet-bild {
+            width: 40px;
+            height: 40px;
+        }
+
+    /* Zeilenhöhe wie die erste Zeile (14 px Schrift), so wird die Zeile gleich hoch wie im Design */
+    .geraet-zeile-info {
+        font-size: 12px;
+        line-height: calc(14px * 1.55);
+    }
+
+    .geraet-hinzufuegen {
+        margin-top: 14px;
+    }
+
+        .geraet-hinzufuegen > input {
+            min-height: 44px;
+            padding: 12px 12px 12px 36px;
+        }
+
+    /* Bewegungsart über die ganze Breite, je zwei nebeneinander */
+    .transfer-optionen > div {
+        width: 100%;
+    }
+
+    .transfer-art {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1px;
+        background: var(--color-divider);
+    }
+
+        .transfer-art .seg-opt {
+            justify-content: center;
+            min-height: 44px;
+            background-color: var(--color-bg);
+            border-left: 0;
+        }
+
+            /* Bei ungerader Anzahl die letzte über beide Spalten, sonst bliebe eine Lücke */
+            .transfer-art .seg-opt:last-child:nth-child(odd) {
+                grid-column: span 2;
+            }
+
+    .transfer-seite {
+        margin-top: auto;
+    }
+
+        .transfer-seite .btn-cta {
+            min-height: 48px;
+            margin-bottom: -12px;
+        }
+
+            .transfer-seite .btn-cta::before {
+                display: none;
+            }
+}
 
 /* Liste als Zeilen mit Trennlinie (mobil statt Tabelle) */
 .liste-titel {

@@ -21,7 +21,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
 
         // Ab hier nur für die Anzeige: Diese Werte kommen nicht aus dem Formular, daher nicht validieren
 
-        // Der eigene Raum (mit Raumart), aus dem ausgeborgt wird
+        // Der eigene Raum (mit Raumart und verantwortlicher Person), aus dem ausgeborgt wird
         [ValidateNever]
         public Raum VonRaum { get; set; } = null!;
 

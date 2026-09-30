@@ -1,187 +1,260 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.AusborgenViewModel
 
 @{
-    ViewData["Title"] = "Neue Ausleihe";
+    ViewData["Title"] = "Transfer anfragen";
 
-    // Werte für die Zusammenfassung rechts. Das Skript unten aktualisiert sie bei jeder Eingabe,
-    // hier werden sie nur für die erste Anzeige (z. B. nach einem Fehler) berechnet
+    var vonRaum = $"{Model.VonRaum.ID} · {Model.VonRaum.Raumart.Name}";
+    var verantwortlich = Model.VonRaum.Person == null ? "–" : $"{Model.VonRaum.Person.Vorname} {Model.VonRaum.Person.Nachname}";
+
+    // Nach einem Fehler die bisherige Auswahl wieder anzeigen; das Skript unten hält die Werte danach aktuell
     var zielraum = Model.Raeume.FirstOrDefault(r => r.ID == Model.NachRaumID);
-    var ausgewaehlt = Model.Mengen.Values.Where(m => m > 0).ToList();
+    var zielPerson = zielraum?.Person == null ? "Die verantwortliche Person" : $"{zielraum.Person.Vorname} {zielraum.Person.Nachname}";
+    var anzahlGewaehlt = Model.Mengen.Count(m => m.Value > 0);
 }
 
-<div class="mb-1 text-muted">Aus Raum @Model.VonRaum.ID · @Model.VonRaum.Raumart.Name</div>
-<h1>Neue Ausleihe</h1>
-<hr />
-
-<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-@* Ohne _ValidationScriptsPartial: Die Pflichtfelder und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
-<form asp-action="Ausborgen" method="post" id="ausleiheFormular" class="ausleihe-raster">
-    <div class="ausleihe-auswahl">
-        <section>
-            <h2 class="h4">Wohin?</h2>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="NachRaumID" class="control-label"></label>
-                        @* Optionen von Hand, damit die Zusammenfassung die verantwortliche Person aus data-* lesen kann *@
-                        <select asp-for="NachRaumID" class="form-select" required>
-                            <option value="">Raum auswählen</option>
-                            @foreach (var raum in Model.Raeume)
-                            {
-                                // Der Controller lädt nur Räume mit verantwortlicher Person
-                                var person = raum.Person!;
-                                <option value="@raum.ID" data-raum="@raum.ID · @raum.Raumart.Name"
-                                        data-person="@person.Vorname @person.Nachname" data-initialen="@person.Initialen">
-                                    @raum.ID · @raum.Raumart.Name · @person.Vorname @person.Nachname
-                                </option>
-                            }
-                        </select>
-                        <span asp-validation-for="NachRaumID" class="text-danger"></span>
-                        <div class="form-text">Nur Räume mit verantwortlicher Person, da diese die Übernahme bestätigt.</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="BewegungsartID" class="control-label"></label>
-                        <select asp-for="BewegungsartID" asp-items="Model.Bewegungsarten" class="form-select" required>
-                            <option value="">Bewegungsart auswählen</option>
-                        </select>
-                        <span asp-validation-for="BewegungsartID" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <h2 class="h4">Gegenstände</h2>
-
-            @if (!Model.Bestand.Any())
-            {
-                <p class="text-muted">Im Raum @Model.VonRaum.ID liegt derzeit nichts, das ausgeborgt werden kann.</p>
-            }
-            else
-            {
-                <div class="suchfeld mb-3">
-                    <i data-lucide="search"></i>
-                    <input type="search" class="form-control" placeholder="Liste durchsuchen: Bezeichnung, Seriennummer oder Kategorie"
-                           aria-label="Liste durchsuchen" data-tabellen-suche="#ausleiheTabelle" />
-                </div>
-
-                <div class="table-responsive">
-                    @* Auf dem Handy ohne Kategorie, damit die Tabelle ohne seitliches Scrollen passt *@
-                    <table class="table table-hover align-middle" id="ausleiheTabelle">
-                        <thead>
-                            <tr>
-                                <th>Gegenstand</th>
-                                <th class="d-none d-md-table-cell">Kategorie</th>
-                                <th class="text-end">Bestand</th>
-                                <th class="text-end">Auswahl</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var bestand in Model.Bestand)
-                            {
-                                var gegenstand = bestand.Gegenstand;
-                                // Nach einem Fehler die bisher eingegebene Menge wieder anzeigen
-                                Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
-                                <tr class="@(menge > 0 ? "ausgewaehlt" : null)">
-                                    <td>
-                                        <div class="fw-medium">@gegenstand.Name</div>
-                                        <div class="small text-muted">@(gegenstand.Seriennummer ?? "ohne Seriennummer")</div>
-                                    </td>
-                                    <td class="d-none d-md-table-cell">@gegenstand.Kategorie.Name</td>
-                                    <td class="text-end">@bestand.Menge</td>
-                                    <td class="text-end">
-                                        @* Ein Gerät mit Seriennummer wird immer einzeln ausgeborgt, daher nur eine Checkbox (Menge 1) *@
-                                        @if (gegenstand.Seriennummer != null)
-                                        {
-                                            <input type="checkbox" class="form-check-input" name="Mengen[@gegenstand.ID]" value="1" checked="@(menge == 1)"
-                                                   aria-label="@gegenstand.Name (@gegenstand.Seriennummer) ausborgen" />
-                                        }
-                                        else
-                                        {
-                                            <input type="number" class="form-control menge-feld" name="Mengen[@gegenstand.ID]" value="@menge"
-                                                   min="0" max="@bestand.Menge" step="1" placeholder="0" aria-label="Menge von @gegenstand.Name" />
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </section>
+<div class="seite transfer">
+    <div class="seiten-kopf d-none d-lg-flex">
+        <div>
+            <h1>Transfer anfragen</h1>
+            <div class="seiten-untertitel">Geräte aus Raum @Model.VonRaum.ID in einen anderen Raum verlegen.</div>
+        </div>
+    </div>
+    <div class="transfer-kopf-mobil d-lg-none">
+        <a class="abbrechen-link" asp-action="Index">Abbrechen</a>
+        <h1 class="transfer-titel-mobil">Transfer</h1>
     </div>
 
-    <aside class="card ausleihe-zusammenfassung">
-        <div class="card-body d-flex flex-column gap-3">
-            <span class="card-kicker">Zusammenfassung</span>
-            <div class="angabe">
-                <span class="angabe-label">Aus Raum</span>
-                <span>@Model.VonRaum.ID · @Model.VonRaum.Raumart.Name</span>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    @* Ohne _ValidationScriptsPartial: Zielraum, Bewegungsart und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
+    <form asp-action="Ausborgen" method="post" id="transferFormular" class="transfer-formular">
+        @* Von: der eigene Raum, Nach: Auswahl der Räume mit verantwortlicher Person *@
+        <div class="transfer-route">
+            <div class="blueprint route-karte">
+                <span class="card-kicker">Von</span>
+                <span class="route-raum">@vonRaum</span>
+                <span class="route-info d-none d-lg-block">Verantwortlich: @verantwortlich</span>
             </div>
-            <div class="angabe">
-                <span class="angabe-label">An Raum</span>
-                <span data-zusammenfassung="raum">@(zielraum == null ? "–" : $"{zielraum.ID} · {zielraum.Raumart.Name}")</span>
-            </div>
-            <div class="angabe">
-                <span class="angabe-label">Ausgewählt</span>
-                <span data-zusammenfassung="auswahl">
-                    @(ausgewaehlt.Count == 0 ? "Noch nichts ausgewählt" : $"{ausgewaehlt.Count} {(ausgewaehlt.Count == 1 ? "Gegenstand" : "Gegenstände")} · {ausgewaehlt.Sum()} Stück")
+            <div class="route-pfeil d-none d-lg-grid" aria-hidden="true"><i data-lucide="arrow-right"></i></div>
+            <div class="blueprint route-karte ziel">
+                <label class="card-kicker" for="NachRaumID">Nach</label>
+                <select asp-for="NachRaumID" class="route-raum raum-auswahl" required>
+                    <option value="">Raum auswählen</option>
+                    @foreach (var raum in Model.Raeume)
+                    {
+                        // Der Controller lädt nur Räume mit verantwortlicher Person, denn diese muss die Übernahme bestätigen
+                        var person = raum.Person!;
+                        <option value="@raum.ID" data-person="@person.Vorname @person.Nachname">@raum.ID · @raum.Raumart.Name</option>
+                    }
+                </select>
+                <span class="route-info">
+                    <span data-transfer="person">@zielPerson</span><span class="d-none d-lg-inline"> muss freigeben</span><span class="d-lg-none"> gibt frei</span>
                 </span>
+                <span asp-validation-for="NachRaumID" class="text-danger"></span>
             </div>
-            <div class="angabe trenner">
-                <span class="angabe-label">Übernahme bestätigt</span>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="avatar avatar-sm" aria-hidden="true" data-zusammenfassung="initialen">@(zielraum?.Person?.Initialen ?? "?")</span>
-                    <span data-zusammenfassung="person">@(zielraum?.Person == null ? "Zielraum auswählen" : $"{zielraum.Person.Vorname} {zielraum.Person.Nachname}")</span>
+        </div>
+
+        <div class="transfer-raster">
+            <div class="transfer-auswahl">
+                <div class="geraete-liste">
+                    <h4 class="d-none d-lg-block">Geräte · <span data-transfer="anzahl">@anzahlGewaehlt</span></h4>
+
+                    @* Alle Geräte des eigenen Raums sind da, aber nur die ausgewählten sichtbar; nicht ausgewählte Felder
+                       sind deaktiviert und werden daher nicht mitgeschickt. Hinzufügen über die Suche darunter *@
+                    @foreach (var bestand in Model.Bestand)
+                    {
+                        var gegenstand = bestand.Gegenstand;
+                        Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
+                        var gewaehlt = menge > 0;
+                        <div class="geraet-zeile" hidden="@(!gewaehlt)"
+                             data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
+                             data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Raum")">
+                            <div class="geraet-bild" aria-hidden="true"></div>
+                            <div>
+                                <div class="fw-medium">@gegenstand.Name</div>
+                                <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name)</div>
+                            </div>
+                            @* Ein Gerät mit Seriennummer wird immer einzeln gebucht (Menge 1), sonst die Menge eingeben *@
+                            @if (gegenstand.Seriennummer != null)
+                            {
+                                <span class="tag tag-accent d-none d-lg-inline-flex">Verfügbar</span>
+                                <input type="hidden" name="Mengen[@gegenstand.ID]" value="1" disabled="@(!gewaehlt)" />
+                            }
+                            else
+                            {
+                                <span class="menge-auswahl">
+                                    <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@(gewaehlt ? menge : 1)"
+                                           min="1" max="@bestand.Menge" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
+                                    <span>von @bestand.Menge</span>
+                                </span>
+                            }
+                            <button type="button" class="entfernen" data-entfernen aria-label="@gegenstand.Name entfernen"><i data-lucide="x"></i></button>
+                        </div>
+                    }
+                    <p class="geraete-leer" hidden="@(anzahlGewaehlt > 0)">
+                        @(Model.Bestand.Any() ? "Noch keine Geräte ausgewählt." : $"Im Raum {Model.VonRaum.ID} liegt derzeit nichts, das verlegt werden kann.")
+                    </p>
+
+                    @if (Model.Bestand.Any())
+                    {
+                        <div class="geraet-hinzufuegen">
+                            <i data-lucide="scan-line"></i>
+                            <input type="search" id="geraetSuche" placeholder="Weiteres Gerät suchen oder Seriennummer eingeben" autocomplete="off"
+                                   aria-label="Gerät hinzufügen" aria-controls="geraetVorschlaege" />
+                            <div class="vorschlaege" id="geraetVorschlaege" hidden></div>
+                        </div>
+                    }
+                </div>
+
+                <div class="transfer-optionen">
+                    @* Im Design "Dauerhaft/Zeitweise"; gespeichert wird bei einer Lagerbewegung die Bewegungsart *@
+                    <div>
+                        <span class="form-label d-none d-lg-block">Art</span>
+                        <div class="seg transfer-art" role="radiogroup" aria-label="Bewegungsart">
+                            @foreach (var art in Model.Bewegungsarten)
+                            {
+                                <label class="seg-opt">
+                                    <input type="radio" name="BewegungsartID" value="@art.Value" checked="@art.Selected" required />@art.Text
+                                </label>
+                            }
+                        </div>
+                        <span asp-validation-for="BewegungsartID" class="text-danger"></span>
+                    </div>
+                    @* Beispiel aus dem Design: Rückgabedatum und Grund werden noch nicht gespeichert (Felder ohne name) *@
+                    <div class="datum-feld d-none d-lg-block">
+                        <label class="form-label" for="zurueckAm">Zurück nach @Model.VonRaum.ID am</label>
+                        <input type="date" class="form-control" id="zurueckAm" />
+                    </div>
+                </div>
+                <div class="grund-feld d-none d-lg-block">
+                    <label class="form-label" for="grund">Grund</label>
+                    <textarea class="form-control" id="grund" rows="2" placeholder="Tablets für die MINT-Projektwoche, Klassen 7a–7c"></textarea>
                 </div>
             </div>
-            <p class="hinweis">
-                <i data-lucide="info"></i>
-                <span>Die Gegenstände werden sofort aus Raum @Model.VonRaum.ID abgebucht und sind unterwegs, bis die Übernahme bestätigt ist.</span>
-            </p>
-            <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())"><i data-lucide="handshake"></i>Ausborgen</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
+
+            <div class="transfer-seite">
+                <div class="blueprint ablauf d-none d-lg-flex">
+                    <span class="card-kicker">Ablauf</span>
+                    <div class="ablauf-schritt"><span class="schritt-nummer aktuell">1</span><span>Sie fragen den Transfer an, die Geräte werden aus @Model.VonRaum.ID abgebucht</span></div>
+                    <div class="ablauf-schritt"><span class="schritt-nummer">2</span><span><span data-transfer="person">@zielPerson</span> gibt unter „Freigaben“ frei</span></div>
+                    <div class="ablauf-schritt"><span class="schritt-nummer">3</span><span>Bis dahin sind die Geräte unterwegs</span></div>
+                    <div class="ablauf-schritt"><span class="schritt-nummer">4</span><span>Standort wird im Katalog aktualisiert</span></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())">Transfer anfragen</button>
+            </div>
         </div>
-    </aside>
-</form>
+    </form>
+</div>
 
 @section Scripts {
     <script>
-        // Zusammenfassung rechts: Zielraum, verantwortliche Person und Auswahl bei jeder Eingabe neu anzeigen
+        // Geräteauswahl wie im Design: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen
         (function () {
-            var formular = document.getElementById('ausleiheFormular');
+            var formular = document.getElementById('transferFormular');
+            var zeilen = Array.prototype.slice.call(formular.querySelectorAll('.geraet-zeile'));
+            var suchfeld = document.getElementById('geraetSuche');
+            var vorschlaege = document.getElementById('geraetVorschlaege');
             var raumAuswahl = formular.querySelector('select[name="NachRaumID"]');
 
             function anzeigen(name, text) {
-                formular.querySelector('[data-zusammenfassung="' + name + '"]').textContent = text;
+                document.querySelectorAll('[data-transfer="' + name + '"]').forEach(function (feld) {
+                    feld.textContent = text;
+                });
             }
 
+            // Anzahl, Hinweis ohne Auswahl und die Person des Zielraums neu anzeigen
             function aktualisieren() {
-                var raum = raumAuswahl.selectedOptions[0];
-                var gewaehlt = raum && raum.value !== '';
-                anzeigen('raum', gewaehlt ? raum.dataset.raum : '–');
-                anzeigen('person', gewaehlt ? raum.dataset.person : 'Zielraum auswählen');
-                anzeigen('initialen', gewaehlt ? raum.dataset.initialen : '?');
+                var anzahl = zeilen.filter(function (zeile) { return !zeile.hidden; }).length;
+                anzeigen('anzahl', anzahl);
+                formular.querySelector('.geraete-leer').hidden = anzahl > 0;
 
-                var anzahl = 0, stueck = 0;
-                formular.querySelectorAll('input[name^="Mengen["]').forEach(function (feld) {
-                    var menge = feld.type === 'checkbox' ? (feld.checked ? 1 : 0) : (parseInt(feld.value, 10) || 0);
-                    feld.closest('tr').classList.toggle('ausgewaehlt', menge > 0);
-                    if (menge > 0) {
-                        anzahl++;
-                        stueck += menge;
+                var raum = raumAuswahl.selectedOptions[0];
+                anzeigen('person', raum && raum.value !== '' ? raum.dataset.person : 'Die verantwortliche Person');
+            }
+
+            // Zeile zeigen und ihre Felder mitschicken oder ausblenden und nicht mitschicken
+            function auswaehlen(zeile, gewaehlt) {
+                zeile.hidden = !gewaehlt;
+                zeile.querySelectorAll('input').forEach(function (feld) {
+                    feld.disabled = !gewaehlt;
+                });
+                aktualisieren();
+            }
+
+            function hinzufuegen(zeile) {
+                auswaehlen(zeile, true);
+                suchfeld.value = '';
+                vorschlaege.hidden = true;
+                var menge = zeile.querySelector('input[type="number"]');
+                (menge || suchfeld).focus();
+            }
+
+            // Vorschläge: noch nicht ausgewählte Geräte, deren Name, Seriennummer oder Kategorie den Suchbegriff enthält
+            function vorschlaegeZeigen() {
+                var begriff = suchfeld.value.trim().toLowerCase();
+                vorschlaege.replaceChildren();
+                if (begriff === '') {
+                    vorschlaege.hidden = true;
+                    return;
+                }
+
+                var treffer = zeilen.filter(function (zeile) {
+                    return zeile.hidden && zeile.dataset.suchtext.indexOf(begriff) !== -1;
+                }).slice(0, 8);
+
+                treffer.forEach(function (zeile) {
+                    var knopf = document.createElement('button');
+                    knopf.type = 'button';
+                    knopf.className = 'vorschlag';
+                    var name = document.createElement('span');
+                    name.textContent = zeile.dataset.name;
+                    var info = document.createElement('span');
+                    info.className = 'nebeninfo';
+                    info.textContent = zeile.dataset.info;
+                    knopf.append(name, info);
+                    knopf.addEventListener('click', function () {
+                        hinzufuegen(zeile);
+                    });
+                    vorschlaege.append(knopf);
+                });
+
+                if (treffer.length === 0) {
+                    var leer = document.createElement('div');
+                    leer.className = 'vorschlag-leer';
+                    leer.textContent = 'Kein passendes Gerät in diesem Raum';
+                    vorschlaege.append(leer);
+                }
+                vorschlaege.hidden = false;
+            }
+
+            zeilen.forEach(function (zeile) {
+                zeile.querySelector('[data-entfernen]').addEventListener('click', function () {
+                    auswaehlen(zeile, false);
+                });
+            });
+
+            if (suchfeld) {
+                suchfeld.addEventListener('input', vorschlaegeZeigen);
+                suchfeld.addEventListener('keydown', function (e) {
+                    // Enter übernimmt den ersten Vorschlag (z. B. nach dem Scannen einer Seriennummer) statt das Formular abzuschicken
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        var erster = vorschlaege.querySelector('.vorschlag');
+                        if (erster) {
+                            erster.click();
+                        }
+                    } else if (e.key === 'Escape') {
+                        vorschlaege.hidden = true;
                     }
                 });
-                anzeigen('auswahl', anzahl === 0
-                    ? 'Noch nichts ausgewählt'
-                    : anzahl + (anzahl === 1 ? ' Gegenstand' : ' Gegenstände') + ' · ' + stueck + ' Stück');
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.geraet-hinzufuegen')) {
+                        vorschlaege.hidden = true;
+                    }
+                });
             }
 
-            formular.addEventListener('input', aktualisieren);
-            formular.addEventListener('change', aktualisieren);
+            raumAuswahl.addEventListener('change', aktualisieren);
             aktualisieren();
         })();
     </script>

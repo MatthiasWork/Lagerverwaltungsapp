@@ -136,8 +136,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 {
                     var nachRaum = await _context.Raum.Include(r => r.Person).FirstAsync(r => r.ID == ausborgen.NachRaumID);
                     var wartetAuf = nachRaum.Person == null ? "die verantwortliche Person" : $"{nachRaum.Person.Vorname} {nachRaum.Person.Nachname}";
-                    var anzahl = positionen.Count == 1 ? "1 Gegenstand" : $"{positionen.Count} Gegenstände";
-                    TempData["Meldung"] = $"{anzahl} an Raum {nachRaum.ID} ausgeborgt. Bis {wartetAuf} die Übernahme bestätigt, sind sie unterwegs.";
+                    var anzahl = positionen.Count == 1 ? "1 Gerät" : $"{positionen.Count} Geräte";
+                    TempData["Meldung"] = $"Transfer von {anzahl} nach Raum {nachRaum.ID} angefragt. Bis {wartetAuf} ihn freigibt, sind die Geräte unterwegs.";
                     return RedirectToAction(nameof(Index));
                 }
                 ModelState.AddModelError(string.Empty, fehler);
@@ -165,7 +165,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         /// <returns>Gibt eine Task zurück</returns>
         private async Task AnzeigeSetzenAsync(AusborgenViewModel ausborgen, string raumID)
         {
-            ausborgen.VonRaum = await _context.Raum.Include(r => r.Raumart).FirstAsync(r => r.ID == raumID);
+            ausborgen.VonRaum = await _context.Raum.Include(r => r.Raumart).Include(r => r.Person).FirstAsync(r => r.ID == raumID);
 
             ausborgen.Bestand = await _context.Raumbestand
                 .Include(r => r.Gegenstand).ThenInclude(g => g.Kategorie)
