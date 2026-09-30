@@ -787,10 +787,10 @@ dl.row dd {
     color: var(--color-neutral-700);
 }
 
-/* Kennzahlen: Desktop Beschriftung, Zahl und Zusatz untereinander; mobil 2 × 2 mit Zahl über der Beschriftung */
+/* Kennzahlen: Desktop Beschriftung, Zahl und Zusatz untereinander; mobil mit Zahl über der Beschriftung */
 .kennzahlen {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
 }
 
@@ -1900,13 +1900,6 @@ dl.row dd {
     border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 
-/* Übersicht: fällige Ausleihen und Aktivität nebeneinander, bis zum unteren Rand gestreckt */
-.uebersicht-raster {
-    grid-template-columns: 1.5fr 1fr;
-    gap: 20px;
-    align-items: stretch;
-}
-
 .aktivitaeten {
     display: flex;
     flex-direction: column;
@@ -2016,17 +2009,6 @@ dl.row dd {
 .benutzer {
     gap: 18px;
 }
-
-.sync-info {
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-}
-
-    .sync-info .lucide {
-        width: 13px;
-        height: 13px;
-    }
 
 .benutzer-filter {
     display: flex;
@@ -2284,21 +2266,17 @@ a.tag-outline {
         border-width: 0;
     }
 
-.ausleihe-zeile {
+.anfrage-zeile {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 14px;
     align-items: center;
     padding: 8px 0;
 }
 
-    .ausleihe-zeile:not(:last-child) {
+    .anfrage-zeile:not(:last-child) {
         border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
     }
-
-.ausleihe-bis {
-    font-size: 13px;
-}
 
 .raum-titel {
     font: 600 24px var(--font-heading);
@@ -2743,110 +2721,10 @@ span.seg-opt {
         background-color: transparent;
     }
 
-/* Button, der wie ein Link aussieht */
-.link-knopf {
-    padding: 0;
-    font: inherit;
-    color: var(--color-accent-700);
-    background: none;
-    border: 0;
-    cursor: pointer;
-}
-
-    .link-knopf:hover {
-        text-decoration: underline;
-    }
-
-/* Rückgaben (statisch) */
+/* Rückgaben (ohne Rückgabefristen nur ein Hinweis) */
 .rueckgaben {
     gap: 20px;
 }
-
-/* Regeln für Erinnerung und Eskalation in einer gerahmten Zeile */
-.regel-leiste {
-    align-items: center;
-    gap: 32px;
-    padding: 14px 18px;
-    font-size: 13.5px;
-    border: 1px solid var(--color-divider);
-}
-
-.regel {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-    .regel .lucide {
-        width: 16px;
-        height: 16px;
-        color: var(--color-accent-700);
-    }
-
-    .regel b {
-        font-weight: 500;
-    }
-
-.rueckgaben-filter {
-    align-self: flex-start;
-}
-
-.rueckgaben-tabelle {
-    --zelle-y: 11px;
-}
-
-    .rueckgaben-tabelle > tbody > tr > td:last-child {
-        padding-right: 16px;
-        text-align: right;
-    }
-
-/* Mobil: zwei Filter nebeneinander, Hinweis und Liste */
-.rueckgaben-filter-mobil {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
-
-    .rueckgaben-filter-mobil .seg-opt {
-        justify-content: center;
-        min-height: 40px;
-    }
-
-.regel-mobil {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12.5px;
-    color: var(--color-neutral-700);
-}
-
-    .regel-mobil .lucide {
-        width: 14px;
-        height: 14px;
-    }
-
-.rueckgabe-zeile {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-}
-
-    .rueckgabe-zeile > div {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-        .rueckgabe-zeile > div:last-child {
-            font-size: 12.5px;
-            color: var(--color-neutral-700);
-        }
-
-    .rueckgabe-zeile b {
-        font-size: 14px;
-    }
 
 @media (max-width: 991.98px) {
     .rueckgaben {

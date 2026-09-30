@@ -19,9 +19,6 @@
         }
         return zeitpunkt.Date == jetzt.Date.AddDays(-1) ? "Gestern" : zeitpunkt.ToString("dd.MM.");
     }
-
-    // Beispieldaten: Rückgabefristen gibt es im Datenmodell noch nicht (siehe Models/Beispieldaten.cs)
-    var faellig = Beispieldaten.FaelligeAusleihen;
 }
 
 <div class="seite seite-voll">
@@ -46,17 +43,7 @@
             <span class="kennzahl-wert">@Model.Verfuegbar.ToString("N0", kultur)</span>
             <span class="kennzahl-info">von @Model.Gesamt.ToString("N0", kultur) Geräten</span>
         </div>
-        @* Beispieldaten: Verleih an Personen mit Frist gibt es noch nicht *@
-        <div class="kennzahl blueprint">
-            <span class="kennzahl-label">Verliehen</span>
-            <span class="kennzahl-wert">@Beispieldaten.Verliehen</span>
-            <span class="kennzahl-info">@Beispieldaten.HeuteFaellig davon heute fällig</span>
-        </div>
-        <div class="kennzahl blueprint">
-            <span class="kennzahl-label">Überfällig</span>
-            <span class="kennzahl-wert">@Beispieldaten.Ueberfaellig</span>
-            <span class="kennzahl-info">@Beispieldaten.Eskaliert an Admins eskaliert</span>
-        </div>
+        @* "Verliehen" und "Überfällig" aus dem Design fehlen, da es Verleih an Personen mit Rückgabefrist noch nicht gibt *@
         <div class="kennzahl blueprint">
             <span class="kennzahl-label">Freigaben offen</span>
             <span class="kennzahl-wert">@Model.OffeneFreigaben</span>
@@ -64,64 +51,20 @@
         </div>
     </div>
 
-    @* Desktop: fällige Ausleihen als Tabelle, daneben die letzten Buchungen *@
-    <div class="uebersicht-raster seite-fuellen d-none d-lg-grid">
-        <div class="blueprint">
-            <div class="panel-kopf">
-                <h4>Überfällig &amp; bald fällig</h4>
-                <a class="btn btn-ghost btn-sm" asp-controller="Rueckgabe" asp-action="Index">Alle Rückgaben</a>
-            </div>
-            <table class="table liste-tabelle">
-                <thead>
-                    <tr>
-                        <th>Gerät</th>
-                        <th>Ausgeliehen an</th>
-                        <th>Fällig</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var ausleihe in faellig)
-                    {
-                        <tr>
-                            <td>
-                                <div class="fw-medium">@ausleihe.Geraet</div>
-                                <div class="nebeninfo">@ausleihe.InventarNr</div>
-                            </td>
-                            <td>@ausleihe.Ausleiher</td>
-                            <td>@ausleihe.Faellig</td>
-                            <td><span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="blueprint aktivitaeten">
-            <h4>Aktivität</h4>
-            @foreach (var aktivitaet in Model.Aktivitaeten)
-            {
-                <div class="aktivitaet">
-                    <span class="aktivitaet-zeit">@Zeit(aktivitaet.Zeitpunkt)</span>
-                    <span>@aktivitaet.Text</span>
-                </div>
-            }
-            @if (Model.Aktivitaeten.Count == 0)
-            {
-                <p class="aktivitaet-leer">Noch keine Buchungen.</p>
-            }
-        </div>
-    </div>
-
-    @* Mobil: nur die fälligen Ausleihen als Liste *@
-    <section class="d-lg-none">
-        <h4 class="liste-titel">Bald fällig</h4>
-        @foreach (var ausleihe in faellig)
+    @* Die letzten Buchungen, auf dem Desktop bis zum unteren Rand gestreckt. Die Tabelle "Überfällig & bald fällig"
+       aus dem Design fehlt, da es Rückgabefristen noch nicht gibt *@
+    <div class="blueprint aktivitaeten seite-fuellen">
+        <h4>Aktivität</h4>
+        @foreach (var aktivitaet in Model.Aktivitaeten)
         {
-            <div class="listen-zeile">
-                <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">@ausleihe.Ausleiher · @ausleihe.Faellig</span></span>
-                <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+            <div class="aktivitaet">
+                <span class="aktivitaet-zeit">@Zeit(aktivitaet.Zeitpunkt)</span>
+                <span>@aktivitaet.Text</span>
             </div>
         }
-    </section>
+        @if (Model.Aktivitaeten.Count == 0)
+        {
+            <p class="aktivitaet-leer">Noch keine Buchungen.</p>
+        }
+    </div>
 </div>

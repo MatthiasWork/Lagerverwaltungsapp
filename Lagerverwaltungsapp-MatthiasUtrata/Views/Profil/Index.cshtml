@@ -16,8 +16,13 @@
     // "L. Brandt" für den Tag "wartet auf ..."
     string Kurzname(Person? p) => p == null ? "–" : $"{(p.Vorname.Length > 0 ? p.Vorname[..1] + ". " : "")}{p.Nachname}";
 
-    // Beispieldaten: Verleih an Personen gibt es noch nicht (siehe Models/Beispieldaten.cs)
-    var ausleihen = Beispieldaten.EigeneAusleihen;
+    // Offene Transfers, die die Person angelegt hat, je Zielraum zusammengefasst
+    var anfragen = Model.OffeneTransfers.GroupBy(l => l.NachRaumID).ToList();
+    var anfragenTitel = Model.IstEigenesProfil ? "Meine Anfragen" : "Anfragen";
+
+    // Beschreibung einer Anfrage: erster Gegenstand und wie viele Positionen noch dazugehören
+    string AnfrageText(IGrouping<string, Lagerbewegung> anfrage) =>
+        anfrage.First().Gegenstand.Name + (anfrage.Count() > 1 ? $" + {anfrage.Count() - 1} Pos." : "");
 }
 
 @* Desktop *@
@@ -40,16 +45,19 @@
     </div>
 
     <div class="profil-raster">
-        @* Beispiel aus dem Design *@
+        @* Statt "Aktuelle Ausleihen" aus dem Design (Verleih an Personen gibt es noch nicht) die offenen Anfragen wie mobil *@
         <div class="blueprint profil-karte breit">
-            <span class="card-kicker">Aktuelle Ausleihen · @ausleihen.Count</span>
-            @foreach (var ausleihe in ausleihen)
+            <span class="card-kicker">@anfragenTitel · @anfragen.Count</span>
+            @foreach (var anfrage in anfragen)
             {
-                <div class="ausleihe-zeile">
-                    <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">@ausleihe.InventarNr</span></span>
-                    <span class="ausleihe-bis">bis @ausleihe.Bis</span>
-                    <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
+                <div class="anfrage-zeile">
+                    <span><b class="fw-medium">Transfer nach @anfrage.Key</b><br /><span class="nebeninfo">@AnfrageText(anfrage)</span></span>
+                    <span class="tag tag-accent">wartet auf @Kurzname(anfrage.First().NachRaum.Person)</span>
                 </div>
+            }
+            @if (anfragen.Count == 0)
+            {
+                <p class="aktivitaet-leer">Keine offenen Anfragen.</p>
             }
         </div>
 
@@ -98,33 +106,20 @@
         </div>
     </div>
 
-    @* Beispiel aus dem Design *@
+    @* "Meine Ausleihen" aus dem Design fehlt, da es Verleih an Personen noch nicht gibt *@
     <section>
-        <h6>@(Model.IstEigenesProfil ? "Meine Ausleihen" : "Ausleihen")</h6>
-        @foreach (var ausleihe in ausleihen)
+        <h6>@anfragenTitel</h6>
+        @foreach (var anfrage in anfragen)
         {
-            <div class="profil-zeile">
-                <span><b class="fw-medium">@ausleihe.Geraet</b><br /><span class="nebeninfo">bis @ausleihe.BisMobil</span></span>
-                <span class="tag @StatusTag.Klasse(ausleihe.Status)">@ausleihe.Status</span>
-            </div>
-        }
-    </section>
-
-    @* Offene Transfers, die die Person angelegt hat, je Zielraum zusammengefasst *@
-    <section>
-        <h6>@(Model.IstEigenesProfil ? "Meine Anfragen" : "Anfragen")</h6>
-        @foreach (var anfrage in Model.OffeneTransfers.GroupBy(l => l.NachRaumID))
-        {
-            var erste = anfrage.First();
             <div class="profil-zeile">
                 <span>
                     <b class="fw-medium">Transfer nach @anfrage.Key</b><br />
-                    <span class="nebeninfo">@erste.Gegenstand.Name@(anfrage.Count() > 1 ? $" + {anfrage.Count() - 1} Pos." : "")</span>
+                    <span class="nebeninfo">@AnfrageText(anfrage)</span>
                 </span>
-                <span class="tag tag-outline">wartet auf @Kurzname(erste.NachRaum.Person)</span>
+                <span class="tag tag-outline">wartet auf @Kurzname(anfrage.First().NachRaum.Person)</span>
             </div>
         }
-        @if (Model.OffeneTransfers.Count == 0)
+        @if (anfragen.Count == 0)
         {
             <p class="aktivitaet-leer">Keine offenen Anfragen.</p>
         }

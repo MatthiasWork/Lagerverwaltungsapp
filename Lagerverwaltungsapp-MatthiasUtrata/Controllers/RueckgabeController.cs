@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 {
     // Rückgabefristen, Erinnerungen und Eskalation gibt es im Datenmodell noch nicht.
-    // Bis dahin ist "Rückgaben" eine statische Seite mit den Beispieldaten aus dem Design (Models/Beispieldaten.cs)
+    // Bis dahin zeigt "Rückgaben" nur einen Hinweis darauf
     public class RueckgabeController : Controller
     {
         /// <summary>
-        /// Methode, die die überfälligen und bald fälligen Ausleihen anzeigt (statisch, ohne Funktion).
+        /// Methode, die die Seite "Rückgaben" anzeigt (nur ein Hinweis, da es Rückgabefristen noch nicht gibt).
         /// </summary>
         /// <returns>Gibt ein IActionResult zurück</returns>
         // GET: Rueckgabe

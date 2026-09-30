@@ -75,8 +75,8 @@
     }
     @if (Model.IstAdmin)
     {
-        @* Beispieldaten: Rückgabefristen gibt es noch nicht *@
-        await Eintrag("Rückgaben", "Rueckgabe", "Index", "undo-2", Beispieldaten.Ueberfaellig);
+        @* Ohne Badge: Rückgabefristen gibt es noch nicht, daher auch keine überfälligen Ausleihen *@
+        await Eintrag("Rückgaben", "Rueckgabe", "Index", "undo-2");
     }
     @if (Model.RaumID != null)
     {
