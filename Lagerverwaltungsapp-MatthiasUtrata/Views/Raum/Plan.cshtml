@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "Räume";
+
+    // Statische Seite: Häuser, Stockwerke und die Lage der Räume gibt es im Datenmodell noch nicht,
+    // daher der Grundriss aus dem Design (Haus C, Erdgeschoss). Bereich = grid-area im Raster aus 9 Spalten
+    var raeume = new (string Nummer, string Fach, int Geraete, string Kuerzel, string Bereich)[]
+    {
+        ("C 011", "Chemie", 18, "TK", "1 / 1 / 2 / 3"),
+        ("C 013", "Biologie", 12, "AÖ", "1 / 3 / 2 / 5"),
+        ("C 015", "MINT-Labor", 42, "LB", "1 / 5 / 2 / 8"),
+        ("C 017", "Sammlung", 64, "LB", "1 / 8 / 2 / 10"),
+        ("C 010", "Werkraum", 9, "MY", "3 / 1 / 4 / 4"),
+        ("C 012", "Physik 2", 21, "PS", "3 / 4 / 4 / 6"),
+        ("C 014", "Medienraum 2", 33, "TK", "3 / 6 / 4 / 9"),
+        ("WC", "", 0, "", "3 / 9 / 4 / 10")
+    };
+    var ausgewaehlt = "C 015";
+    var bestand = new (string Kategorie, int Anzahl)[] { ("Tablets", 18), ("Robotik", 12), ("Messgeräte", 8), ("Laptops", 4) };
+
+    // Der WC-Raum ist kein Lagerraum und wird grau dargestellt
+    string Klasse(string nummer) => nummer == ausgewaehlt ? "plan-raum ausgewaehlt" : nummer == "WC" ? "plan-raum nebenraum" : "plan-raum";
+}
+
+@* Desktop *@
+<div class="seite seite-voll raumplan d-none d-lg-flex">
+    <div class="seiten-kopf">
+        <div>
+            <h1>Räume</h1>
+            <div class="seiten-untertitel">38 Räume in 3 Häusern</div>
+        </div>
+        <div class="seiten-aktionen d-flex">
+            @* Nicht im Design: die echten Räume anlegen und bearbeiten *@
+            <a class="btn btn-outline-secondary" asp-action="Index">Raumliste</a>
+            <div class="seg"><span class="seg-opt">Haus A</span><span class="seg-opt">Haus B</span><span class="seg-opt active">Haus C</span></div>
+            <div class="seg"><span class="seg-opt active">EG</span><span class="seg-opt">1. OG</span></div>
+        </div>
+    </div>
+
+    <div class="raumplan-raster seite-fuellen">
+        <div class="blueprint grundriss" aria-label="Grundriss Haus C, Erdgeschoss">
+            @foreach (var raum in raeume)
+            {
+                <div class="@Klasse(raum.Nummer)" style="grid-area: @raum.Bereich">
+                    <span class="plan-raum-nummer">@raum.Nummer</span>
+                    <span class="plan-raum-fach">@raum.Fach</span>
+                    <span class="plan-raum-fuss"><span>@(raum.Geraete > 0 ? raum.Geraete.ToString() : "")</span><span>@raum.Kuerzel</span></span>
+                </div>
+            }
+            <div class="plan-flur">Flur</div>
+        </div>
+
+        <aside class="blueprint raum-panel">
+            <span class="card-kicker">Ausgewählt</span>
+            <div>
+                <div class="raum-panel-titel">C 015 · MINT-Labor</div>
+                <div class="profil-info">Verantwortlich: Lea Brandt</div>
+            </div>
+            <div class="raum-bestand">
+                @foreach (var zeile in bestand)
+                {
+                    <div class="bestand-zeile"><span>@zeile.Kategorie</span><span>@zeile.Anzahl</span></div>
+                }
+            </div>
+            <div class="raum-panel-aktionen">
+                <button type="button" class="btn btn-outline-secondary">Geräte anzeigen</button>
+                <button type="button" class="btn btn-primary">Transfer hierher</button>
+            </div>
+        </aside>
+    </div>
+</div>
+
+@* Mobil: kleinerer Grundriss, Auswahl darunter *@
+<div class="seite raumplan-mobil d-lg-none">
+    <h1>Räume</h1>
+    <div class="seg haus-wahl"><span class="seg-opt">Haus A</span><span class="seg-opt">Haus B</span><span class="seg-opt active">Haus C</span></div>
+    <div class="grundriss grundriss-klein" aria-label="Grundriss Haus C, Erdgeschoss">
+        @foreach (var raum in raeume)
+        {
+            <div class="@Klasse(raum.Nummer)" style="grid-area: @raum.Bereich">
+                <span class="plan-raum-nummer">@raum.Nummer</span>
+                <span class="plan-raum-anzahl">@(raum.Geraete > 0 ? raum.Geraete.ToString() : "")</span>
+            </div>
+        }
+    </div>
+    <div class="blueprint raum-panel">
+        <div class="raum-panel-titel">C 015 · MINT-Labor</div>
+        <div class="raum-panel-info">Lea Brandt · 42 Geräte</div>
+        <div class="raum-panel-aktionen">
+            <button type="button" class="btn btn-outline-secondary">Geräte</button>
+            <button type="button" class="btn btn-primary">Transfer hierher</button>
+        </div>
+    </div>
+</div>

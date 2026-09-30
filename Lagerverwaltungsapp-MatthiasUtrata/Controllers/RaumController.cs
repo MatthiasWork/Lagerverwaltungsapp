@@ -26,6 +26,17 @@ public class RaumController : Controller
     }
 
     /// <summary>
+    /// Methode, die den Grundriss mit den Räumen eines Stockwerks anzeigt. Häuser, Stockwerke und die Lage der Räume
+    /// gibt es im Datenmodell noch nicht, daher ist die Seite statisch mit den Beispieldaten aus dem Design.
+    /// </summary>
+    /// <returns>Gibt ein IActionResult zurück</returns>
+    // GET: Raum/Plan
+    public IActionResult Plan()
+    {
+        return View();
+    }
+
+    /// <summary>
     /// Methode, die alle Räume mit Raumart und verantwortlicher Person anzeigt.
     /// </summary>
     /// <returns>Gibt eine Task zurück</returns>
