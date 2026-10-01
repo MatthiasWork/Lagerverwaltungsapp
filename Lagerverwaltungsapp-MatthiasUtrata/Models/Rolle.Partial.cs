@@ -4,7 +4,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 public partial class Rolle
 {
     /// <summary>
-    /// Name der Rolle, die neu registrierte Benutzer automatisch bekommen. Diese Rolle ist nie eine Admin-Rolle.
+    /// Name der Standardrolle für alle, die keine Admins sind. Die Ersteinrichtung legt sie ohne Admin-Rechte an.
     /// </summary>
     public const string LehrerIn = "LehrerIn";
 }

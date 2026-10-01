@@ -11,7 +11,7 @@ SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
 /* ---------- Rolle ---------- */
--- "LehrerIn" muss genau so heißen, da neu registrierte Benutzer diese Rolle bekommen (Rolle.LehrerIn)
+-- "LehrerIn" muss genau so heißen, sonst legt die Ersteinrichtung diese Rolle zusätzlich an (Rolle.LehrerIn)
 INSERT INTO dbo.Rolle (Name, [Admin])
 SELECT v.Name, v.[Admin]
 FROM (VALUES
@@ -148,7 +148,7 @@ WHERE NOT EXISTS (SELECT 1 FROM dbo.Hersteller h WHERE h.Name = v.Name);
 /* ---------- Person (Benutzername höchstens 20 Zeichen) ---------- */
 -- Die Passwörter sind wie im PasswordService samt Pepper aus der appsettings.json ("AlleMeineEntchen") gehasht.
 -- Wird der Pepper geändert, passen diese Hashes nicht mehr und die Konten können sich nicht mehr anmelden.
--- Die Startkonten legt sonst die Ersteinrichtung an (Passwort = Benutzername), mit ihnen kann das Skript auch vor dem ersten Start laufen.
+-- Die Startkonten haben als Passwort ihren Benutzernamen (z. B. admin/admin). Da es danach Benutzer gibt, zeigt die Anmeldung keine Registrierung mehr an.
 -- Alle anderen Konten haben das Passwort "Test1234".
 DECLARE @Test1234 varchar(max) = 'AQAAAAIAAYagAAAAEJnadFfrRR04RxK+beY0E2wLIrxiY3Xnij7Brc7ggfkMZkWost2mV4enzJlR7KKPQw==';
 

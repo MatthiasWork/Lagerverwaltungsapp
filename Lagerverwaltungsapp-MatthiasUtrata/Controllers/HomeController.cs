@@ -174,14 +174,20 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Login-Seite anzeigt.
+        /// Methode, die die Login-Seite anzeigt. Gibt es noch keinen Benutzer, wird stattdessen zur Registrierung
+        /// weitergeleitet, damit sich der erste Benutzer als Admin registrieren kann.
         /// </summary>
         /// <param name="returnUrl">Die URL, zu der nach erfolgreichem Login weitergeleitet wird</param>
-        /// <returns>Gibt ein IActionResult zurück</returns>
+        /// <returns>Gibt eine Task zurück</returns>
         // GET: Home/Login
         [AllowAnonymous]
-        public IActionResult Login(string? returnUrl)
+        public async Task<IActionResult> Login(string? returnUrl)
         {
+            if (!await _context.Person.AnyAsync())
+            {
+                return RedirectToAction(nameof(Register));
+            }
+
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -226,23 +232,30 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Registrierungsseite anzeigt. Bereits angemeldete Benutzer werden zur Startseite weitergeleitet.
+        /// Methode, die die Registrierungsseite anzeigt. Registrieren kann sich nur der erste Benutzer, solange es noch keinen gibt;
+        /// danach legt ein Admin alle weiteren Benutzer an und es wird zum Login weitergeleitet.
+        /// Bereits angemeldete Benutzer werden zur Startseite weitergeleitet.
         /// </summary>
-        /// <returns>Gibt ein IActionResult zurück</returns>
+        /// <returns>Gibt eine Task zurück</returns>
         // GET: Home/Register
         [AllowAnonymous]
-        public IActionResult Register()
+        public async Task<IActionResult> Register()
         {
             if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction(nameof(Index));
             }
+
+            if (await _context.Person.AnyAsync())
+            {
+                return RedirectToAction(nameof(Login));
+            }
             return View();
         }
 
         /// <summary>
-        /// Methode, die einen neuen Benutzer registriert, sofern der Benutzername noch nicht vergeben ist.
-        /// Neue Benutzer bekommen automatisch die Rolle "LehrerIn" und werden danach direkt angemeldet.
+        /// Methode, die den ersten Benutzer als Admin registriert und danach direkt anmeldet.
+        /// Gibt es schon einen Benutzer, wird nichts angelegt und zum Login weitergeleitet.
         /// </summary>
         /// <param name="registrierung">Das RegisterViewModel mit den Daten aus dem Formular</param>
         /// <returns>Gibt eine Task zurück</returns>
@@ -252,10 +265,10 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel registrierung)
         {
-            // Der Login sucht über den Benutzernamen, daher muss er eindeutig sein
-            if (await _context.Person.AnyAsync(p => p.Username == registrierung.Username))
+            // Auch hier prüfen, sonst könnte man sich mit einem direkt abgeschickten Formular später noch als Admin registrieren
+            if (await _context.Person.AnyAsync())
             {
-                ModelState.AddModelError(nameof(RegisterViewModel.Username), "Dieser Benutzername ist bereits vergeben.");
+                return RedirectToAction(nameof(Login));
             }
 
             if (!ModelState.IsValid)
@@ -263,10 +276,9 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 return View(registrierung);
             }
 
-            // Wer sich selbst registriert, darf nie Admin werden. Deshalb nur eine LehrerIn-Rolle ohne Admin-Rechte verwenden
-            // und sie neu anlegen, falls sie gelöscht oder zu einer Admin-Rolle gemacht wurde.
-            var lehrerInRolle = await _context.Rolle.FirstOrDefaultAsync(r => r.Name == Rolle.LehrerIn && !r.Admin)
-                ?? new Rolle { Name = Rolle.LehrerIn, Admin = false };
+            // Der erste Benutzer wird Admin, damit er alle weiteren Benutzer anlegen kann. Gibt es noch keine Admin-Rolle, wird sie angelegt
+            var adminRolle = await _context.Rolle.FirstOrDefaultAsync(r => r.Admin)
+                ?? new Rolle { Name = "Administrator", Admin = true };
 
             var person = new Person
             {
@@ -274,14 +286,13 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 Nachname = registrierung.Nachname,
                 Username = registrierung.Username,
                 Email = registrierung.Email,
-                Rolle = lehrerInRolle
+                Rolle = adminRolle
             };
             person.Password = _passwordService.HashPassword(person, registrierung.Password);
 
             _context.Person.Add(person);
             await _context.SaveChangesAsync();
 
-            // Neu registrierte Benutzer haben immer die LehrerIn-Rolle ohne Admin-Rechte, bekommen also keine Admin-Rolle
             await AnmeldenAsync(person);
 
             return RedirectToAction(nameof(Index));
