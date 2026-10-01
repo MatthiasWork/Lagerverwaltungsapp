@@ -2995,10 +2995,20 @@ span.seg-opt {
         flex: 1;
     }
 
+    /* Menüpunkt, bei dem etwas wartet (offene Freigaben): Text fett wie ungelesene Nachrichten */
+    .sidebar-link.hat-badge .label {
+        font-weight: 600;
+    }
+
+/* Zahl der offenen Freigaben: gefülltes Kästchen im dunklen Stahlblau, damit es sich vom Menü abhebt */
 .sidebar-badge {
-    padding: 1px 6px;
-    font-size: 11px;
-    background: var(--color-accent);
+    min-width: 22px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
+    background: var(--color-accent-700);
     color: var(--color-bg);
 }
 
@@ -3144,14 +3154,21 @@ span.seg-opt {
     color: var(--color-bg);
 }
 
+/* Zahl der offenen Freigaben am Icon, wie .sidebar-badge */
 .tabbar-badge {
     position: absolute;
-    top: -2px;
-    right: -6px;
-    padding: 0 4px;
-    font-size: 10px;
-    background: var(--color-accent-900);
+    top: -4px;
+    right: -9px;
+    min-width: 18px;
+    padding: 1px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+    text-align: center;
+    background: var(--color-accent-700);
     color: var(--color-bg);
+    /* Schmaler Rand in Hintergrundfarbe trennt die Zahl vom Icon darunter */
+    box-shadow: 0 0 0 2px var(--color-bg);
 }
 
 .app-content {

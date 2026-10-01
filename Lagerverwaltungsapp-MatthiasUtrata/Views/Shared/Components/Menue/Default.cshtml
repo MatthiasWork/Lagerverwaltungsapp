@@ -40,17 +40,19 @@
         rolle += $" · {Model.RaumID}";
     }
 
-    // Ein Menüpunkt mit Lucide-Icon und optionalem Badge; hervorgehoben, wenn sein Text zur aktuellen Seite passt
+    // Ein Menüpunkt mit Lucide-Icon und optionalem Badge; hervorgehoben, wenn sein Text zur aktuellen Seite passt.
+    // Mit Badge (z. B. offene Freigaben) ist der Text fett, damit gleich auffällt, dass dort etwas wartet
     async Task Eintrag(string text, string controller, string action, string icon, int badge = 0)
     {
         var istAktiv = text == aktiv;
 
-        <a class="sidebar-link @(istAktiv ? "active" : null)" asp-area="" asp-controller="@controller" asp-action="@action" aria-current="@(istAktiv ? "page" : null)">
+        <a class="sidebar-link @(istAktiv ? "active" : null) @(badge > 0 ? "hat-badge" : null)" asp-area="" asp-controller="@controller" asp-action="@action" aria-current="@(istAktiv ? "page" : null)">
             <i data-lucide="@icon"></i>
             <span class="label">@text</span>
             @if (badge > 0)
             {
-                <span class="sidebar-badge">@badge</span>
+                @* Vorgelesen als "Freigaben 3 offen" *@
+                <span class="sidebar-badge">@badge<span class="visually-hidden"> offen</span></span>
             }
         </a>
     }
