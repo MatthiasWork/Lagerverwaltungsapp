@@ -3,7 +3,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
     // Benutzer (Admin/Index)
     public class AdminUebersichtViewModel
     {
-        // Anzahl aller Benutzer und je Rolle (Schlüssel = RolleID) für den Filter "Alle · 48 | Lehrkräfte · 41 ..."
+        // Anzahl aller Benutzer und je Rolle (Schlüssel = RolleID) für die Auswahlliste "Rolle: alle · 48", "Rolle: Lehrkräfte · 41" ...
         public int AnzahlBenutzer { get; set; }
 
         public Dictionary<int, int> AnzahlJeRolle { get; set; } = new Dictionary<int, int>();

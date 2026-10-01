@@ -1865,23 +1865,6 @@ dl.row dd {
     }
 }
 
-/* Segment-Schalter mit Umbruch: bei vielen Optionen weitere Zeilen, die Optionen füllen die Breite */
-.seg-umbruch {
-    display: flex;
-    flex-wrap: wrap;
-    overflow: visible;
-    padding: 1px 0 0 1px;
-    border: 0;
-}
-
-    .seg-umbruch .seg-opt,
-    .seg-umbruch .seg-opt + .seg-opt {
-        flex: 1 0 auto;
-        justify-content: center;
-        margin: -1px 0 0 -1px;
-        border: 1px solid var(--color-divider);
-    }
-
 /* Ausgewählte Zeile einer Tabelle (z. B. Benutzer, der rechts angezeigt wird) */
 .liste-tabelle > tbody > tr.ausgewaehlt > * {
     --bs-table-bg-state: var(--color-accent-100);
@@ -1974,22 +1957,7 @@ a.tag-outline {
         background: var(--color-accent-100);
     }
 
-/* Rechte als Schalter (nur Anzeige) */
-.rechte {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 14px;
-    border-top: 1px solid var(--color-divider);
-}
-
-.recht {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13.5px;
-}
-
+/* Schalter, z. B. für den Dark Mode in der Seitenleiste */
 .schalter {
     position: relative;
     width: 32px;
@@ -2009,12 +1977,10 @@ a.tag-outline {
     }
 
     /* Der Dark-Mode-Schalter in der Seitenleiste ist an, solange der Dark Mode an ist */
-    .schalter.an,
     [data-bs-theme="dark"] .farbmodus-schalter .schalter {
         background: var(--color-accent);
     }
 
-        .schalter.an::after,
         [data-bs-theme="dark"] .farbmodus-schalter .schalter::after {
             left: auto;
             right: 2px;
@@ -2087,24 +2053,6 @@ a.tag-outline {
         .benutzer .seiten-kopf {
             align-items: center;
         }
-
-    /* Rollen als Schalter über die ganze Breite, drei je Zeile */
-    .benutzer-filter .seg {
-        display: flex;
-        flex-wrap: wrap;
-        width: 100%;
-        overflow: visible;
-        padding: 1px 0 0 1px;
-        border: 0;
-    }
-
-        .benutzer-filter .seg .seg-opt,
-        .benutzer-filter .seg .seg-opt + .seg-opt {
-            flex: 1 0 calc(100% / 3);
-            justify-content: center;
-            margin: -1px 0 0 -1px;
-            border: 1px solid var(--color-divider);
-        }
 }
 
 /* Profil */
@@ -2172,15 +2120,9 @@ a.tag-outline {
     color: var(--color-neutral-700);
 }
 
-.benachrichtigungen {
-    gap: 12px;
-}
-
-    .benachrichtigungen .profil-info {
-        font-size: 12.5px;
-    }
-
+/* Der Verlauf geht über die ganze Breite des Rasters */
 .profil-verlauf {
+    grid-column: 1 / -1;
     gap: 6px;
 }
 
@@ -2235,37 +2177,6 @@ a.tag-outline {
     .profil-zeile .tag:not(.tag-outline) {
         border-width: 0;
     }
-
-.profil-mobil .benachrichtigungen {
-    gap: 12px;
-}
-
-    .profil-mobil .benachrichtigungen h6 {
-        margin: 0;
-    }
-
-    .profil-mobil .benachrichtigungen .recht {
-        min-height: 28px;
-        font-size: 14px;
-    }
-
-    /* Größere Schalter zum Tippen */
-    .profil-mobil .benachrichtigungen .schalter {
-        width: 40px;
-        height: 22px;
-    }
-
-        .profil-mobil .benachrichtigungen .schalter::after {
-            top: 3px;
-            left: 3px;
-            width: 16px;
-            height: 16px;
-        }
-
-        .profil-mobil .benachrichtigungen .schalter.an::after {
-            left: auto;
-            right: 3px;
-        }
 
 /* Alle Bereiche: das Menü der Seitenleiste als Liste, darunter Abmelden über die ganze Breite */
 .profil-menue .sidebar-nav {
@@ -2486,167 +2397,6 @@ span.seg-opt {
         background-color: transparent;
     }
 
-/* Räume: Grundriss (statisch) */
-.raumplan {
-    gap: 20px;
-}
-
-    .raumplan .seiten-aktionen {
-        gap: 10px;
-    }
-
-.raumplan-raster {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 24px;
-}
-
-/* Grundriss: Raster aus 9 Spalten auf Karopapier, die Räume liegen über grid-area */
-.grundriss {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    grid-template-rows: 1fr 70px 1fr;
-    padding: 24px;
-    background: repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px);
-}
-
-/* Benachbarte Räume teilen sich die Wand (-1 px) */
-.plan-raum {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: -1px 0 0 -1px;
-    padding: 12px;
-    border: 1px solid var(--color-neutral-600);
-}
-
-    .plan-raum.ausgewaehlt {
-        background: var(--color-accent-100);
-    }
-
-    .plan-raum.nebenraum {
-        background: var(--color-neutral-200);
-    }
-
-.plan-raum-nummer {
-    font: 600 18px var(--font-heading);
-}
-
-.plan-raum-fach {
-    font-size: 12.5px;
-    color: var(--color-neutral-800);
-}
-
-.plan-raum-fuss {
-    display: flex;
-    justify-content: space-between;
-    margin-top: auto;
-    font-size: 12px;
-    color: var(--color-neutral-700);
-}
-
-.plan-flur {
-    grid-area: 2 / 1 / 3 / 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--color-neutral-600);
-}
-
-.raum-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    align-self: start;
-    padding: 20px;
-}
-
-.raum-panel-titel {
-    font: 600 28px var(--font-heading);
-}
-
-.raum-bestand {
-    border-top: 1px solid var(--color-divider);
-}
-
-.raum-panel-aktionen {
-    display: flex;
-    gap: 8px;
-}
-
-    .raum-panel-aktionen .btn {
-        flex: 1;
-    }
-
-/* Räume mobil: kleinerer Grundriss mit gerahmtem Rand */
-.raumplan-mobil {
-    gap: 12px;
-}
-
-    .raumplan-mobil h1 {
-        margin: 0;
-    }
-
-.haus-wahl {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-}
-
-    .haus-wahl .seg-opt {
-        justify-content: center;
-        min-height: 40px;
-    }
-
-.grundriss-klein {
-    grid-template-rows: 110px 36px 110px;
-    padding: 10px;
-    border: 1px solid var(--color-divider);
-    background: repeating-linear-gradient(0deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px), repeating-linear-gradient(90deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px);
-}
-
-    .grundriss-klein .plan-raum {
-        gap: 0;
-        padding: 5px;
-        overflow: hidden;
-    }
-
-    .grundriss-klein .plan-raum-nummer {
-        font-size: 12px;
-    }
-
-.plan-raum-anzahl {
-    font-size: 10px;
-    color: var(--color-neutral-700);
-}
-
-.raumplan-mobil .raum-panel {
-    align-self: stretch;
-    gap: 6px;
-    padding: 14px;
-}
-
-.raumplan-mobil .raum-panel-titel {
-    font-size: 22px;
-}
-
-.raum-panel-info {
-    font-size: 12.5px;
-    color: var(--color-neutral-700);
-}
-
-.raumplan-mobil .raum-panel-aktionen {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-top: 6px;
-}
-
-    .raumplan-mobil .raum-panel-aktionen .btn {
-        min-height: 44px;
-    }
-
 /* Scannen (statisch) */
 .scan {
     gap: 22px;
@@ -2750,6 +2500,11 @@ span.seg-opt {
 
 .scan-geraet-name {
     font: 600 22px var(--font-heading);
+}
+
+.raum-panel-info {
+    font-size: 12.5px;
+    color: var(--color-neutral-700);
 }
 
 .scan-aktionen {

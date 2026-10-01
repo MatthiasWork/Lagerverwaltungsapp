@@ -15,8 +15,6 @@
         "Ausleihe" => "Ausleihen",
         "Lager" => "Aus dem Lager",
         "Uebernahme" => "Freigaben",
-        // Der Grundriss ist "Räume" wie im Design, Liste, Anlegen und Bearbeiten gehören zu den Stammdaten
-        "Raum" when aktion.ActionName == "Plan" => "Räume",
         "Raum" => "Raumliste",
         "Admin" or "Person" or "Rolle" => "Benutzer",
         // Profil einer anderen Person (mit ID, aus der Benutzerliste); das eigene hat keinen Menüpunkt
@@ -84,7 +82,6 @@
     }
     @if (Model.IstAdmin)
     {
-        await Eintrag("Räume", "Raum", "Plan", "map");
         await Eintrag("Benutzer", "Admin", "Index", "users");
 
         @* Stammdaten gibt es im Design nicht; sie bleiben für Admins unter den Menüpunkten des Designs erreichbar *@

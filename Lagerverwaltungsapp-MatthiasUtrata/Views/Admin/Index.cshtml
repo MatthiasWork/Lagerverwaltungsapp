@@ -3,8 +3,7 @@
 @{
     ViewData["Title"] = "Benutzer";
 
-    // Links auf die Benutzerliste; Suche, Rolle und ausgewählter Benutzer bleiben erhalten, wenn nicht anders angegeben
-    string RolleLink(int? rolleID) => Url.Action("Index", new { suche = Model.Suche, rolleID })!;
+    // Link auf einen Benutzer der Liste; Suche und Rolle bleiben erhalten
     string AuswahlLink(int id) => Url.Action("Index", new { suche = Model.Suche, rolleID = Model.RolleID, id })!;
 
     // Räume, für die eine Person verantwortlich ist, z. B. "HL · Hauptlager"
@@ -41,21 +40,20 @@
     @* Rückmeldungen aus dem PersonController (Anlegen, Speichern, Löschen) *@
     <partial name="_Meldungen" />
 
-    <div class="benutzer-filter">
-        <nav class="seg" aria-label="Rolle">
-            @* Die Anzahl nur am Desktop; ein gemeinsames span, damit kein Abstand der Flexbox dazwischenkommt *@
-            <a class="seg-opt @(Model.RolleID == null ? "active" : null)" href="@RolleLink(null)"><span>Alle<span class="d-none d-lg-inline"> · @Model.AnzahlBenutzer</span></span></a>
+    @* Rolle sofort bei Änderung (site.js), Suche mit Enter; beide bleiben beim Abschicken erhalten. Die Suche nur am Desktop *@
+    <form class="benutzer-filter" asp-action="Index" method="get">
+        <select asp-for="RolleID" class="filter-auswahl" data-auto-absenden aria-label="Rolle">
+            <option value="">Rolle: alle · @Model.AnzahlBenutzer</option>
             @foreach (var rolle in Model.Rollen)
             {
-                <a class="seg-opt @(rolle.ID == Model.RolleID ? "active" : null)" href="@RolleLink(rolle.ID)"><span>@rolle.Name<span class="d-none d-lg-inline"> · @Model.AnzahlJeRolle.GetValueOrDefault(rolle.ID)</span></span></a>
+                <option value="@rolle.ID">Rolle: @rolle.Name · @Model.AnzahlJeRolle.GetValueOrDefault(rolle.ID)</option>
             }
-        </nav>
-        <form class="feld-mit-icon benutzer-suche d-none d-lg-block" asp-action="Index" method="get">
-            <input type="hidden" asp-for="RolleID" />
+        </select>
+        <div class="feld-mit-icon benutzer-suche d-none d-lg-block">
             <input asp-for="Suche" class="form-control" placeholder="Name oder E-Mail" aria-label="Suche" />
             <i data-lucide="search"></i>
-        </form>
-    </div>
+        </div>
+    </form>
 
     @if (Model.Benutzer.Count == 0)
     {
@@ -108,13 +106,6 @@
             @if (ausgewaehlt != null)
             {
                 var raeume = Raeume(ausgewaehlt);
-                // Rechte ergeben sich aus der Rolle (Admin) und der Raumverantwortung, hier nur angezeigt
-                var rechte = new (string Text, bool An)[]
-                {
-                    ("Transfers freigeben", raeume.Count > 0),
-                    ("Geräte erfassen", ausgewaehlt.Rolle.Admin),
-                    ("Benutzer verwalten", ausgewaehlt.Rolle.Admin)
-                };
 
                 <aside class="blueprint benutzer-panel" aria-label="Ausgewählter Benutzer">
                     <div class="benutzer-kopf">
@@ -127,12 +118,7 @@
                     <div>
                         <span class="form-label">Rolle</span>
                         @* Nur Anzeige; die Rolle ändert man über "Bearbeiten" *@
-                        <div class="seg seg-umbruch">
-                            @foreach (var rolle in Model.Rollen)
-                            {
-                                <span class="seg-opt @(rolle.ID == ausgewaehlt.RolleID ? "active" : null)">@rolle.Name</span>
-                            }
-                        </div>
+                        <div><span class="tag tag-accent">@ausgewaehlt.Rolle.Name</span></div>
                     </div>
                     <div>
                         <span class="form-label">Verantwortlich für Räume</span>
@@ -144,16 +130,6 @@
                             @* Die Zuständigkeit legt man beim Raum fest *@
                             <a class="tag tag-outline" asp-controller="Raum" asp-action="Index">+ Raum</a>
                         </div>
-                    </div>
-                    <div class="rechte">
-                        <span class="angabe-label">Rechte</span>
-                        @foreach (var recht in rechte)
-                        {
-                            <div class="recht">
-                                @recht.Text
-                                <span class="schalter @(recht.An ? "an" : null)" role="img" aria-label="@(recht.An ? "ja" : "nein")"></span>
-                            </div>
-                        }
                     </div>
                     <div class="panel-aktionen">
                         <a class="btn btn-outline-secondary" asp-controller="Profil" asp-action="Index" asp-route-id="@ausgewaehlt.ID">Profil öffnen</a>

@@ -126,15 +126,7 @@
             <div class="profil-info">@raumInfo</div>
         </div>
 
-        @* Beispiel aus dem Design: Benachrichtigungen gibt es noch nicht *@
-        <div class="blueprint profil-karte benachrichtigungen">
-            <span class="card-kicker">Benachrichtigungen</span>
-            <div class="recht">Push aufs Handy<span class="schalter an" role="img" aria-label="an"></span></div>
-            <div class="recht">In-App-Postfach<span class="schalter an" role="img" aria-label="an"></span></div>
-            <div class="profil-info">Das Postfach ist immer aktiv.</div>
-        </div>
-
-        <div class="blueprint profil-karte profil-verlauf breit">
+        <div class="blueprint profil-karte profil-verlauf">
             <span class="card-kicker">Verlauf</span>
             @foreach (var eintrag in Model.Verlauf)
             {
@@ -178,13 +170,6 @@
         {
             <p class="aktivitaet-leer">Keine offenen Anfragen.</p>
         }
-    </section>
-
-    @* Beispiel aus dem Design: Benachrichtigungen gibt es noch nicht *@
-    <section class="benachrichtigungen">
-        <h6>Benachrichtigungen</h6>
-        <div class="recht">Push<span class="schalter an" role="img" aria-label="an"></span></div>
-        <div class="recht">In-App-Postfach<span class="schalter an" role="img" aria-label="an"></span></div>
     </section>
 
     @* Nicht im Design: Mobil gibt es keine Seitenleiste, daher hier alle Bereiche und Abmelden *@
