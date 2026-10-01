@@ -13,7 +13,6 @@
         "Gegenstand" => "Katalog",
         "Ausleihe" => "Ausleihen",
         "Lager" => "Aus dem Lager",
-        "Rueckgabe" => "Rückgaben",
         "Uebernahme" => "Freigaben",
         // Der Grundriss ist "Räume" wie im Design, Liste, Anlegen und Bearbeiten gehören zu den Stammdaten
         "Raum" when aktion.ActionName == "Plan" => "Räume",
@@ -73,11 +72,6 @@
     {
         @* Geräte aus einem Lager in den eigenen Raum holen, daher wie "Mein Raum" nur mit eigenem Raum *@
         await Eintrag("Aus dem Lager", "Lager", "Index", "warehouse");
-    }
-    @if (Model.IstAdmin)
-    {
-        @* Ohne Badge: Rückgabefristen gibt es noch nicht, daher auch keine überfälligen Ausleihen *@
-        await Eintrag("Rückgaben", "Rueckgabe", "Index", "undo-2");
     }
     @if (Model.RaumID != null)
     {

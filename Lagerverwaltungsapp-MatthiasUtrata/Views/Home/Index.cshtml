@@ -74,7 +74,6 @@
             <span class="kennzahl-wert">@Model.Verfuegbar.ToString("N0", kultur)</span>
             <span class="kennzahl-info">von @Model.Gesamt.ToString("N0", kultur) Geräten</span>
         </div>
-        @* "Verliehen" und "Überfällig" aus dem Design fehlen, da es Verleih an Personen mit Rückgabefrist noch nicht gibt *@
         <div class="kennzahl blueprint">
             <span class="kennzahl-label">Freigaben offen</span>
             <span class="kennzahl-wert">@Model.OffeneFreigaben</span>
@@ -82,8 +81,7 @@
         </div>
     </div>
 
-    @* Die letzten Buchungen, auf dem Desktop bis zum unteren Rand gestreckt. Die Tabelle "Überfällig & bald fällig"
-       aus dem Design fehlt, da es Rückgabefristen noch nicht gibt *@
+    @* Die letzten Buchungen, auf dem Desktop bis zum unteren Rand gestreckt *@
     <div class="blueprint aktivitaeten seite-fuellen">
         <h4>Aktivität</h4>
         @foreach (var aktivitaet in Model.Aktivitaeten)
