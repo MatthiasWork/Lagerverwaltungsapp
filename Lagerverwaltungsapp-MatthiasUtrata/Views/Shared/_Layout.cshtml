@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · BSEVITA Geräteverleih</title>
     <script type="importmap"></script>
+    @* Dark Mode: der gemerkte Modus (sonst der des Betriebssystems) muss feststehen, bevor die Seite gezeichnet wird,
+       sonst blitzt sie beim Laden kurz hell auf. Daher hier direkt im <head> statt in site.js, dort ist der Schalter *@
+    <script>
+            (function () {
+                var modus = null;
+                try {
+                    modus = localStorage.getItem('farbmodus');
+                } catch (e) {
+                    // Ohne Zugriff auf den Speicher (z. B. gesperrt im Browser) gilt der Modus des Betriebssystems
+                }
+                if (modus !== 'dark' && modus !== 'light') {
+                    modus = 'light';
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        modus = 'dark';
+                    }
+                }
+                document.documentElement.setAttribute('data-bs-theme', modus);
+            })();
+    </script>
     @* Schriften des Design-Systems: Barlow (Text) und Barlow Condensed (Überschriften) *@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

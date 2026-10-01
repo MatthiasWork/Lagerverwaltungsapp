@@ -97,19 +97,29 @@
     }
 </nav>
 
-<div class="sidebar-user">
-    @* Name und Avatar führen zum eigenen Profil *@
-    <a class="sidebar-user-link" asp-area="" asp-controller="Profil" asp-action="Index" asp-route-id="">
-        <span class="avatar" aria-hidden="true">@initialen</span>
-        <span class="sidebar-user-text">
-            <span class="sidebar-user-name">@vorname @nachname</span>
-            <span class="sidebar-user-role">@rolle</span>
-        </span>
-    </a>
-    <form asp-area="" asp-controller="Home" asp-action="Logout" method="post">
-        @* In der Seitenleiste nur das Icon, im Profil (mobil) mit Text *@
-        <button type="submit" class="btn btn-outline-secondary btn-icon" title="Abmelden" aria-label="Abmelden">
-            <i data-lucide="log-out"></i><span class="abmelden-text">Abmelden</span>
-        </button>
-    </form>
+<div class="sidebar-fuss">
+    @* Wechselt zwischen hellem und dunklem Modus (site.js); die Wahl merkt sich der Browser.
+       Ob der Schalter an ist, kommt aus site.css, da der Modus schon vor dem Zeichnen der Seite feststeht *@
+    <button type="button" class="sidebar-link farbmodus-schalter" role="switch" aria-checked="false" data-farbmodus-schalter>
+        <i data-lucide="moon"></i>
+        <span class="label">Dark Mode</span>
+        <span class="schalter" aria-hidden="true"></span>
+    </button>
+
+    <div class="sidebar-user">
+        @* Name und Avatar führen zum eigenen Profil *@
+        <a class="sidebar-user-link" asp-area="" asp-controller="Profil" asp-action="Index" asp-route-id="">
+            <span class="avatar" aria-hidden="true">@initialen</span>
+            <span class="sidebar-user-text">
+                <span class="sidebar-user-name">@vorname @nachname</span>
+                <span class="sidebar-user-role">@rolle</span>
+            </span>
+        </a>
+        <form asp-area="" asp-controller="Home" asp-action="Logout" method="post">
+            @* In der Seitenleiste nur das Icon, im Profil (mobil) mit Text *@
+            <button type="submit" class="btn btn-outline-secondary btn-icon" title="Abmelden" aria-label="Abmelden">
+                <i data-lucide="log-out"></i><span class="abmelden-text">Abmelden</span>
+            </button>
+        </form>
+    </div>
 </div>
