@@ -16,14 +16,14 @@ public partial class Bewegungsart
     /// <summary>
     /// Name der Bewegungsart, die eine Lagerbewegung bekommt, wenn der Zielraum sie ablehnt oder der Von-Raum sie zurückzieht.
     /// Anders als die übrigen Bewegungsarten hat sie eine Bedeutung: Sie wird nur vom LagerService vergeben, kann im Formular
-    /// nicht gewählt werden und kann weder umbenannt noch gelöscht werden. Der Start legt sie an, falls sie fehlt.
+    /// nicht gewählt werden und kann weder umbenannt noch gelöscht werden. Angelegt wird sie mit dem SQL-Skript Testdaten.sql.
     /// </summary>
     public const string Storniert = "Storniert";
 
     /// <summary>
     /// Name der Bewegungsart, die eine Korrekturbuchung bekommt, mit der ein Admin den Bestand eines Raums korrigiert (z. B. nach
     /// einer Inventur). Wie "Storniert" wird sie nur vom LagerService vergeben, kann im Formular nicht gewählt werden und kann
-    /// weder umbenannt noch gelöscht werden. Der Start legt sie an, falls sie fehlt.
+    /// weder umbenannt noch gelöscht werden. Angelegt wird sie mit dem SQL-Skript Testdaten.sql.
     /// </summary>
     public const string Korrektur = "Korrektur";
 

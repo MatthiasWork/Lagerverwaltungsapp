@@ -11,7 +11,6 @@ SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
 /* ---------- Rolle ---------- */
--- "LehrerIn" muss genau so heißen, sonst legt die Ersteinrichtung diese Rolle zusätzlich an (Rolle.LehrerIn)
 INSERT INTO dbo.Rolle (Name, [Admin])
 SELECT v.Name, v.[Admin]
 FROM (VALUES

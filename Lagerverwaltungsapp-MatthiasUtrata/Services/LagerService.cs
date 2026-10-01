@@ -269,11 +269,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                     return "Diesen Raum gibt es nicht.";
                 }
 
-                // Die Ersteinrichtung legt die Bewegungsart bei jedem Start an, falls sie fehlt
+                // Die Bewegungsart legt das SQL-Skript Testdaten.sql an, über die Oberfläche kann sie nicht angelegt werden
                 var korrektur = await _context.Bewegungsart.FirstOrDefaultAsync(b => b.Name == Bewegungsart.Korrektur);
                 if (korrektur == null)
                 {
-                    return $"Die Bewegungsart \"{Bewegungsart.Korrektur}\" fehlt. Bitte die Anwendung neu starten, dann wird sie angelegt.";
+                    return $"Die Bewegungsart \"{Bewegungsart.Korrektur}\" fehlt in der Datenbank. Sie wird mit dem SQL-Skript Testdaten.sql angelegt.";
                 }
 
                 var geaendert = positionen.Where(p => p.Value.Neu != p.Value.Bisher).ToList();
@@ -538,11 +538,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung storniert wurde</returns>
         private async Task<string?> StornierenAsync(Lagerbewegung lagerbewegung)
         {
-            // Die Ersteinrichtung legt die Bewegungsart bei jedem Start an, falls sie fehlt
+            // Die Bewegungsart legt das SQL-Skript Testdaten.sql an, über die Oberfläche kann sie nicht angelegt werden
             var storniert = await _context.Bewegungsart.FirstOrDefaultAsync(b => b.Name == Bewegungsart.Storniert);
             if (storniert == null)
             {
-                return $"Die Bewegungsart \"{Bewegungsart.Storniert}\" fehlt. Bitte die Anwendung neu starten, dann wird sie angelegt.";
+                return $"Die Bewegungsart \"{Bewegungsart.Storniert}\" fehlt in der Datenbank. Sie wird mit dem SQL-Skript Testdaten.sql angelegt.";
             }
 
             lagerbewegung.Bewegungsart = storniert;

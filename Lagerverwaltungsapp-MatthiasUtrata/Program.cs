@@ -30,17 +30,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddScoped<IPasswordHasher<Person>, PasswordHasher<Person>>();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<LagerService>();
-builder.Services.AddScoped<SeedService>();
 
 var app = builder.Build();
-
-// Ersteinrichtung: fehlende Stammdaten anlegen (Rollen) und Beispieldaten (Raumarten, Bewegungsarten, Räume).
-// Benutzer werden keine angelegt, der erste Benutzer registriert sich selbst als Admin
-using (var scope = app.Services.CreateScope())
-{
-    var seedService = scope.ServiceProvider.GetRequiredService<SeedService>();
-    await seedService.SeedAsync();
-}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

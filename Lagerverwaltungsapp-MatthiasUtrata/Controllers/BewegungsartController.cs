@@ -182,8 +182,8 @@ public class BewegungsartController : Controller
     }
 
     /// <summary>
-    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. Die gibt es schon (der Start legt
-    /// sie an), und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
+    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. Die gibt es schon (Testdaten.sql
+    /// legt sie an), und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
     /// </summary>
     /// <param name="bewegungsart">Die Bewegungsart aus dem Formular</param>
     private void FesteNichtNeuVergeben(Bewegungsart bewegungsart)
