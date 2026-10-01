@@ -9,6 +9,7 @@
     var aktiv = aktion?.ControllerName switch
     {
         "Home" => "Übersicht",
+        "MeinRaum" when aktion.ActionName == "Wareneingang" => "Wareneingang",
         "MeinRaum" => "Mein Raum",
         "Gegenstand" => "Katalog",
         "Ausleihe" => "Ausleihen",
@@ -63,6 +64,8 @@
     @if (Model.RaumID != null)
     {
         await Eintrag("Mein Raum", "MeinRaum", "Index", "door-open");
+        @* Neue Gegenstände in den Bestand des eigenen Raums einbuchen, daher wie "Mein Raum" nur mit eigenem Raum *@
+        await Eintrag("Wareneingang", "MeinRaum", "Wareneingang", "package-plus");
     }
     @{
         await Eintrag("Katalog", "Gegenstand", "Index", "package");

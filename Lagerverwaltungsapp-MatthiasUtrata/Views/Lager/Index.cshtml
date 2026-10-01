@@ -116,15 +116,8 @@
 
                     <div class="transfer-optionen">
                         <div>
-                            <span class="form-label d-none d-lg-block">Art</span>
-                            <div class="seg transfer-art" role="radiogroup" aria-label="Bewegungsart">
-                                @foreach (var art in Model.Bewegungsarten)
-                                {
-                                    <label class="seg-opt">
-                                        <input type="radio" name="BewegungsartID" value="@art.Value" checked="@art.Selected" required />@art.Text
-                                    </label>
-                                }
-                            </div>
+                            <label class="form-label" asp-for="BewegungsartID"></label>
+                            <select asp-for="BewegungsartID" asp-items="Model.Bewegungsarten" class="form-select" required></select>
                             <span asp-validation-for="BewegungsartID" class="text-danger"></span>
                         </div>
                     </div>

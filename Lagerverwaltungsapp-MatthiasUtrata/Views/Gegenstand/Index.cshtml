@@ -3,15 +3,6 @@
 @{
     ViewData["Title"] = "Katalog";
 
-    // Direkt als Schalter nur die Kategorien mit den meisten Geräten, alle übrigen in der Auswahl "Weitere"
-    const int schalterAnzahl = 3;
-    var schalter = Model.Kategorien.Take(schalterAnzahl).ToList();
-    var weitere = Model.Kategorien.Skip(schalterAnzahl).ToList();
-    var aktivInWeitere = weitere.Any(k => k.ID == Model.KategorieID);
-
-    // Link auf den Katalog mit einer anderen Kategorie; Suche, Raum und Status bleiben erhalten
-    string KategorieLink(int? kategorieID) => Url.Action("Index", new { suche = Model.Suche, kategorieID, raumID = Model.RaumID, status = Model.Status })!;
-
     // Unter dem Namen: Kategorie, bei Gegenständen ohne Seriennummer auch die Stückzahl
     string Zusatz(KatalogEintrag eintrag)
     {
@@ -43,31 +34,19 @@
 
     <partial name="_Meldungen" />
 
-    @* Suche mit Enter, Raum und Status sofort bei Änderung (site.js); die Kategorie wählt man über die Links *@
+    @* Suche mit Enter, Kategorie, Raum und Status sofort bei Änderung (site.js). Die Kategorie gibt es auch mobil *@
     <form class="katalog-filter" asp-action="Index" method="get">
         <div class="feld-mit-icon katalog-suche">
             <input asp-for="Suche" class="form-control" placeholder="Name, Seriennummer oder Raum" aria-label="Suche" />
             <i data-lucide="search"></i>
         </div>
-        <input type="hidden" asp-for="KategorieID" />
-
-        <div class="seg d-none d-lg-inline-flex" role="group" aria-label="Kategorie">
-            <a class="seg-opt @(Model.KategorieID == null ? "active" : null)" href="@KategorieLink(null)">Alle</a>
-            @foreach (var kategorie in schalter)
+        <select asp-for="KategorieID" class="filter-auswahl" data-auto-absenden aria-label="Kategorie">
+            <option value="">Kategorie: alle</option>
+            @foreach (var kategorie in Model.Kategorien)
             {
-                <a class="seg-opt @(kategorie.ID == Model.KategorieID ? "active" : null)" href="@KategorieLink(kategorie.ID)">@kategorie.Name</a>
+                <option value="@kategorie.ID">Kategorie: @kategorie.Name</option>
             }
-            @if (weitere.Count > 0)
-            {
-                <select class="seg-opt seg-auswahl @(aktivInWeitere ? "active" : null)" data-link-auswahl aria-label="Weitere Kategorien">
-                    <option value="" disabled selected="@(!aktivInWeitere)">Weitere</option>
-                    @foreach (var kategorie in weitere)
-                    {
-                        <option value="@KategorieLink(kategorie.ID)" selected="@(kategorie.ID == Model.KategorieID)">@kategorie.Name</option>
-                    }
-                </select>
-            }
-        </div>
+        </select>
 
         <select asp-for="RaumID" class="filter-auswahl ms-auto d-none d-lg-block" data-auto-absenden aria-label="Raum">
             <option value="">Raum: alle</option>
@@ -84,15 +63,6 @@
             }
         </select>
     </form>
-
-    @* Mobil: Kategorien als Chips zum Wischen *@
-    <nav class="kategorie-chips d-lg-none" aria-label="Kategorie">
-        <a class="chip @(Model.KategorieID == null ? "active" : null)" href="@KategorieLink(null)">Alle</a>
-        @foreach (var kategorie in Model.Kategorien)
-        {
-            <a class="chip @(kategorie.ID == Model.KategorieID ? "active" : null)" href="@KategorieLink(kategorie.ID)">@kategorie.Name</a>
-        }
-    </nav>
 
     @if (Model.Eintraege.Count == 0)
     {

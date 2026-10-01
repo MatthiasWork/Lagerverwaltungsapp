@@ -82,7 +82,7 @@ public class GegenstandController : Controller
             KategorieID = kategorieID,
             RaumID = raumID,
             Status = status,
-            Kategorien = await _context.Kategorie.OrderByDescending(k => k.Gegenstand.Count).ThenBy(k => k.Name).ToListAsync(),
+            Kategorien = await _context.Kategorie.OrderBy(k => k.Name).ToListAsync(),
             Raeume = await _context.Raum.OrderBy(r => r.ID).Select(r => r.ID).ToListAsync()
         };
 

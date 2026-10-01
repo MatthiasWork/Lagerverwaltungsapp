@@ -9,15 +9,6 @@ document.querySelectorAll('[data-auto-absenden]').forEach(function (auswahl) {
     });
 });
 
-// Auswahlliste mit Links als Werten (data-link-auswahl, z. B. "Weitere Kategorien"): öffnet den gewählten Link
-document.querySelectorAll('[data-link-auswahl]').forEach(function (auswahl) {
-    auswahl.addEventListener('change', function () {
-        if (auswahl.value) {
-            window.location.href = auswahl.value;
-        }
-    });
-});
-
 // Formular mit data-bestaetigen (z. B. Transfer ablehnen oder zurückziehen): erst nach einer Rückfrage abschicken
 document.querySelectorAll('form[data-bestaetigen]').forEach(function (formular) {
     formular.addEventListener('submit', function (e) {

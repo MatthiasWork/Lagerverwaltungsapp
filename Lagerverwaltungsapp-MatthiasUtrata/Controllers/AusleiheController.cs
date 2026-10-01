@@ -10,7 +10,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
     // Neue Ausleihe: die Seite für Transfers aus dem eigenen Raum (eine eigene Transfer-Seite gibt es nicht mehr). Die für einen Raum
     // verantwortliche Person bucht Gegenstände aus ihrem Raum in einen anderen Raum, dessen verantwortliche Person die Übernahme
     // unter "Freigaben" bestätigt. Die Buchung macht LagerService.AusborgenAsync.
-    // Den Zweck zeigt das Formular an, gespeichert wird er nicht
     public class AusleiheController : Controller
     {
         private readonly LagerverwaltungContext _context;

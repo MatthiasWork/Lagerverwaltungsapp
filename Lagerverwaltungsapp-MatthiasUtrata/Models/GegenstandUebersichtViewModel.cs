@@ -25,7 +25,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
 
         public string? Status { get; set; }
 
-        // Kategorien nach Anzahl der Gegenstände, die größten zuerst (die ersten stehen direkt als Schalter da)
+        // Alle Kategorien nach Name für den Filter "Kategorie"
         public List<Kategorie> Kategorien { get; set; } = new List<Kategorie>();
 
         // IDs aller Räume für den Filter "Raum"
