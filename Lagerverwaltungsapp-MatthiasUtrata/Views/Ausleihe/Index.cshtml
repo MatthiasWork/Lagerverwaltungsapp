@@ -26,11 +26,7 @@
                 </li>
                 <li class="schritt-linie" aria-hidden="true"></li>
                 <li class="schritt" data-schritt>
-                    <span class="schritt-marke"><span data-marke="nummer">2</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Zeitraum
-                </li>
-                <li class="schritt-linie" aria-hidden="true"></li>
-                <li class="schritt" data-schritt>
-                    <span class="schritt-marke"><span data-marke="nummer">3</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Freigabe
+                    <span class="schritt-marke"><span data-marke="nummer">2</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Freigabe
                 </li>
             </ol>
         }
@@ -162,32 +158,12 @@
                         }
                     </div>
 
-                    @* Zeitraum und Zweck wie im Design. Gespeichert werden sie wie beim Transfer nicht: Datum und Zweck haben keinen name,
+                    @* Zweck wie im Design. Gespeichert wird er wie beim Transfer nicht: Das Feld hat keinen name,
                        und der Controller übernimmt nur Zielraum, Bewegungsart und Mengen *@
-                    <div class="zeitraum">
-                        <h4>Zeitraum</h4>
-                        <div class="seg" role="radiogroup" aria-label="Zeitraum">
-                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="heute" />Heute</label>
-                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="woche" checked />Diese Woche</label>
-                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="zweiWochen" />2 Wochen</label>
-                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="eigener" />Eigener Zeitraum</label>
-                        </div>
-                        <div class="datum-raster">
-                            <div>
-                                <label class="form-label" for="abholung">Abholung</label>
-                                <input type="date" class="form-control" id="abholung" />
-                            </div>
-                            <div>
-                                <label class="form-label" for="rueckgabe">Rückgabe bis</label>
-                                <input type="date" class="form-control" id="rueckgabe" />
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="zweck">
                         <label class="form-label" for="zweck">Zweck (optional)</label>
                         <textarea class="form-control" id="zweck" rows="2" placeholder="z. B. Projektwoche Robotik, Klasse 8b"></textarea>
-                        <div class="form-text">Zeitraum und Zweck werden nicht gespeichert. Bitte bei Bedarf mit der Person absprechen, die freigibt.</div>
+                        <div class="form-text">Der Zweck wird nicht gespeichert. Bitte bei Bedarf mit der Person absprechen, die freigibt.</div>
                     </div>
                 </div>
 
@@ -201,10 +177,6 @@
                     <div class="angabe">
                         <span class="angabe-label">An</span>
                         <span class="fw-medium" data-ausleihe="ziel">@ziel</span>
-                    </div>
-                    <div class="angabe">
-                        <span class="angabe-label">Zeitraum</span>
-                        <span data-ausleihe="zeitraum">–</span>
                     </div>
                     <div class="angabe freigabe-liste">
                         <span class="angabe-label">Benötigte Freigabe</span>
@@ -234,7 +206,7 @@
 @section Scripts {
     <script>
         // Geräteauswahl wie beim Transfer: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen.
-        // Dazu die Zusammenfassung (Zielraum, Zeitraum, benötigte Freigabe) und die Schritte oben
+        // Dazu die Zusammenfassung (Zielraum, benötigte Freigabe) und die Schritte oben
         (function () {
             var formular = document.getElementById('ausleiheFormular');
             if (!formular) {
@@ -244,8 +216,6 @@
             var suchfeld = document.getElementById('geraetSuche');
             var vorschlaege = document.getElementById('geraetVorschlaege');
             var raumAuswahl = formular.querySelector('select[name="NachRaumID"]');
-            var abholung = document.getElementById('abholung');
-            var rueckgabe = document.getElementById('rueckgabe');
 
             function feld(name) {
                 return formular.querySelector('[data-ausleihe="' + name + '"]');
@@ -272,38 +242,6 @@
                     geraete = anzahl + ' Geräte';
                 }
                 feld('freigabe-info').textContent = 'Raum ' + raum.value + ' · ' + geraete;
-                return true;
-            }
-
-            // Zeitraum in der Zusammenfassung; liefert, ob er gültig ist
-            function zeitraumZeigen() {
-                var ausgabe = feld('zeitraum');
-                if (!abholung.value || !rueckgabe.value) {
-                    ausgabe.textContent = '–';
-                    return false;
-                }
-                var von = new Date(abholung.value + 'T00:00');
-                var bis = new Date(rueckgabe.value + 'T00:00');
-                var tage = Math.round((bis - von) / 86400000) + 1;
-                if (tage < 1) {
-                    ausgabe.textContent = 'Rückgabe liegt vor der Abholung';
-                    return false;
-                }
-                // "05.10." bzw. mit Jahr "09.10.2026"
-                var format = function (datum, mitJahr) {
-                    var text = String(datum.getDate()).padStart(2, '0') + '.' + String(datum.getMonth() + 1).padStart(2, '0') + '.';
-                    if (mitJahr) {
-                        text += datum.getFullYear();
-                    }
-                    return text;
-                };
-                var dauer;
-                if (tage === 1) {
-                    dauer = '1 Tag';
-                } else {
-                    dauer = tage + ' Tage';
-                }
-                ausgabe.textContent = format(von, false) + ' – ' + format(bis, true) + ' · ' + dauer;
                 return true;
             }
 
@@ -335,9 +273,8 @@
                 feld('anzahl').textContent = anzahl;
                 formular.querySelector('.geraete-leer').hidden = anzahl > 0;
                 var zielGewaehlt = freigabeZeigen(anzahl);
-                var zeitraumGueltig = zeitraumZeigen();
                 // "Freigabe" ist erst nach dem Absenden erledigt
-                schritteZeigen([anzahl > 0 && zielGewaehlt, anzahl > 0 && zielGewaehlt && zeitraumGueltig, false]);
+                schritteZeigen([anzahl > 0 && zielGewaehlt, false]);
             }
 
             // Zeile zeigen und ihre Felder mitschicken oder ausblenden und nicht mitschicken
@@ -422,50 +359,7 @@
                 });
             }
 
-            // Zeitraum: die Auswahl füllt Abholung und Rückgabe, "Eigener Zeitraum" lässt beide frei wählen
-            function alsWert(datum) {
-                return datum.getFullYear() + '-' + String(datum.getMonth() + 1).padStart(2, '0') + '-' + String(datum.getDate()).padStart(2, '0');
-            }
-
-            function zeitraumSetzen(wahl) {
-                if (wahl === 'eigener') {
-                    return;
-                }
-                var heute = new Date();
-                heute.setHours(0, 0, 0, 0);
-                var bis = new Date(heute);
-                if (wahl === 'woche') {
-                    // Bis Freitag dieser Woche, am Wochenende bis Freitag der nächsten (getDay: 0 = Sonntag, 6 = Samstag)
-                    var tageBisFreitag;
-                    if (heute.getDay() === 6) {
-                        tageBisFreitag = 6;
-                    } else {
-                        tageBisFreitag = (5 - heute.getDay() + 7) % 7;
-                    }
-                    bis.setDate(heute.getDate() + tageBisFreitag);
-                } else if (wahl === 'zweiWochen') {
-                    bis.setDate(heute.getDate() + 13);
-                }
-                abholung.value = alsWert(heute);
-                rueckgabe.value = alsWert(bis);
-            }
-
-            formular.querySelectorAll('input[name="zeitraumWahl"]').forEach(function (wahl) {
-                wahl.addEventListener('change', function () {
-                    zeitraumSetzen(wahl.value);
-                    aktualisieren();
-                });
-            });
-            [abholung, rueckgabe].forEach(function (datum) {
-                datum.addEventListener('change', function () {
-                    // Wer ein Datum selbst ändert, wählt einen eigenen Zeitraum
-                    formular.querySelector('input[name="zeitraumWahl"][value="eigener"]').checked = true;
-                    aktualisieren();
-                });
-            });
-
             raumAuswahl.addEventListener('change', aktualisieren);
-            zeitraumSetzen(formular.querySelector('input[name="zeitraumWahl"]:checked').value);
             aktualisieren();
         })();
     </script>
