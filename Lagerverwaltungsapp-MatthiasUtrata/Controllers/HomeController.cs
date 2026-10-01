@@ -49,7 +49,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             var istAdmin = User.IsInRole("Admin");
             var raumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value);
 
-            var offen = _context.Lagerbewegung.Where(l => l.BestaetigtAm == null);
+            var offen = _context.Lagerbewegung.Where(Lagerbewegung.IstOffen);
             var uebersicht = new UebersichtViewModel
             {
                 Verfuegbar = await _context.Raumbestand.SumAsync(r => r.Menge),
@@ -66,11 +66,12 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 bewegungen = bewegungen.Where(l => l.PersonID == personID || l.VonRaumID == raumID || l.NachRaumID == raumID);
             }
 
-            // Jede Bewegung ergibt bis zu zwei Einträge (angefragt, übernommen). Die 5 neuesten Einträge
+            // Jede Bewegung ergibt bis zu zwei Einträge (angefragt, dann übernommen oder storniert). Die 5 neuesten Einträge
             // stammen daher sicher aus den 5 Bewegungen mit dem neuesten Zeitpunkt
             var letzte = await bewegungen
                 .Include(l => l.Person)
                 .Include(l => l.Gegenstand)
+                .Include(l => l.Bewegungsart)
                 .OrderByDescending(l => l.BestaetigtAm ?? l.ErstelltAm)
                 .Take(5)
                 .ToListAsync();
@@ -80,7 +81,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 var person = $"{l.Person.Vorname} {l.Person.Nachname}";
                 var was = l.Menge == 1 ? l.Gegenstand.Name : $"{l.Menge} × {l.Gegenstand.Name}";
 
-                if (l.BestaetigtAm == l.ErstelltAm)
+                if (!l.Storniert && l.BestaetigtAm == l.ErstelltAm)
                 {
                     // Sofort bestätigt: Wareneingang oder Umbuchung zwischen zwei eigenen Räumen
                     var text = l.VonRaumID == l.NachRaumID
@@ -91,7 +92,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 }
 
                 uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = $"{person} fragt Transfer von {was} nach {l.NachRaumID} an" });
-                if (l.BestaetigtAm != null)
+                if (l.Storniert)
+                {
+                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer von {was} nach {l.NachRaumID} storniert, zurück in {l.VonRaumID}" });
+                }
+                else if (l.BestaetigtAm != null)
                 {
                     uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm.Value, Text = $"{was} in {l.NachRaumID} übernommen" });
                 }

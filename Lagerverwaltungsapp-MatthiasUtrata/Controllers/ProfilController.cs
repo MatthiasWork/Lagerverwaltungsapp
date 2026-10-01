@@ -62,16 +62,18 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 OffeneTransfers = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Person)
-                    .Where(l => l.PersonID == anzeigenID && l.BestaetigtAm == null)
+                    .Where(Lagerbewegung.IstOffen)
+                    .Where(l => l.PersonID == anzeigenID)
                     .OrderBy(l => l.ErstelltAm)
                     .ToListAsync()
             };
 
-            // Verlauf: was die Person gebucht hat und was in ihre Räume übernommen wurde.
-            // Jede Bewegung ergibt höchstens zwei Einträge, daher reichen die 8 neuesten Bewegungen für 8 Einträge
             var bewegungen = await _context.Lagerbewegung
                 .Include(l => l.Gegenstand)
-                .Where(l => l.PersonID == anzeigenID || (l.BestaetigtAm != null && raumIDs.Contains(l.NachRaumID)))
+                .Include(l => l.Bewegungsart)
+                .Where(l => l.PersonID == anzeigenID
+                    || (l.BestaetigtAm != null && raumIDs.Contains(l.NachRaumID))
+                    || (l.BestaetigtAm != null && l.Bewegungsart.Name == Bewegungsart.Storniert && raumIDs.Contains(l.VonRaumID)))
                 .OrderByDescending(l => l.BestaetigtAm ?? l.ErstelltAm)
                 .Take(8)
                 .ToListAsync();
@@ -79,7 +81,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             foreach (var l in bewegungen)
             {
                 var was = l.Menge == 1 ? l.Gegenstand.Name : $"{l.Gegenstand.Name} × {l.Menge}";
-                var sofortBestaetigt = l.BestaetigtAm == l.ErstelltAm;
+                var sofortBestaetigt = !l.Storniert && l.BestaetigtAm == l.ErstelltAm;
 
                 if (l.PersonID == anzeigenID)
                 {
@@ -89,7 +91,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
                 }
 
-                if (l.BestaetigtAm != null && !sofortBestaetigt && raumIDs.Contains(l.NachRaumID))
+                if (l.Storniert)
+                {
+                    profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer {was} {l.VonRaumID} → {l.NachRaumID} storniert" });
+                }
+                else if (l.BestaetigtAm != null && !sofortBestaetigt && raumIDs.Contains(l.NachRaumID))
                 {
                     profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm.Value, Text = $"{was} in {l.NachRaumID} übernommen" });
                 }

@@ -34,6 +34,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
             await LehrerInRolleAnlegenAsync();
             await RaumartenAnlegenAsync();
             await BewegungsartenAnlegenAsync();
+            await StorniertAnlegenAsync();
             await RaeumeAnlegenAsync();
         }
 
@@ -118,6 +119,21 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                 _context.Bewegungsart.Add(new Bewegungsart { Name = name });
             }
             await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Methode, die die Bewegungsart "Storniert" anlegt, die abgelehnte und zurückgezogene Transfers bekommen.
+        /// Anders als die Beispiel-Bewegungsarten bei jedem Start, da der LagerService sie zum Stornieren braucht.
+        /// Sie muss nach den Beispiel-Bewegungsarten kommen, sonst gäbe es schon eine Bewegungsart und diese würden übersprungen.
+        /// </summary>
+        /// <returns>Gibt eine Task zurück</returns>
+        private async Task StorniertAnlegenAsync()
+        {
+            if (!await _context.Bewegungsart.AnyAsync(b => b.Name == Bewegungsart.Storniert))
+            {
+                _context.Bewegungsart.Add(new Bewegungsart { Name = Bewegungsart.Storniert });
+                await _context.SaveChangesAsync();
+            }
         }
 
         /// <summary>

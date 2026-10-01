@@ -67,10 +67,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .Include(l => l.Gegenstand)
                     .Include(l => l.Bewegungsart)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Person)
-                    .Where(l => l.BestaetigtAm == null && l.VonRaumID == raumID)
+                    .Where(Lagerbewegung.IstOffen)
+                    .Where(l => l.VonRaumID == raumID)
                     .OrderByDescending(l => l.ErstelltAm)
                     .ToListAsync(),
-                OffeneUebernahmen = await _context.Lagerbewegung.CountAsync(l => l.BestaetigtAm == null && l.NachRaumID == raumID),
+                OffeneUebernahmen = await _context.Lagerbewegung.Where(Lagerbewegung.IstOffen).CountAsync(l => l.NachRaumID == raumID),
                 Suche = suche,
                 KategorieID = kategorieID,
                 // Nur Kategorien, von denen es im Raum auch etwas gibt
@@ -145,6 +146,37 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             await AnzeigeSetzenAsync(ausborgen, raumID);
             return View(ausborgen);
+        }
+
+        /// <summary>
+        /// Methode, mit der die angemeldete Person einen Transfer aus ihrem Raum zurückzieht, solange der Zielraum ihn noch nicht
+        /// bestätigt hat. Die Menge kommt wieder in den eigenen Raum.
+        /// </summary>
+        /// <param name="id">Die ID der Lagerbewegung, die zurückgezogen werden soll</param>
+        /// <returns>Gibt eine Task zurück</returns>
+        // POST: MeinRaum/Zurueckziehen/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Zurueckziehen(int id)
+        {
+            var personID = User.GetPersonID();
+            if (personID == null)
+            {
+                return Forbid();
+            }
+
+            var fehler = await _lagerService.ZurueckziehenAsync(id, personID.Value);
+            if (fehler != null)
+            {
+                TempData["Fehler"] = fehler;
+            }
+            else
+            {
+                var vonRaumID = await _context.Lagerbewegung.Where(l => l.ID == id).Select(l => l.VonRaumID).FirstAsync();
+                TempData["Meldung"] = $"Der Transfer wurde zurückgezogen. Das Gerät ist wieder im Bestand von Raum {vonRaumID}.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
@@ -242,7 +274,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(r => r.ID)
                 .ToListAsync();
 
-            ausborgen.Bewegungsarten = new SelectList(await _context.Bewegungsart.OrderBy(b => b.Name).ToListAsync(), "ID", "Name", ausborgen.BewegungsartID);
+            ausborgen.Bewegungsarten = await WaehlbareBewegungsartenAsync(ausborgen.BewegungsartID);
         }
 
         /// <summary>
@@ -263,7 +295,21 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(g => g.Name).ThenBy(g => g.Seriennummer)
                 .ToListAsync();
 
-            wareneingang.Bewegungsarten = new SelectList(await _context.Bewegungsart.OrderBy(b => b.Name).ToListAsync(), "ID", "Name", wareneingang.BewegungsartID);
+            wareneingang.Bewegungsarten = await WaehlbareBewegungsartenAsync(wareneingang.BewegungsartID);
+        }
+
+        /// <summary>
+        /// Methode, die die Bewegungsarten für die Auswahl im Formular liefert.
+        /// </summary>
+        /// <param name="bewegungsartID">Die ID der Bewegungsart, die vorausgewählt werden soll</param>
+        /// <returns>Die Auswahlliste der Bewegungsarten</returns>
+        private async Task<SelectList> WaehlbareBewegungsartenAsync(int? bewegungsartID)
+        {
+            var bewegungsarten = await _context.Bewegungsart
+                .Where(b => b.Name != Bewegungsart.Storniert)
+                .OrderBy(b => b.Name)
+                .ToListAsync();
+            return new SelectList(bewegungsarten, "ID", "Name", bewegungsartID);
         }
     }
 }

@@ -60,6 +60,7 @@
     <h2 class="h4">Ausgeborgt, noch nicht übernommen</h2>
     <p class="text-muted">
         Diese Gegenstände sind schon aus Raum @Model.Raum.ID abgebucht. Im Zielraum kommen sie an, sobald die dort verantwortliche Person die Übernahme bestätigt.
+        Bis dahin kann der Transfer zurückgezogen werden, dann kommen sie wieder in Raum @Model.Raum.ID.
     </p>
     <div class="table-responsive mb-4">
         <table class="table table-hover align-middle">
@@ -70,6 +71,7 @@
                     <th>An Raum</th>
                     <th>Ausgeborgt am</th>
                     <th>Status</th>
+                    <th class="text-end">Aktionen</th>
                 </tr>
             </thead>
             <tbody>
@@ -86,6 +88,12 @@
                         <td>
                             <span class="tag tag-outline">Übernahme offen</span>
                             <div class="small text-muted">wartet auf @(bewegung.NachRaum.Person == null ? "–" : $"{bewegung.NachRaum.Person.Vorname} {bewegung.NachRaum.Person.Nachname}")</div>
+                        </td>
+                        <td class="text-end">
+                            <form asp-action="Zurueckziehen" asp-route-id="@bewegung.ID" method="post"
+                                  data-bestaetigen="Transfer zurückziehen? @bewegung.Gegenstand.Name kommt wieder in Raum @Model.Raum.ID.">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Zurückziehen</button>
+                            </form>
                         </td>
                     </tr>
                 }

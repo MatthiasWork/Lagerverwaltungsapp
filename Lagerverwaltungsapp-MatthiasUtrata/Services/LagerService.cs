@@ -167,6 +167,68 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
+        /// Methode, mit der die für den Nach-Raum verantwortliche Person eine offene Lagerbewegung ablehnt.
+        /// Die Menge wird wieder im Von-Raum zugebucht, die Lagerbewegung bleibt als storniert in der Historie.
+        /// </summary>
+        /// <param name="lagerbewegungID">Die ID der Lagerbewegung, die abgelehnt werden soll</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die ablehnt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung abgelehnt wurde</returns>
+        public async Task<string?> AblehnenAsync(int lagerbewegungID, int personID)
+        {
+            return await BuchenAsync(async () =>
+            {
+                var lagerbewegung = await _context.Lagerbewegung
+                    .Include(l => l.Bewegungsart)
+                    .Include(l => l.NachRaum)
+                    .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+                var fehler = NichtOffenFehler(lagerbewegung);
+                if (fehler != null)
+                {
+                    return fehler;
+                }
+
+                // Zuständigkeitsregel wie beim Bestätigen: nur die Person, die jetzt für den Nach-Raum verantwortlich ist
+                if (lagerbewegung!.NachRaum.PersonID != personID)
+                {
+                    return $"Nur die für den Raum {lagerbewegung.NachRaumID} verantwortliche Person darf diese Lagerbewegung ablehnen.";
+                }
+
+                return await StornierenAsync(lagerbewegung);
+            });
+        }
+
+        /// <summary>
+        /// Methode, mit der die für den Von-Raum verantwortliche Person eine offene Lagerbewegung zurückzieht, solange sie
+        /// noch nicht bestätigt ist. Die Menge wird wieder im Von-Raum zugebucht, die Lagerbewegung bleibt als storniert in der Historie.
+        /// </summary>
+        /// <param name="lagerbewegungID">Die ID der Lagerbewegung, die zurückgezogen werden soll</param>
+        /// <param name="personID">Die ID der angemeldeten Person, die zurückzieht</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung zurückgezogen wurde</returns>
+        public async Task<string?> ZurueckziehenAsync(int lagerbewegungID, int personID)
+        {
+            return await BuchenAsync(async () =>
+            {
+                var lagerbewegung = await _context.Lagerbewegung
+                    .Include(l => l.Bewegungsart)
+                    .Include(l => l.VonRaum)
+                    .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+                var fehler = NichtOffenFehler(lagerbewegung);
+                if (fehler != null)
+                {
+                    return fehler;
+                }
+
+                // Die Menge kommt in den Von-Raum zurück, daher darf das nur die Person, die jetzt für ihn verantwortlich ist
+                if (lagerbewegung!.VonRaum.PersonID != personID)
+                {
+                    return $"Nur die für den Raum {lagerbewegung.VonRaumID} verantwortliche Person darf diese Lagerbewegung zurückziehen.";
+                }
+
+                return await StornierenAsync(lagerbewegung);
+            });
+        }
+
+        /// <summary>
         /// Methode, die eine Lagerbewegung prüft, anlegt und im Raumbestand bucht, ohne zu speichern.
         /// </summary>
         /// <param name="gegenstandID">Die ID des Gegenstands, der bewegt wird</param>
@@ -196,9 +258,16 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                 return $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) ist ein einzelnes Gerät und kann nur mit der Menge 1 gebucht werden.";
             }
 
-            if (!await _context.Bewegungsart.AnyAsync(b => b.ID == bewegungsartID))
+            var bewegungsart = await _context.Bewegungsart.FindAsync(bewegungsartID);
+            if (bewegungsart == null)
             {
                 return "Bitte eine Bewegungsart auswählen.";
+            }
+
+            // Sonst wäre die Bewegung schon beim Anlegen storniert, aber trotzdem offen
+            if (bewegungsart.Name == Bewegungsart.Storniert)
+            {
+                return $"Die Bewegungsart \"{Bewegungsart.Storniert}\" wird nur beim Ablehnen oder Zurückziehen vergeben. Bitte eine andere auswählen.";
             }
 
             var vonRaum = await _context.Raum.FindAsync(vonRaumID);
@@ -277,28 +346,69 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         private async Task<string?> BewegungBestaetigenAsync(int lagerbewegungID, int personID)
         {
             var lagerbewegung = await _context.Lagerbewegung
+                .Include(l => l.Bewegungsart)
                 .Include(l => l.NachRaum)
                 .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
-            if (lagerbewegung == null)
+            var fehler = NichtOffenFehler(lagerbewegung);
+            if (fehler != null)
             {
-                return "Diese Lagerbewegung gibt es nicht.";
-            }
-
-            // Sonst würde dieselbe Menge ein zweites Mal zugebucht
-            if (lagerbewegung.BestaetigtAm != null)
-            {
-                return $"Diese Lagerbewegung wurde bereits am {lagerbewegung.BestaetigtAm.Value:dd.MM.yyyy HH:mm} bestätigt.";
+                return fehler;
             }
 
             // Zuständigkeitsregel: Bestätigen darf nur die Person, die jetzt für den Nach-Raum verantwortlich ist.
             // Wechselt die Zuständigkeit, während die Bewegung offen ist, bestätigt also die neue Person
-            if (lagerbewegung.NachRaum.PersonID != personID)
+            if (lagerbewegung!.NachRaum.PersonID != personID)
             {
                 return $"Nur die für den Raum {lagerbewegung.NachRaumID} verantwortliche Person darf diese Lagerbewegung bestätigen.";
             }
 
             lagerbewegung.BestaetigtAm = DateTime.Now;
             await ZubuchenAsync(lagerbewegung.GegenstandID, lagerbewegung.NachRaumID, lagerbewegung.Menge);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Methode, die eine offene Lagerbewegung storniert, ohne zu speichern: Sie bekommt die Bewegungsart "Storniert",
+        /// BestaetigtAm den Zeitpunkt der Stornierung, und die Menge wird wieder im Von-Raum zugebucht.
+        /// Die ursprüngliche Bewegungsart wird dabei überschrieben.
+        /// </summary>
+        /// <param name="lagerbewegung">Die offene Lagerbewegung, deren Zuständigkeit schon geprüft ist</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung storniert wurde</returns>
+        private async Task<string?> StornierenAsync(Lagerbewegung lagerbewegung)
+        {
+            // Die Ersteinrichtung legt die Bewegungsart bei jedem Start an, falls sie fehlt
+            var storniert = await _context.Bewegungsart.FirstOrDefaultAsync(b => b.Name == Bewegungsart.Storniert);
+            if (storniert == null)
+            {
+                return $"Die Bewegungsart \"{Bewegungsart.Storniert}\" fehlt. Bitte die Anwendung neu starten, dann wird sie angelegt.";
+            }
+
+            lagerbewegung.Bewegungsart = storniert;
+            lagerbewegung.BestaetigtAm = DateTime.Now;
+            await ZubuchenAsync(lagerbewegung.GegenstandID, lagerbewegung.VonRaumID, lagerbewegung.Menge);
+            return null;
+        }
+
+        /// <summary>
+        /// Methode, die überprüft, ob es eine Lagerbewegung gibt und ob sie noch offen ist. Eine abgeschlossene Lagerbewegung
+        /// darf nicht noch einmal abgeschlossen werden, sonst würde dieselbe Menge ein zweites Mal zugebucht.
+        /// Die Bewegungsart muss dafür geladen sein.
+        /// </summary>
+        /// <param name="lagerbewegung">Die geladene Lagerbewegung oder null, wenn es sie nicht gibt</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung offen ist</returns>
+        private static string? NichtOffenFehler(Lagerbewegung? lagerbewegung)
+        {
+            if (lagerbewegung == null)
+            {
+                return "Diese Lagerbewegung gibt es nicht.";
+            }
+
+            if (lagerbewegung.BestaetigtAm != null)
+            {
+                var wie = lagerbewegung.Storniert ? "storniert" : "bestätigt";
+                return $"Diese Lagerbewegung wurde bereits am {lagerbewegung.BestaetigtAm.Value:dd.MM.yyyy HH:mm} {wie}.";
+            }
 
             return null;
         }
@@ -369,7 +479,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
             // Eine offene Lagerbewegung ist schon aus dem Von-Raum abgebucht, aber noch nicht im Nach-Raum zugebucht
             var nachRaumID = await _context.Lagerbewegung
-                .Where(l => l.GegenstandID == gegenstand.ID && l.BestaetigtAm == null)
+                .Where(Lagerbewegung.IstOffen)
+                .Where(l => l.GegenstandID == gegenstand.ID)
                 .Select(l => l.NachRaumID)
                 .FirstOrDefaultAsync();
             if (nachRaumID != null)

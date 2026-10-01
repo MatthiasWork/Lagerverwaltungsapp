@@ -108,8 +108,7 @@ public class GegenstandController : Controller
         };
         eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
 
-        // Unterwegs ist, was schon abgebucht, aber im Zielraum noch nicht übernommen wurde
-        var offen = gegenstand.Lagerbewegung.Where(l => l.BestaetigtAm == null).ToList();
+        var offen = gegenstand.Lagerbewegung.Where(l => l.Offen).ToList();
         var unterwegs = offen.Sum(l => l.Menge);
         if (unterwegs > 0)
         {
@@ -155,15 +154,22 @@ public class GegenstandController : Controller
         var details = new GegenstandDetailsViewModel
         {
             Eintrag = KatalogEintragErstellen(gegenstand),
-            Unterwegs = gegenstand.Lagerbewegung.Where(l => l.BestaetigtAm == null).OrderBy(l => l.ErstelltAm).ToList(),
+            Unterwegs = gegenstand.Lagerbewegung.Where(l => l.Offen).OrderBy(l => l.ErstelltAm).ToList(),
             EigenerRaumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value)
         };
 
-        // Verlauf: jede Bewegung ergibt einen Eintrag beim Anlegen und, falls schon bestätigt, einen bei der Übernahme
         foreach (var l in gegenstand.Lagerbewegung)
         {
             var person = $"{l.Person.Vorname} {l.Person.Nachname}";
             var menge = gegenstand.Seriennummer == null ? $"{l.Menge} Stück " : "";
+
+            // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung und ihre ursprüngliche Bewegungsart verloren
+            if (l.Storniert)
+            {
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang($"{menge}von {l.VonRaumID} nach {l.NachRaumID} gebucht von {person}") });
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer nach {l.NachRaumID} storniert, {menge}zurück in {l.VonRaumID}" });
+                continue;
+            }
 
             if (l.BestaetigtAm == l.ErstelltAm)
             {

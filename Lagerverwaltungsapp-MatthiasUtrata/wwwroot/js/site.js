@@ -18,6 +18,15 @@ document.querySelectorAll('[data-link-auswahl]').forEach(function (auswahl) {
     });
 });
 
+// Formular mit data-bestaetigen (z. B. Transfer ablehnen oder zurückziehen): erst nach einer Rückfrage abschicken
+document.querySelectorAll('form[data-bestaetigen]').forEach(function (formular) {
+    formular.addEventListener('submit', function (e) {
+        if (!window.confirm(formular.dataset.bestaetigen)) {
+            e.preventDefault();
+        }
+    });
+});
+
 // Tabellenzeile mit data-href: ein Klick irgendwo in der Zeile öffnet den Link (Links und Buttons in der Zeile gehen vor)
 document.querySelectorAll('tr[data-href]').forEach(function (zeile) {
     zeile.addEventListener('click', function (e) {

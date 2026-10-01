@@ -16,7 +16,7 @@ public class BewegungsartController : Controller
     }
 
     // GET: Bewegungsart
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
         return View(await _context.Bewegungsart.ToListAsync());
     }
@@ -52,6 +52,8 @@ public class BewegungsartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("ID,Name")] Bewegungsart bewegungsart)
     {
+        StorniertNichtNeuVergeben(bewegungsart);
+
         if (ModelState.IsValid)
         {
             _context.Add(bewegungsart);
@@ -87,6 +89,22 @@ public class BewegungsartController : Controller
         if (id != bewegungsart.ID)
         {
             return NotFound();
+        }
+
+        var bisherigerName = await _context.Bewegungsart.Where(b => b.ID == bewegungsart.ID).Select(b => b.Name).FirstOrDefaultAsync();
+        if (bisherigerName == null)
+        {
+            return NotFound();
+        }
+
+        if (bisherigerName == Bewegungsart.Storniert && bewegungsart.Name != Bewegungsart.Storniert)
+        {
+            ModelState.AddModelError(nameof(Bewegungsart.Name),
+                $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht umbenannt werden.");
+        }
+        else if (bisherigerName != Bewegungsart.Storniert)
+        {
+            StorniertNichtNeuVergeben(bewegungsart);
         }
 
         if (ModelState.IsValid)
@@ -138,6 +156,12 @@ public class BewegungsartController : Controller
         var bewegungsart = await _context.Bewegungsart.FindAsync(id);
         if (bewegungsart != null)
         {
+            if (bewegungsart.Name == Bewegungsart.Storniert)
+            {
+                TempData["Fehler"] = $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht gelöscht werden.";
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Bewegungsart.Remove(bewegungsart);
         }
 
@@ -148,5 +172,19 @@ public class BewegungsartController : Controller
     private bool BewegungsartExists(int? id)
     {
         return _context.Bewegungsart.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" heißt. Die gibt es schon (der Start legt sie an),
+    /// und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
+    /// </summary>
+    /// <param name="bewegungsart">Die Bewegungsart aus dem Formular</param>
+    private void StorniertNichtNeuVergeben(Bewegungsart bewegungsart)
+    {
+        if (string.Equals(bewegungsart.Name?.Trim(), Bewegungsart.Storniert, StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(nameof(Bewegungsart.Name),
+                $"Die Bewegungsart \"{Bewegungsart.Storniert}\" gibt es schon. Sie wird nur beim Ablehnen oder Zurückziehen vergeben.");
+        }
     }
 }

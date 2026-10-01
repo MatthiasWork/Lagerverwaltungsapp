@@ -101,6 +101,11 @@
                         <input type="hidden" name="ids" value="@bewegung.ID" />
                         <button type="submit" class="btn btn-primary btn-cta w-100"><i data-lucide="check"></i>Freigeben</button>
                     </form>
+                    @* Nicht im Design: Wer den Transfer nicht übernehmen will, lehnt ihn ab und die Menge geht zurück in den Von-Raum *@
+                    <form asp-action="Ablehnen" asp-route-id="@bewegung.ID" method="post"
+                          data-bestaetigen="Transfer ablehnen? @bewegung.Gegenstand.Name@Menge(bewegung) geht zurück in Raum @bewegung.VonRaumID.">
+                        <button type="submit" class="btn btn-outline-secondary w-100"><i data-lucide="x"></i>Ablehnen</button>
+                    </form>
                 </div>
             }
         </div>
@@ -114,9 +119,10 @@
             <ul class="erledigt-liste">
                 @foreach (var bewegung in Model.Erledigt)
                 {
+                    // Übernommen oder storniert (abgelehnt oder vom Von-Raum zurückgezogen)
                     <li>
-                        <i data-lucide="check"></i>
-                        <span class="flex-grow-1">@bewegung.Gegenstand.Name@Menge(bewegung) · Transfer @bewegung.VonRaumID → @bewegung.NachRaumID</span>
+                        <i data-lucide="@(bewegung.Storniert ? "x" : "check")"></i>
+                        <span class="flex-grow-1">@bewegung.Gegenstand.Name@Menge(bewegung) · Transfer @bewegung.VonRaumID → @bewegung.NachRaumID@(bewegung.Storniert ? " · storniert" : "")</span>
                         <span class="erledigt-zeit">@Erledigt(bewegung.BestaetigtAm!.Value)</span>
                     </li>
                 }

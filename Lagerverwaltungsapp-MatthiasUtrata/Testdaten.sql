@@ -45,7 +45,8 @@ FROM (VALUES
     ('Ausgabe'),
     ('Rueckgabe'),
     ('Einlagerung'),
-    ('Reparatur')
+    ('Reparatur'),
+    ('Storniert')
 ) AS v(Name)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Bewegungsart b WHERE b.Name = v.Name);
 

@@ -48,10 +48,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .Include(l => l.Person)
                     .Include(l => l.VonRaum).ThenInclude(r => r.Raumart)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Raumart)
-                    .Where(l => l.BestaetigtAm == null && l.NachRaum.PersonID == personID)
+                    .Where(Lagerbewegung.IstOffen)
+                    .Where(l => l.NachRaum.PersonID == personID)
                     .OrderBy(l => l.ErstelltAm)
                     .ToListAsync(),
-                // Ein Wareneingang ist keine Übernahme, daher nur Bewegungen aus einem anderen Raum
+                // Bestätigt oder storniert. Ein Wareneingang ist keine Übernahme, daher nur Bewegungen aus einem anderen Raum
                 Erledigt = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
                     .Include(l => l.Bewegungsart)
@@ -91,6 +92,37 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 TempData["Meldung"] = anzahl == 1
                     ? "Der Transfer wurde freigegeben. Das Gerät ist jetzt im Bestand Ihres Raums."
                     : $"{anzahl} Transfers wurden freigegeben. Die Geräte sind jetzt im Bestand Ihres Raums.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Methode, mit der die angemeldete Person eine offene Lagerbewegung in ihren Raum ablehnt.
+        /// Die Menge geht zurück in den Raum, aus dem sie kam.
+        /// </summary>
+        /// <param name="id">Die ID der Lagerbewegung, die abgelehnt werden soll</param>
+        /// <returns>Gibt eine Task zurück</returns>
+        // POST: Uebernahme/Ablehnen/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Ablehnen(int id)
+        {
+            var personID = User.GetPersonID();
+            if (personID == null)
+            {
+                return Forbid();
+            }
+
+            var fehler = await _lagerService.AblehnenAsync(id, personID.Value);
+            if (fehler != null)
+            {
+                TempData["Fehler"] = fehler;
+            }
+            else
+            {
+                var vonRaumID = await _context.Lagerbewegung.Where(l => l.ID == id).Select(l => l.VonRaumID).FirstAsync();
+                TempData["Meldung"] = $"Der Transfer wurde abgelehnt. Das Gerät ist wieder im Bestand von Raum {vonRaumID}.";
             }
 
             return RedirectToAction(nameof(Index));
