@@ -1,77 +1,209 @@
-@model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Lagerbewegung>
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.HistorieViewModel
 
 @{
     ViewData["Title"] = "Historie";
+
+    var statusWerte = new[] { HistorieViewModel.FreigabeOffen, HistorieViewModel.Bestaetigt, HistorieViewModel.Storniert };
+
+    // "1 Buchung" bzw. "12 Buchungen"
+    string Buchungen(int anzahl)
+    {
+        if (anzahl == 1)
+        {
+            return "1 Buchung";
+        }
+        return $"{anzahl} Buchungen";
+    }
+
+    // Link auf eine andere Seite der Liste; die Filter bleiben erhalten
+    string SeitenLink(int seite) => Url.Action("Index", new
+    {
+        suche = Model.Suche,
+        raumID = Model.RaumID,
+        bewegungsartID = Model.BewegungsartID,
+        status = Model.Status,
+        von = Model.Von?.ToString("yyyy-MM-dd"),
+        bis = Model.Bis?.ToString("yyyy-MM-dd"),
+        seite
+    })!;
+
+    // Bei einer Korrektur ist die Menge die Änderung des Bestands, daher mit Vorzeichen
+    string Menge(Lagerbewegung bewegung)
+    {
+        if (bewegung.IstKorrektur && bewegung.Menge > 0)
+        {
+            return $"+{bewegung.Menge}";
+        }
+        if (bewegung.IstKorrektur && bewegung.Menge < 0)
+        {
+            return $"−{-bewegung.Menge}";
+        }
+        return bewegung.Menge.ToString();
+    }
+
+    // Bei einem Wareneingang und einer Korrektur sind Von- und Nach-Raum gleich, dann steht der Raum nur einmal da
+    string Weg(Lagerbewegung bewegung)
+    {
+        if (bewegung.VonRaumID == bewegung.NachRaumID)
+        {
+            return bewegung.NachRaumID;
+        }
+        return $"{bewegung.VonRaumID} → {bewegung.NachRaumID}";
+    }
+
+    // Unter dem Status: auf wen eine offene Lagerbewegung wartet, sonst wann sie bestätigt oder storniert wurde
+    string StatusZusatz(Lagerbewegung bewegung)
+    {
+        if (bewegung.Offen)
+        {
+            return $"wartet auf {bewegung.FreigabeRaum.Person?.VollerName ?? "–"}";
+        }
+        // Wareneingang, Korrektur und Umbuchung zwischen eigenen Räumen sind sofort bestätigt
+        if (bewegung.BestaetigtAm == bewegung.ErstelltAm)
+        {
+            return "sofort gebucht";
+        }
+        return $"am {bewegung.BestaetigtAm:dd.MM.yyyy HH:mm}";
+    }
+
+    var erste = (Model.Seite - 1) * HistorieViewModel.EintraegeJeSeite + 1;
+    var letzte = erste + Model.Lagerbewegungen.Count - 1;
 }
 
-<div class="d-flex justify-content-between align-items-center">
-    <h1>Historie</h1>
-    @* Alle Lagerbewegungen als CSV-Datei, chronologisch nach dem Zeitpunkt der Buchung *@
-    <a asp-action="Export" class="btn btn-primary"><i data-lucide="download"></i>CSV exportieren</a>
+<div class="seite historie">
+    <div class="seiten-kopf">
+        <div>
+            <h1>Historie</h1>
+            <div class="seiten-untertitel">@Buchungen(Model.AnzahlGesamt), die neueste zuerst</div>
+        </div>
+        @* Alle Lagerbewegungen als CSV-Datei, chronologisch nach dem Zeitpunkt der Buchung (ohne die Filter); mobil nur das Icon *@
+        <a asp-action="Export" class="btn btn-primary d-none d-lg-inline-flex"><i data-lucide="download"></i>CSV exportieren</a>
+        <a asp-action="Export" class="btn btn-outline-secondary btn-quadrat d-lg-none" title="CSV exportieren" aria-label="CSV exportieren"><i data-lucide="download"></i></a>
+    </div>
+
+    @* Auswahllisten sofort bei Änderung (site.js), Suche und Zeitraum mit Enter oder "Filtern". Zum Filtern geht es immer auf Seite 1.
+       Mobil wie im Katalog nur die Suche und eine Auswahlliste (Status) *@
+    <form class="historie-filter" asp-action="Index" method="get">
+        <div class="feld-mit-icon historie-suche">
+            <input asp-for="Suche" class="form-control" placeholder="Gerät, Seriennummer oder Person" aria-label="Suche" />
+            <i data-lucide="search"></i>
+        </div>
+        <select asp-for="RaumID" class="filter-auswahl d-none d-lg-block" data-auto-absenden aria-label="Raum">
+            <option value="">Raum: alle</option>
+            @foreach (var raumID in Model.Raeume)
+            {
+                <option value="@raumID">Raum: @raumID</option>
+            }
+        </select>
+        <select asp-for="BewegungsartID" class="filter-auswahl d-none d-lg-block" data-auto-absenden aria-label="Bewegungsart">
+            <option value="">Bewegungsart: alle</option>
+            @foreach (var bewegungsart in Model.Bewegungsarten)
+            {
+                <option value="@bewegungsart.ID">Bewegungsart: @bewegungsart.Name</option>
+            }
+        </select>
+        <select asp-for="Status" class="filter-auswahl" data-auto-absenden aria-label="Status">
+            <option value="">Status: alle</option>
+            @foreach (var status in statusWerte)
+            {
+                <option value="@status">Status: @status</option>
+            }
+        </select>
+        @* Ohne asp-for, sonst kommt zu jedem Datumsfeld ein verstecktes Feld "__Invariant" in die Adresse *@
+        <div class="historie-zeitraum d-none d-lg-flex">
+            <input name="Von" type="date" value="@Model.Von?.ToString("yyyy-MM-dd")" class="form-control" title="Gebucht ab" aria-label="Gebucht ab" />
+            <span aria-hidden="true">–</span>
+            <input name="Bis" type="date" value="@Model.Bis?.ToString("yyyy-MM-dd")" class="form-control" title="Gebucht bis" aria-label="Gebucht bis" />
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtern</button>
+        @if (Model.Gefiltert)
+        {
+            <a class="btn btn-outline-secondary btn-icon" asp-action="Index" title="Filter zurücksetzen" aria-label="Filter zurücksetzen"><i data-lucide="x"></i></a>
+        }
+    </form>
+
+    @if (Model.Lagerbewegungen.Count == 0)
+    {
+        if (Model.AnzahlGesamt == 0)
+        {
+            <p class="text-muted">Es wurde noch nichts gebucht.</p>
+        }
+        else
+        {
+            <p class="text-muted">Keine Buchungen gefunden.</p>
+        }
+    }
+    else
+    {
+        @* Desktop: Tabelle, ein Klick auf die Zeile öffnet das Gerät mit seinem ganzen Verlauf *@
+        <div class="blueprint d-none d-lg-block">
+            <table class="table table-hover liste-tabelle historie-tabelle">
+                <thead>
+                    <tr>
+                        <th>Gebucht am</th>
+                        <th>Gerät</th>
+                        <th class="text-end">Menge</th>
+                        <th>Von → Nach</th>
+                        <th>Bewegungsart</th>
+                        <th>Gebucht von</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var bewegung in Model.Lagerbewegungen)
+                    {
+                        var status = HistorieViewModel.StatusVon(bewegung);
+                        <tr data-href="@Url.Action("Details", "Gegenstand", new { id = bewegung.GegenstandID })">
+                            <td class="zahlen">
+                                @bewegung.ErstelltAm.ToString("dd.MM.yyyy")
+                                <div class="nebeninfo">@bewegung.ErstelltAm.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                <a class="zeilen-link fw-medium" asp-controller="Gegenstand" asp-action="Details" asp-route-id="@bewegung.GegenstandID">@bewegung.Gegenstand.Name</a>
+                                <div class="nebeninfo">@(bewegung.Gegenstand.Seriennummer ?? "ohne Seriennummer")</div>
+                            </td>
+                            <td class="zahlen text-end">@Menge(bewegung)</td>
+                            <td class="zahlen">@Weg(bewegung)</td>
+                            <td>@bewegung.Bewegungsart.Name</td>
+                            <td>@bewegung.Person.VollerName</td>
+                            <td>
+                                <span class="tag @StatusTag.Klasse(status)">@status</span>
+                                <div class="nebeninfo">@StatusZusatz(bewegung)</div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* Mobil: Liste mit Status rechts, ein Tipp öffnet das Gerät *@
+        <div class="d-lg-none">
+            @foreach (var bewegung in Model.Lagerbewegungen)
+            {
+                var status = HistorieViewModel.StatusVon(bewegung);
+                <a class="historie-zeile" asp-controller="Gegenstand" asp-action="Details" asp-route-id="@bewegung.GegenstandID">
+                    <span class="historie-zeile-text">
+                        <b class="fw-medium">@bewegung.Gegenstand.Name</b><br />
+                        <span class="nebeninfo">@Menge(bewegung) Stück · @Weg(bewegung) · @bewegung.Bewegungsart.Name</span><br />
+                        <span class="nebeninfo">@bewegung.ErstelltAm.ToString("dd.MM.yyyy HH:mm") · @bewegung.Person.VollerName</span>
+                    </span>
+                    <span class="tag tag-klein @StatusTag.Klasse(status)">@status</span>
+                </a>
+            }
+        </div>
+
+        <div class="historie-seiten">
+            <span>@erste–@letzte von @Buchungen(Model.AnzahlGefiltert)</span>
+            @if (Model.AnzahlSeiten > 1)
+            {
+                <div class="historie-blaettern">
+                    <a class="btn btn-outline-secondary btn-icon @(Model.Seite == 1 ? "disabled" : null)" href="@SeitenLink(Model.Seite - 1)"
+                       aria-disabled="@(Model.Seite == 1 ? "true" : null)" title="Vorherige Seite" aria-label="Vorherige Seite"><i data-lucide="chevron-left"></i></a>
+                    <span>Seite @Model.Seite von @Model.AnzahlSeiten</span>
+                    <a class="btn btn-outline-secondary btn-icon @(Model.Seite == Model.AnzahlSeiten ? "disabled" : null)" href="@SeitenLink(Model.Seite + 1)"
+                       aria-disabled="@(Model.Seite == Model.AnzahlSeiten ? "true" : null)" title="Nächste Seite" aria-label="Nächste Seite"><i data-lucide="chevron-right"></i></a>
+                </div>
+            }
+        </div>
+    }
 </div>
-<hr />
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Menge)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ErstelltAm)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BestaetigtAm)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BewegungsartID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.VonRaumID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NachRaumID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.GegenstandID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonID)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Menge)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.ErstelltAm)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.BestaetigtAm)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.BewegungsartID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.VonRaumID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.NachRaumID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.GegenstandID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.PersonID)
-            </td>
-            <td>
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>

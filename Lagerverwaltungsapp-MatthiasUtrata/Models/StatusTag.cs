@@ -11,7 +11,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         {
             return status switch
             {
-                "Verfügbar" => "tag-accent",
+                "Verfügbar" or "Bestätigt" => "tag-accent",
                 "Freigabe offen" => "tag-outline",
                 "In Transfer" => "tag-outline-neutral",
                 _ => "tag-neutral"

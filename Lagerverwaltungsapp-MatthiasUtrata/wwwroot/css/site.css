@@ -2252,6 +2252,92 @@ a.tag-outline {
         }
 }
 
+/* Historie (nicht im Design, aus denselben Bausteinen wie Katalog und Benutzer) */
+.historie {
+    gap: 18px;
+}
+
+.historie-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.historie-suche {
+    flex: none;
+    width: 250px;
+}
+
+/* Zeitraum: zwei Datumsfelder mit Strich dazwischen, so breit wie ihr Inhalt */
+.historie-zeitraum {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-neutral-700);
+}
+
+    .historie-zeitraum > .form-control {
+        width: auto;
+    }
+
+.historie-tabelle {
+    --zelle-y: 9px;
+}
+
+/* Unter der Tabelle: angezeigte Buchungen links, Blättern rechts */
+.historie-seiten {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--color-neutral-700);
+}
+
+.historie-blaettern {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Mobil: Buchungen als Liste, Status rechts */
+.historie-zeile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-text);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+    .historie-zeile:hover {
+        color: var(--color-text);
+    }
+
+.historie-zeile-text {
+    min-width: 0;
+}
+
+@media (max-width: 991.98px) {
+    .historie {
+        gap: 12px;
+    }
+
+        .historie .seiten-kopf {
+            align-items: center;
+        }
+
+    .historie-suche {
+        width: 100%;
+    }
+}
+
 /* Profil */
 .profil-kopf {
     display: flex;

@@ -19,10 +19,104 @@ public class LagerbewegungController : Controller
         _context = context;
     }
 
+    /// <summary>
+    /// Methode, die die Historie anzeigt: alle Lagerbewegungen, die neueste zuerst, seitenweise.
+    /// Die Liste kann nach Suchbegriff, Raum, Bewegungsart, Status und Zeitraum gefiltert werden.
+    /// </summary>
+    /// <param name="suche">Suchbegriff für Gegenstand, Seriennummer oder die Person, die gebucht hat</param>
+    /// <param name="raumID">Die ID des Raums, aus dem oder in den gebucht wurde</param>
+    /// <param name="bewegungsartID">Die ID der Bewegungsart, nach der gefiltert werden soll</param>
+    /// <param name="status">Der Status, nach dem gefiltert werden soll (siehe HistorieViewModel)</param>
+    /// <param name="von">Der erste Tag, an dem gebucht wurde</param>
+    /// <param name="bis">Der letzte Tag, an dem gebucht wurde (einschließlich)</param>
+    /// <param name="seite">Die Seite, die angezeigt werden soll (ab 1)</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Lagerbewegung
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? suche, string? raumID, int? bewegungsartID, string? status, DateTime? von, DateTime? bis, int seite = 1)
     {
-        return View(await _context.Lagerbewegung.ToListAsync());
+        suche = suche?.Trim();
+
+        var abfrage = _context.Lagerbewegung.AsQueryable();
+
+        if (!string.IsNullOrEmpty(suche))
+        {
+            abfrage = abfrage.Where(l => l.Gegenstand.Name.Contains(suche)
+                || (l.Gegenstand.Seriennummer != null && l.Gegenstand.Seriennummer.Contains(suche))
+                || (l.Person.Vorname + " " + l.Person.Nachname).Contains(suche)
+                || l.Person.Username.Contains(suche));
+        }
+
+        if (!string.IsNullOrEmpty(raumID))
+        {
+            abfrage = abfrage.Where(l => l.VonRaumID == raumID || l.NachRaumID == raumID);
+        }
+
+        if (bewegungsartID != null)
+        {
+            abfrage = abfrage.Where(l => l.BewegungsartID == bewegungsartID);
+        }
+
+        // Auch eine stornierte Lagerbewegung hat einen Zeitpunkt in BestaetigtAm, erkannt wird sie an der Bewegungsart
+        if (status == HistorieViewModel.FreigabeOffen)
+        {
+            abfrage = abfrage.Where(Lagerbewegung.IstOffen);
+        }
+        else if (status == HistorieViewModel.Storniert)
+        {
+            abfrage = abfrage.Where(l => l.BestaetigtAm != null && l.Bewegungsart.Name == Bewegungsart.Storniert);
+        }
+        else if (status == HistorieViewModel.Bestaetigt)
+        {
+            abfrage = abfrage.Where(l => l.BestaetigtAm != null && l.Bewegungsart.Name != Bewegungsart.Storniert);
+        }
+
+        if (von != null)
+        {
+            var anfang = von.Value.Date;
+            abfrage = abfrage.Where(l => l.ErstelltAm >= anfang);
+        }
+
+        if (bis != null)
+        {
+            // Bis einschließlich: alles vor dem Beginn des nächsten Tages
+            var ende = bis.Value.Date.AddDays(1);
+            abfrage = abfrage.Where(l => l.ErstelltAm < ende);
+        }
+
+        // Eine Seite zu weit (z. B. nach einem neuen Filter in einem alten Link) zeigt die letzte Seite
+        var anzahlGefiltert = await abfrage.CountAsync();
+        var anzahlSeiten = Math.Max(1, (int)Math.Ceiling(anzahlGefiltert / (double)HistorieViewModel.EintraegeJeSeite));
+        seite = Math.Clamp(seite, 1, anzahlSeiten);
+
+        var historie = new HistorieViewModel
+        {
+            Lagerbewegungen = await abfrage
+                .Include(l => l.Gegenstand)
+                .Include(l => l.Bewegungsart)
+                .Include(l => l.Person)
+                // Mit den verantwortlichen Personen, damit bei offenen Lagerbewegungen steht, wer freigeben muss (Lagerbewegung.FreigabeRaum)
+                .Include(l => l.VonRaum).ThenInclude(r => r.Person)
+                .Include(l => l.NachRaum).ThenInclude(r => r.Person)
+                .OrderByDescending(l => l.ErstelltAm)
+                .ThenByDescending(l => l.ID)
+                .Skip((seite - 1) * HistorieViewModel.EintraegeJeSeite)
+                .Take(HistorieViewModel.EintraegeJeSeite)
+                .ToListAsync(),
+            AnzahlGesamt = await _context.Lagerbewegung.CountAsync(),
+            AnzahlGefiltert = anzahlGefiltert,
+            Seite = seite,
+            AnzahlSeiten = anzahlSeiten,
+            Suche = suche,
+            RaumID = raumID,
+            BewegungsartID = bewegungsartID,
+            Status = status,
+            Von = von,
+            Bis = bis,
+            Raeume = await _context.Raum.OrderBy(r => r.ID).Select(r => r.ID).ToListAsync(),
+            Bewegungsarten = await _context.Bewegungsart.OrderBy(b => b.Name).ToListAsync()
+        };
+
+        return View(historie);
     }
 
     // GET: Lagerbewegung/Details/5
