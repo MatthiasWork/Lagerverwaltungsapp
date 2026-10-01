@@ -1,142 +1,415 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.AusborgenViewModel
+@using System.Security.Claims
+
 @{
     ViewData["Title"] = "Neue Ausleihe";
 
-    // Statische Seite: alle Werte sind Beispieldaten aus dem Design, gespeichert wird nichts.
-    // Wird der Verleih an Personen umgesetzt, kommen sie aus einem ViewModel
-    var geraete = new (string Name, string InventarNr, string Raum, string Freigabe)[]
-    {
-        ("Lego Spike Prime Set", "BSV-ROB-0021", "C 015", "Lea Brandt"),
-        ("Lego Spike Prime Set", "BSV-ROB-0022", "C 015", "Lea Brandt"),
-        ("Dokumentenkamera Elmo", "BSV-DOK-0012", "A 008", "Aylin Öztürk")
-    };
-    var freigaben = new (string Initialen, string Name, string Info)[]
-    {
-        ("LB", "Lea Brandt", "C 015 · 2 Geräte"),
-        ("AÖ", "Aylin Öztürk", "A 008 · 1 Gerät")
-    };
+    // Ohne eigenen Raum gibt der Controller kein Model mit, dann zeigt die Seite nur einen Hinweis
+    var hatRaum = Model != null;
 }
 
-@* Desktop *@
-<div class="seite ausleihe d-none d-lg-flex">
-    <div class="seiten-kopf">
-        <h1>Neue Ausleihe</h1>
-        <ol class="schritte" aria-label="Schritte">
-            <li class="schritt erledigt"><span class="schritt-marke"><i data-lucide="check"></i></span>Geräte</li>
-            <li class="schritt-linie" aria-hidden="true"></li>
-            <li class="schritt aktuell" aria-current="step"><span class="schritt-marke">2</span>Zeitraum</li>
-            <li class="schritt-linie" aria-hidden="true"></li>
-            <li class="schritt"><span class="schritt-marke">3</span>Freigabe</li>
-        </ol>
-    </div>
-
-    <div class="ausleihe-raster">
-        <div class="ausleihe-auswahl">
-            <div class="geraete-liste">
-                <h4>Geräte</h4>
-                @foreach (var geraet in geraete)
-                {
-                    <div class="geraet-zeile">
-                        <div class="geraet-bild" aria-hidden="true"></div>
-                        <div>
-                            <div class="fw-medium">@geraet.Name</div>
-                            <div class="geraet-zeile-info">@geraet.InventarNr · @geraet.Raum</div>
-                        </div>
-                        <span class="geraet-zeile-info">Freigabe: @geraet.Freigabe</span>
-                        <button type="button" class="entfernen" aria-label="@geraet.Name entfernen"><i data-lucide="x"></i></button>
-                    </div>
-                }
-                <div class="geraet-hinzufuegen">
-                    <i data-lucide="scan-line"></i>
-                    <input type="search" placeholder="Weiteres Gerät scannen oder Inventar-Nr. eingeben" aria-label="Gerät hinzufügen" />
-                </div>
-            </div>
-
-            <div class="zeitraum">
-                <h4>Zeitraum</h4>
-                <div class="seg" role="radiogroup" aria-label="Zeitraum">
-                    <label class="seg-opt"><input type="radio" name="zeitraum" />Heute</label>
-                    <label class="seg-opt"><input type="radio" name="zeitraum" checked />Diese Woche</label>
-                    <label class="seg-opt"><input type="radio" name="zeitraum" />2 Wochen</label>
-                    <label class="seg-opt"><input type="radio" name="zeitraum" />Eigener Zeitraum</label>
-                </div>
-                <div class="datum-raster">
-                    <div>
-                        <span class="form-label">Abholung</span>
-                        <div class="form-control anzeige-feld">Mo, 05.10.2026<i data-lucide="calendar"></i></div>
-                    </div>
-                    <div>
-                        <span class="form-label">Rückgabe bis</span>
-                        <div class="form-control anzeige-feld">Fr, 09.10.2026<i data-lucide="calendar"></i></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="zweck">
-                <span class="form-label">Zweck (optional, für die Freigabe sichtbar)</span>
-                <div class="form-control">Projektwoche Robotik, Klasse 8b</div>
-            </div>
+<div class="seite ausleihe">
+    <div class="seiten-kopf d-none d-lg-flex">
+        <div>
+            <h1>Neue Ausleihe</h1>
+            @if (hatRaum)
+            {
+                <div class="seiten-untertitel">Geräte aus Raum @Model!.VonRaum.ID an einen anderen Raum ausleihen.</div>
+            }
         </div>
-
-        <aside class="blueprint zusammenfassung">
-            <span class="card-kicker">Zusammenfassung</span>
-            <div class="angabe">
-                <span class="angabe-label">Ausleiher</span>
-                <span class="fw-medium">Jonas Weber · Lehrkraft</span>
-            </div>
-            <div class="angabe">
-                <span class="angabe-label">Zeitraum</span>
-                <span>05.10. – 09.10.2026 · 5 Tage</span>
-            </div>
-            <div class="angabe freigabe-liste">
-                <span class="angabe-label">Benötigte Freigaben</span>
-                @foreach (var freigabe in freigaben)
-                {
-                    <div class="freigeber">
-                        <span class="avatar avatar-sm" aria-hidden="true">@freigabe.Initialen</span>
-                        <span>@freigabe.Name<br /><span class="nebeninfo">@freigabe.Info</span></span>
-                    </div>
-                }
-            </div>
-            <p class="hinweis-klein"><i data-lucide="bell"></i>Erinnerung am 08.10. Bei mehr als 5 Tagen Verzug werden die IT-Admins informiert.</p>
-            <button type="button" class="btn btn-primary btn-cta">Freigabe anfragen</button>
-        </aside>
-    </div>
-</div>
-
-@* Mobil: Schritt 2 von 3 als eigener Bildschirm *@
-<div class="ausleihe-mobil d-lg-none">
-    <div class="ausleihe-mobil-kopf">
-        <div class="schritt-zeile">
-            <a class="abbrechen-link" asp-controller="Home" asp-action="Index">Abbrechen</a>
-            <span class="schritt-text">Schritt 2 von 3</span>
-        </div>
-        <div class="fortschritt" aria-hidden="true"><span class="fertig"></span><span class="fertig"></span><span></span></div>
-        <h1>Zeitraum</h1>
-    </div>
-
-    <div class="zeitraum-wahl" role="radiogroup" aria-label="Zeitraum">
-        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />Heute</label>
-        <label class="seg-opt"><input type="radio" name="zeitraumMobil" checked />Woche</label>
-        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />2 Wo.</label>
-        <label class="seg-opt"><input type="radio" name="zeitraumMobil" />Eigene</label>
-    </div>
-
-    <div class="datum-kacheln">
-        <div><span>Abholung</span><b>Mo 05.10.</b></div>
-        <div><span>Rückgabe</span><b>Fr 09.10.</b></div>
-    </div>
-
-    <div>
-        <div class="geraete-anzahl">@geraete.Length Geräte</div>
-        @foreach (var geraet in geraete)
+        @if (hatRaum)
         {
-            <div class="geraete-kurz"><span>@geraet.Name</span><span class="nebeninfo">@geraet.Raum</span></div>
+            @* Schritte wie im Design; das Skript setzt sie je nach Auswahl auf erledigt bzw. aktuell *@
+            <ol class="schritte" aria-label="Schritte">
+                <li class="schritt aktuell" data-schritt>
+                    <span class="schritt-marke"><span data-marke="nummer">1</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Geräte
+                </li>
+                <li class="schritt-linie" aria-hidden="true"></li>
+                <li class="schritt" data-schritt>
+                    <span class="schritt-marke"><span data-marke="nummer">2</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Zeitraum
+                </li>
+                <li class="schritt-linie" aria-hidden="true"></li>
+                <li class="schritt" data-schritt>
+                    <span class="schritt-marke"><span data-marke="nummer">3</span><span data-marke="haken" hidden><i data-lucide="check"></i></span></span>Freigabe
+                </li>
+            </ol>
         }
     </div>
-
-    <p class="hinweis-klein"><i data-lucide="bell"></i>Freigabe durch Lea Brandt und Aylin Öztürk. Erinnerung am 08.10.</p>
-
-    <div class="ausleihe-weiter">
-        <button type="button" class="btn btn-primary">Weiter zur Freigabe</button>
+    <div class="transfer-kopf-mobil d-lg-none">
+        <a class="abbrechen-link" asp-controller="Home" asp-action="Index">Abbrechen</a>
+        <h1 class="transfer-titel-mobil">Neue Ausleihe</h1>
     </div>
+
+    @if (!hatRaum)
+    {
+        <p class="text-muted mb-0">
+            Ausleihen kann nur, wer für einen Raum verantwortlich ist, da die Geräte aus diesem Raum gebucht werden.
+            Ein Admin kann Ihnen in der Raumliste einen Raum zuweisen.
+        </p>
+        <div>
+            <a class="btn btn-outline-secondary" asp-controller="Gegenstand" asp-action="Index">Zum Katalog</a>
+        </div>
+    }
+    else
+    {
+        var vonRaum = Model!.VonRaum;
+        var verantwortlich = vonRaum.Person == null ? "–" : $"{vonRaum.Person.Vorname} {vonRaum.Person.Nachname}";
+        var rolle = User.FindFirstValue(ClaimTypes.Role);
+
+        // Nach einem Fehler die bisherige Auswahl wieder anzeigen; das Skript unten hält die Werte danach aktuell
+        var zielraum = Model.Raeume.FirstOrDefault(r => r.ID == Model.NachRaumID);
+        var anzahlGewaehlt = Model.Mengen.Count(m => m.Value > 0);
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <form asp-action="Index" method="post" id="ausleiheFormular">
+            <div class="ausleihe-raster">
+                <div class="ausleihe-auswahl">
+                    @* Wohin: Die Person des Zielraums bestätigt die Übernahme, wie bei jedem Transfer *@
+                    <div class="ausleihe-ziel">
+                        <div>
+                            <label class="form-label" asp-for="NachRaumID">Ausleihen an</label>
+                            <select asp-for="NachRaumID" class="form-select" required>
+                                <option value="">Raum auswählen</option>
+                                @foreach (var raum in Model.Raeume)
+                                {
+                                    // Der Controller lädt nur Räume mit verantwortlicher Person
+                                    var person = raum.Person!;
+                                    <option value="@raum.ID" data-raumart="@raum.Raumart.Name"
+                                            data-person="@person.Vorname @person.Nachname" data-initialen="@person.Initialen">
+                                        @raum.ID · @raum.Raumart.Name · @person.Vorname @person.Nachname
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="NachRaumID" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label class="form-label" asp-for="BewegungsartID"></label>
+                            <select asp-for="BewegungsartID" asp-items="Model.Bewegungsarten" class="form-select" required></select>
+                            <span asp-validation-for="BewegungsartID" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="geraete-liste">
+                        <h4>Geräte · <span data-ausleihe="anzahl">@anzahlGewaehlt</span></h4>
+
+                        @foreach (var bestand in Model.Bestand)
+                        {
+                            var gegenstand = bestand.Gegenstand;
+                            Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
+                            var gewaehlt = menge > 0;
+                            <div class="geraet-zeile" hidden="@(!gewaehlt)"
+                                 data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
+                                 data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Raum")">
+                                <div class="geraet-bild" aria-hidden="true"></div>
+                                <div>
+                                    <div class="fw-medium">@gegenstand.Name</div>
+                                    <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name) · @vonRaum.ID</div>
+                                </div>
+                                @if (gegenstand.Seriennummer != null)
+                                {
+                                    <span class="tag tag-accent d-none d-lg-inline-flex">Verfügbar</span>
+                                    <input type="hidden" name="Mengen[@gegenstand.ID]" value="1" disabled="@(!gewaehlt)" />
+                                }
+                                else
+                                {
+                                    <span class="menge-auswahl">
+                                        <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@(gewaehlt ? menge : 1)"
+                                               min="1" max="@bestand.Menge" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
+                                        <span>von @bestand.Menge</span>
+                                    </span>
+                                }
+                                <button type="button" class="entfernen" data-entfernen aria-label="@gegenstand.Name entfernen"><i data-lucide="x"></i></button>
+                            </div>
+                        }
+                        <p class="geraete-leer" hidden="@(anzahlGewaehlt > 0)">
+                            @(Model.Bestand.Any() ? "Noch keine Geräte ausgewählt." : $"Im Raum {vonRaum.ID} liegt derzeit nichts, das ausgeliehen werden kann.")
+                        </p>
+
+                        @if (Model.Bestand.Any())
+                        {
+                            <div class="geraet-hinzufuegen">
+                                <i data-lucide="scan-line"></i>
+                                <input type="search" id="geraetSuche" placeholder="Gerät scannen oder Name/Seriennummer eingeben" autocomplete="off"
+                                       aria-label="Gerät hinzufügen" aria-controls="geraetVorschlaege" />
+                                <div class="vorschlaege" id="geraetVorschlaege" hidden></div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="zeitraum">
+                        <h4>Zeitraum</h4>
+                        <div class="seg" role="radiogroup" aria-label="Zeitraum">
+                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="heute" />Heute</label>
+                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="woche" checked />Diese Woche</label>
+                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="zweiWochen" />2 Wochen</label>
+                            <label class="seg-opt"><input type="radio" name="zeitraumWahl" value="eigener" />Eigener Zeitraum</label>
+                        </div>
+                        <div class="datum-raster">
+                            <div>
+                                <label class="form-label" for="abholung">Abholung</label>
+                                <input type="date" class="form-control" id="abholung" />
+                            </div>
+                            <div>
+                                <label class="form-label" for="rueckgabe">Rückgabe bis</label>
+                                <input type="date" class="form-control" id="rueckgabe" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="zweck">
+                        <label class="form-label" for="zweck">Zweck (optional)</label>
+                        <textarea class="form-control" id="zweck" rows="2" placeholder="z. B. Projektwoche Robotik, Klasse 8b"></textarea>
+                        <div class="form-text">Zeitraum und Zweck werden nicht gespeichert. Bitte bei Bedarf mit der Person absprechen, die freigibt.</div>
+                    </div>
+                </div>
+
+                <aside class="blueprint zusammenfassung">
+                    <span class="card-kicker">Zusammenfassung</span>
+                    <div class="angabe">
+                        <span class="angabe-label">Von</span>
+                        <span class="fw-medium">@vonRaum.ID · @vonRaum.Raumart.Name</span>
+                        <span class="nebeninfo">@verantwortlich · @rolle</span>
+                    </div>
+                    <div class="angabe">
+                        <span class="angabe-label">An</span>
+                        <span class="fw-medium" data-ausleihe="ziel">@(zielraum == null ? "–" : $"{zielraum.ID} · {zielraum.Raumart.Name}")</span>
+                    </div>
+                    <div class="angabe">
+                        <span class="angabe-label">Zeitraum</span>
+                        <span data-ausleihe="zeitraum">–</span>
+                    </div>
+                    <div class="angabe freigabe-liste">
+                        <span class="angabe-label">Benötigte Freigabe</span>
+                        <div class="freigeber" data-ausleihe="freigeber" hidden="@(zielraum == null)">
+                            <span class="avatar avatar-sm" aria-hidden="true" data-ausleihe="initialen">@zielraum?.Person?.Initialen</span>
+                            <span>
+                                <span data-ausleihe="person">@zielraum?.Person?.Vorname @zielraum?.Person?.Nachname</span><br />
+                                <span class="nebeninfo" data-ausleihe="freigabe-info"></span>
+                            </span>
+                        </div>
+                        <span class="nebeninfo" data-ausleihe="keine-freigabe" hidden="@(zielraum != null)">Noch kein Raum ausgewählt.</span>
+                    </div>
+                    <p class="hinweis-klein">
+                        <i data-lucide="info"></i>
+                        <span>
+                            Beim Absenden werden die Geräte aus Raum @vonRaum.ID abgebucht. Sie sind unterwegs, bis die Person des Zielraums
+                            die Übernahme unter „Freigaben“ bestätigt. Bis dahin können Sie die Ausleihe unter „Mein Raum“ zurückziehen.
+                        </span>
+                    </p>
+                    <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())">Freigabe anfragen</button>
+                </aside>
+            </div>
+        </form>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        // Geräteauswahl wie beim Transfer: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen.
+        // Dazu die Zusammenfassung (Zielraum, Zeitraum, benötigte Freigabe) und die Schritte oben
+        (function () {
+            var formular = document.getElementById('ausleiheFormular');
+            if (!formular) {
+                return;
+            }
+            var zeilen = Array.prototype.slice.call(formular.querySelectorAll('.geraet-zeile'));
+            var suchfeld = document.getElementById('geraetSuche');
+            var vorschlaege = document.getElementById('geraetVorschlaege');
+            var raumAuswahl = formular.querySelector('select[name="NachRaumID"]');
+            var abholung = document.getElementById('abholung');
+            var rueckgabe = document.getElementById('rueckgabe');
+
+            function feld(name) {
+                return formular.querySelector('[data-ausleihe="' + name + '"]');
+            }
+
+            // Zielraum und die Person, die die Übernahme bestätigen muss
+            function freigabeZeigen(anzahl) {
+                var raum = raumAuswahl.selectedOptions[0];
+                var gewaehlt = raum && raum.value !== '';
+                feld('ziel').textContent = gewaehlt ? raum.value + ' · ' + raum.dataset.raumart : '–';
+                feld('freigeber').hidden = !gewaehlt;
+                feld('keine-freigabe').hidden = gewaehlt;
+                if (gewaehlt) {
+                    feld('initialen').textContent = raum.dataset.initialen;
+                    feld('person').textContent = raum.dataset.person;
+                    feld('freigabe-info').textContent = 'Raum ' + raum.value + ' · ' + anzahl + (anzahl === 1 ? ' Gerät' : ' Geräte');
+                }
+                return gewaehlt;
+            }
+
+            // Zeitraum in der Zusammenfassung; liefert, ob er gültig ist
+            function zeitraumZeigen() {
+                var ausgabe = feld('zeitraum');
+                if (!abholung.value || !rueckgabe.value) {
+                    ausgabe.textContent = '–';
+                    return false;
+                }
+                var von = new Date(abholung.value + 'T00:00');
+                var bis = new Date(rueckgabe.value + 'T00:00');
+                var tage = Math.round((bis - von) / 86400000) + 1;
+                if (tage < 1) {
+                    ausgabe.textContent = 'Rückgabe liegt vor der Abholung';
+                    return false;
+                }
+                var format = function (datum, mitJahr) {
+                    return String(datum.getDate()).padStart(2, '0') + '.' + String(datum.getMonth() + 1).padStart(2, '0') + '.' + (mitJahr ? datum.getFullYear() : '');
+                };
+                ausgabe.textContent = format(von, false) + ' – ' + format(bis, true) + ' · ' + tage + (tage === 1 ? ' Tag' : ' Tage');
+                return true;
+            }
+
+            // Schritte: erledigt ist, was ausgefüllt ist, aktuell der erste offene Schritt (zuletzt "Freigabe")
+            function schritteZeigen(erledigt) {
+                var schritte = document.querySelectorAll('[data-schritt]');
+                var aktuell = erledigt.indexOf(false);
+                schritte.forEach(function (schritt, i) {
+                    var fertig = erledigt[i] === true;
+                    var istAktuell = i === (aktuell === -1 ? schritte.length - 1 : aktuell);
+                    schritt.classList.toggle('erledigt', fertig);
+                    schritt.classList.toggle('aktuell', istAktuell);
+                    schritt.querySelector('[data-marke="nummer"]').hidden = fertig;
+                    schritt.querySelector('[data-marke="haken"]').hidden = !fertig;
+                    if (istAktuell) {
+                        schritt.setAttribute('aria-current', 'step');
+                    } else {
+                        schritt.removeAttribute('aria-current');
+                    }
+                });
+            }
+
+            function aktualisieren() {
+                var anzahl = zeilen.filter(function (zeile) { return !zeile.hidden; }).length;
+                feld('anzahl').textContent = anzahl;
+                formular.querySelector('.geraete-leer').hidden = anzahl > 0;
+                var zielGewaehlt = freigabeZeigen(anzahl);
+                var zeitraumGueltig = zeitraumZeigen();
+                // "Freigabe" ist erst nach dem Absenden erledigt
+                schritteZeigen([anzahl > 0 && zielGewaehlt, anzahl > 0 && zielGewaehlt && zeitraumGueltig, false]);
+            }
+
+            // Zeile zeigen und ihre Felder mitschicken oder ausblenden und nicht mitschicken
+            function auswaehlen(zeile, gewaehlt) {
+                zeile.hidden = !gewaehlt;
+                zeile.querySelectorAll('input').forEach(function (eingabe) {
+                    eingabe.disabled = !gewaehlt;
+                });
+                aktualisieren();
+            }
+
+            function hinzufuegen(zeile) {
+                auswaehlen(zeile, true);
+                suchfeld.value = '';
+                vorschlaege.hidden = true;
+                var menge = zeile.querySelector('input[type="number"]');
+                (menge || suchfeld).focus();
+            }
+
+            // Vorschläge: noch nicht ausgewählte Geräte, deren Name, Seriennummer oder Kategorie den Suchbegriff enthält
+            function vorschlaegeZeigen() {
+                var begriff = suchfeld.value.trim().toLowerCase();
+                vorschlaege.replaceChildren();
+                if (begriff === '') {
+                    vorschlaege.hidden = true;
+                    return;
+                }
+
+                var treffer = zeilen.filter(function (zeile) {
+                    return zeile.hidden && zeile.dataset.suchtext.indexOf(begriff) !== -1;
+                }).slice(0, 8);
+
+                treffer.forEach(function (zeile) {
+                    var knopf = document.createElement('button');
+                    knopf.type = 'button';
+                    knopf.className = 'vorschlag';
+                    var name = document.createElement('span');
+                    name.textContent = zeile.dataset.name;
+                    var info = document.createElement('span');
+                    info.className = 'nebeninfo';
+                    info.textContent = zeile.dataset.info;
+                    knopf.append(name, info);
+                    knopf.addEventListener('click', function () {
+                        hinzufuegen(zeile);
+                    });
+                    vorschlaege.append(knopf);
+                });
+
+                if (treffer.length === 0) {
+                    var leer = document.createElement('div');
+                    leer.className = 'vorschlag-leer';
+                    leer.textContent = 'Kein passendes Gerät in diesem Raum';
+                    vorschlaege.append(leer);
+                }
+                vorschlaege.hidden = false;
+            }
+
+            zeilen.forEach(function (zeile) {
+                zeile.querySelector('[data-entfernen]').addEventListener('click', function () {
+                    auswaehlen(zeile, false);
+                });
+            });
+
+            if (suchfeld) {
+                suchfeld.addEventListener('input', vorschlaegeZeigen);
+                suchfeld.addEventListener('keydown', function (e) {
+                    // Enter übernimmt den ersten Vorschlag (z. B. nach dem Scannen einer Seriennummer) statt das Formular abzuschicken
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        var erster = vorschlaege.querySelector('.vorschlag');
+                        if (erster) {
+                            erster.click();
+                        }
+                    } else if (e.key === 'Escape') {
+                        vorschlaege.hidden = true;
+                    }
+                });
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.geraet-hinzufuegen')) {
+                        vorschlaege.hidden = true;
+                    }
+                });
+            }
+
+            // Zeitraum: die Auswahl füllt Abholung und Rückgabe, "Eigener Zeitraum" lässt beide frei wählen
+            function alsWert(datum) {
+                return datum.getFullYear() + '-' + String(datum.getMonth() + 1).padStart(2, '0') + '-' + String(datum.getDate()).padStart(2, '0');
+            }
+
+            function zeitraumSetzen(wahl) {
+                if (wahl === 'eigener') {
+                    return;
+                }
+                var heute = new Date();
+                heute.setHours(0, 0, 0, 0);
+                var bis = new Date(heute);
+                if (wahl === 'woche') {
+                    // Bis Freitag dieser Woche, am Wochenende bis Freitag der nächsten Woche
+                    bis.setDate(heute.getDate() + (heute.getDay() === 6 ? 6 : (5 - heute.getDay() + 7) % 7));
+                } else if (wahl === 'zweiWochen') {
+                    bis.setDate(heute.getDate() + 13);
+                }
+                abholung.value = alsWert(heute);
+                rueckgabe.value = alsWert(bis);
+            }
+
+            formular.querySelectorAll('input[name="zeitraumWahl"]').forEach(function (wahl) {
+                wahl.addEventListener('change', function () {
+                    zeitraumSetzen(wahl.value);
+                    aktualisieren();
+                });
+            });
+            [abholung, rueckgabe].forEach(function (datum) {
+                datum.addEventListener('change', function () {
+                    // Wer ein Datum selbst ändert, wählt einen eigenen Zeitraum
+                    formular.querySelector('input[name="zeitraumWahl"][value="eigener"]').checked = true;
+                    aktualisieren();
+                });
+            });
+
+            raumAuswahl.addEventListener('change', aktualisieren);
+            zeitraumSetzen(formular.querySelector('input[name="zeitraumWahl"]:checked').value);
+            aktualisieren();
+        })();
+    </script>
+}
