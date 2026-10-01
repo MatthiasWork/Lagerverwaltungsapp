@@ -38,7 +38,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Übersicht (Startseite) mit Kennzahlen und den letzten Buchungen anzeigt.
+        /// Methode, die die Übersicht (Startseite) mit Kennzahlen, dem Bestand je Kategorie und je Raum und den letzten Buchungen anzeigt.
         /// Admins sehen alle Buchungen, alle anderen nur ihre eigenen und die ihres Raums.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
@@ -56,6 +56,23 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             };
             // Unterwegs ist, was schon abgebucht, aber noch nicht übernommen wurde
             uebersicht.Gesamt = uebersicht.Verfuegbar + await offen.SumAsync(l => l.Menge);
+
+            // Statistiken: die verfügbaren Stück aus "Verfügbar" nach Kategorie und nach Raum aufgeteilt, wie die Kennzahl für alle gleich
+            uebersicht.BestandJeKategorie = await _context.Raumbestand
+                .GroupBy(r => new { r.Gegenstand.KategorieID, r.Gegenstand.Kategorie.Name })
+                .Where(g => g.Sum(r => r.Menge) > 0)
+                .OrderByDescending(g => g.Sum(r => r.Menge))
+                .ThenBy(g => g.Key.Name)
+                .Select(g => new KategorieStatistik { KategorieID = g.Key.KategorieID, Name = g.Key.Name, Stueck = g.Sum(r => r.Menge) })
+                .ToListAsync();
+
+            uebersicht.BestandJeRaum = await _context.Raumbestand
+                .GroupBy(r => new { r.RaumID, Raumart = r.Raum.Raumart.Name })
+                .Where(g => g.Sum(r => r.Menge) > 0)
+                .OrderByDescending(g => g.Sum(r => r.Menge))
+                .ThenBy(g => g.Key.RaumID)
+                .Select(g => new RaumStatistik { RaumID = g.Key.RaumID, Raumart = g.Key.Raumart, Stueck = g.Sum(r => r.Menge) })
+                .ToListAsync();
 
             // Admins sehen alle offenen Freigaben, alle anderen nur die für ihren Raum (ohne Raum keine)
             if (istAdmin)

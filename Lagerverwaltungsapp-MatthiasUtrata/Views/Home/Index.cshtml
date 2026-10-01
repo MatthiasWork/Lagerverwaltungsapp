@@ -37,6 +37,40 @@
         freigabenInfo = $"{Model.OffeneFreigaben} Transfers";
     }
 
+    // Statistiken: die größten Kategorien als Balken und die größten Räume als Säulen, der Rest jeweils nur als Zeile darunter.
+    // Balken und Säulen sind relativ zum größten Wert ihres Diagramms
+    var balken = Model.BestandJeKategorie.Take(8).ToList();
+    var weitereKategorien = Model.BestandJeKategorie.Skip(balken.Count).ToList();
+    var maxKategorie = balken.Select(k => k.Stueck).DefaultIfEmpty(1).Max();
+
+    var saeulen = Model.BestandJeRaum.Take(10).ToList();
+    var weitereRaeume = Model.BestandJeRaum.Skip(saeulen.Count).ToList();
+    var maxRaum = saeulen.Select(r => r.Stueck).DefaultIfEmpty(1).Max();
+
+    // Länge als Anteil (0 bis 1) am größten Wert für die CSS-Variable --anteil, mit Punkt statt Komma
+    string Anteil(int stueck, int max) => ((double)stueck / max).ToString("0.####", CultureInfo.InvariantCulture);
+
+    // Hinweis beim Darüberfahren mit dem Anteil an allen verfügbaren Stück, z. B. "Kabel und Adapter: 379 Stück, 26 % des Bestands"
+    string Hinweis(string name, int stueck)
+    {
+        var prozent = Math.Round(100.0 * stueck / Model.Verfuegbar);
+        return $"{name}: {stueck.ToString("N0", kultur)} Stück, {prozent} % des Bestands";
+    }
+
+    // Raum im Hinweis mit Raumart, z. B. "309 · Labor"
+    string Raumname(RaumStatistik raum) => $"{raum.RaumID} · {raum.Raumart}";
+
+    // Zeile unter einem Diagramm, z. B. "+ 12 weitere Kategorien · 210 Stück" oder "+ 1 weiterer Raum · 12 Stück"
+    string Weitere(int anzahl, string einzahl, string mehrzahl, int stueck)
+    {
+        var was = mehrzahl;
+        if (anzahl == 1)
+        {
+            was = einzahl;
+        }
+        return $"+ {anzahl} {was} · {stueck.ToString("N0", kultur)} Stück";
+    }
+
     // Zeitangabe in der Aktivitätsliste: heute die Uhrzeit, gestern "Gestern", sonst das Datum
     string Zeit(DateTime zeitpunkt)
     {
@@ -78,6 +112,78 @@
             <span class="kennzahl-label">Freigaben offen</span>
             <span class="kennzahl-wert">@Model.OffeneFreigaben</span>
             <span class="kennzahl-info">@freigabenInfo</span>
+        </div>
+    </div>
+
+    @* Desktop: die beiden Statistiken nebeneinander wie die Kennzahlen darüber und gleich hoch. Mobil untereinander *@
+    <div class="uebersicht-raster">
+        @* Balkendiagramm; jeder Balken führt in den Katalog, gefiltert nach der Kategorie *@
+        <div class="blueprint statistik">
+            <div class="statistik-kopf">
+                <h4>Bestand nach Kategorie</h4>
+                <span class="nebeninfo">verfügbare Stück</span>
+            </div>
+            @if (balken.Count == 0)
+            {
+                <p class="aktivitaet-leer">Noch kein Bestand.</p>
+            }
+            else
+            {
+                <ul class="statistik-liste">
+                    @foreach (var kategorie in balken)
+                    {
+                        <li>
+                            <a class="statistik-zeile" asp-controller="Gegenstand" asp-action="Index" asp-route-kategorieID="@kategorie.KategorieID"
+                               title="@Hinweis(kategorie.Name, kategorie.Stueck)">
+                                <span class="statistik-name">@kategorie.Name</span>
+                                <span class="statistik-feld">
+                                    <span class="statistik-balken" style="--anteil: @Anteil(kategorie.Stueck, maxKategorie)" aria-hidden="true"></span>
+                                    <span class="statistik-wert">@kategorie.Stueck.ToString("N0", kultur)</span>
+                                </span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+                @if (weitereKategorien.Count > 0)
+                {
+                    <a class="statistik-weitere" asp-controller="Gegenstand" asp-action="Index">@Weitere(weitereKategorien.Count, "weitere Kategorie", "weitere Kategorien", weitereKategorien.Sum(k => k.Stueck))</a>
+                }
+            }
+        </div>
+
+        @* Säulendiagramm; jede Säule führt in den Katalog, gefiltert nach dem Raum. Die Raumnummer steht vorne, damit
+           Screenreader erst den Raum und dann die Zahl vorlesen; angezeigt wird sie unter der Säule (site.css) *@
+        <div class="blueprint statistik">
+            <div class="statistik-kopf">
+                <h4>Bestand nach Raum</h4>
+                <span class="nebeninfo">verfügbare Stück</span>
+            </div>
+            @if (saeulen.Count == 0)
+            {
+                <p class="aktivitaet-leer">Noch kein Bestand.</p>
+            }
+            else
+            {
+                <ul class="saeulen">
+                    @foreach (var raum in saeulen)
+                    {
+                        <li>
+                            <a class="saeule" asp-controller="Gegenstand" asp-action="Index" asp-route-raumID="@raum.RaumID"
+                               title="@Hinweis(Raumname(raum), raum.Stueck)">
+                                <span class="saeule-name">@raum.RaumID</span>
+                                <span class="saeule-feld">
+                                    <span class="saeule-wert">@raum.Stueck.ToString("N0", kultur)</span>
+                                    <span class="saeule-balken" style="--anteil: @Anteil(raum.Stueck, maxRaum)" aria-hidden="true"></span>
+                                </span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+                @if (weitereRaeume.Count > 0)
+                {
+                    <a class="statistik-weitere" asp-controller="Gegenstand" asp-action="Index">@Weitere(weitereRaeume.Count, "weiterer Raum", "weitere Räume", weitereRaeume.Sum(r => r.Stueck))</a>
+                }
+            }
         </div>
     </div>
 
