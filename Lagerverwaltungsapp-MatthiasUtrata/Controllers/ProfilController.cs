@@ -83,10 +83,27 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             foreach (var l in bewegungen)
             {
+                // Bei einer Korrektur ist die Menge die Änderung und kann negativ sein, die Richtung steht im Text
                 var was = l.Gegenstand.Name;
-                if (l.Menge != 1)
+                if (Math.Abs(l.Menge) != 1)
                 {
-                    was += $" × {l.Menge}";
+                    was += $" × {Math.Abs(l.Menge)}";
+                }
+
+                // Eine Korrektur macht ein Admin im Bestand eines Raums. Sie steht im Profil des Admins und der Person des Raums
+                if (l.IstKorrektur)
+                {
+                    string text;
+                    if (l.Menge > 0)
+                    {
+                        text = $"{was} in {l.NachRaumID} eingebucht (Korrektur)";
+                    }
+                    else
+                    {
+                        text = $"{was} aus {l.NachRaumID} ausgebucht (Korrektur)";
+                    }
+                    profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
+                    continue;
                 }
 
                 // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung, sie ist also nie "sofort bestätigt"

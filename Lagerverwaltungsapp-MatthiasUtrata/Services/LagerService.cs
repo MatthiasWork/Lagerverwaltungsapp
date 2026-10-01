@@ -49,13 +49,13 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, die die Bewegungsarten liefert, die man beim Buchen auswählen kann (für die Auswahllisten in den Formularen).
-        /// "Storniert" fehlt, da sie nur beim Ablehnen oder Zurückziehen vergeben wird.
+        /// "Storniert" und "Korrektur" fehlen, da nur der LagerService sie vergibt.
         /// </summary>
         /// <returns>Die Bewegungsarten nach Namen sortiert</returns>
         public async Task<List<Bewegungsart>> WaehlbareBewegungsartenAsync()
         {
             return await _context.Bewegungsart
-                .Where(b => b.Name != Bewegungsart.Storniert)
+                .Where(b => b.Name != Bewegungsart.Storniert && b.Name != Bewegungsart.Korrektur)
                 .OrderBy(b => b.Name)
                 .ToListAsync();
         }
@@ -245,6 +245,136 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
+        /// Methode, mit der ein Admin den Bestand eines Raums korrigiert, z. B. nach einer Inventur. Für jeden geänderten Gegenstand
+        /// entsteht eine sofort bestätigte Lagerbewegung mit der Bewegungsart "Korrektur" (siehe Lagerbewegung).
+        /// Alles oder nichts in einer Transaktion; die Regeln je Gegenstand stehen in KorrekturBuchenAsync.
+        /// </summary>
+        /// <param name="raumID">Die ID des Raums, dessen Bestand korrigiert wird</param>
+        /// <param name="positionen">Die geänderten Gegenstände (Schlüssel = GegenstandID) mit der Menge, die beim Anzeigen im Raum war, und der neuen Menge</param>
+        /// <param name="personID">Die ID des angemeldeten Admins</param>
+        /// <returns>Die Fehlermeldung oder null, wenn alle Korrekturen gebucht wurden</returns>
+        public async Task<string?> KorrigierenAsync(string raumID, IReadOnlyDictionary<int, (int Bisher, int Neu)> positionen, int personID)
+        {
+            return await BuchenAsync(async () =>
+            {
+                // Zuständigkeitsregel: Korrigieren darf nur ein Admin, in jedem Raum
+                if (!await _context.Person.AnyAsync(p => p.ID == personID && p.Rolle.Admin))
+                {
+                    return "Nur ein Admin darf den Bestand korrigieren.";
+                }
+
+                var raum = await _context.Raum.FindAsync(raumID);
+                if (raum == null)
+                {
+                    return "Diesen Raum gibt es nicht.";
+                }
+
+                // Die Ersteinrichtung legt die Bewegungsart bei jedem Start an, falls sie fehlt
+                var korrektur = await _context.Bewegungsart.FirstOrDefaultAsync(b => b.Name == Bewegungsart.Korrektur);
+                if (korrektur == null)
+                {
+                    return $"Die Bewegungsart \"{Bewegungsart.Korrektur}\" fehlt. Bitte die Anwendung neu starten, dann wird sie angelegt.";
+                }
+
+                var geaendert = positionen.Where(p => p.Value.Neu != p.Value.Bisher).ToList();
+                if (geaendert.Count == 0)
+                {
+                    return "Es wurde keine Menge geändert.";
+                }
+
+                var jetzt = DateTime.Now;
+                foreach (var (gegenstandID, (bisher, neu)) in geaendert)
+                {
+                    var fehler = await KorrekturBuchenAsync(gegenstandID, bisher, neu, raum.ID, korrektur.ID, personID, jetzt);
+                    if (fehler != null)
+                    {
+                        return fehler;
+                    }
+                }
+
+                return null;
+            });
+        }
+
+        /// <summary>
+        /// Methode, die die Korrektur eines Gegenstands in einem Raum prüft, den Raumbestand auf die neue Menge setzt und die
+        /// Lagerbewegung dazu anlegt, ohne zu speichern.
+        /// </summary>
+        /// <param name="gegenstandID">Die ID des Gegenstands, dessen Bestand korrigiert wird</param>
+        /// <param name="bisher">Die Menge, die beim Anzeigen im Raum war</param>
+        /// <param name="neu">Die neue Menge im Raum (bei einem Gerät mit Seriennummer 0 oder 1)</param>
+        /// <param name="raumID">Die ID des Raums, schon so geschrieben wie in der Datenbank</param>
+        /// <param name="bewegungsartID">Die ID der Bewegungsart "Korrektur"</param>
+        /// <param name="personID">Die ID des Admins, der korrigiert</param>
+        /// <param name="jetzt">Der Zeitpunkt der Korrektur (für alle Gegenstände derselbe)</param>
+        /// <returns>Die Fehlermeldung oder null, wenn die Korrektur gebucht wurde</returns>
+        private async Task<string?> KorrekturBuchenAsync(int gegenstandID, int bisher, int neu, string raumID, int bewegungsartID, int personID, DateTime jetzt)
+        {
+            var gegenstand = await _context.Gegenstand.FindAsync(gegenstandID);
+            if (gegenstand == null)
+            {
+                return "Diesen Gegenstand gibt es nicht.";
+            }
+
+            if (neu < 0)
+            {
+                return $"Die Menge von \"{gegenstand.Name}\" darf nicht negativ sein.";
+            }
+
+            // Ein Gerät mit Seriennummer gibt es genau einmal, im Raum ist es also einmal oder gar nicht
+            if (gegenstand.Seriennummer != null && neu > 1)
+            {
+                return $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) ist ein einzelnes Gerät und kann nur einmal oder gar nicht im Raum sein.";
+            }
+
+            // Hat sich der Bestand geändert, seit der Admin ihn gesehen hat (z. B. durch einen Transfer), stimmt die gezählte Menge
+            // vielleicht nicht mehr. Dann lieber abbrechen und neu prüfen lassen
+            var bestand = await _context.Raumbestand.FindAsync(gegenstand.ID, raumID);
+            var aktuell = bestand?.Menge ?? 0;
+            if (aktuell != bisher)
+            {
+                return $"Der Bestand von \"{gegenstand.Name}\" in Raum {raumID} hat sich inzwischen geändert (jetzt {aktuell} Stück). Bitte die Mengen prüfen und noch einmal speichern.";
+            }
+
+            // Ein Gerät mit Seriennummer darf danach nicht zweimal da sein: Liegt es in einem anderen Raum oder ist es unterwegs,
+            // muss es dort zuerst ausgebucht oder die Bewegung abgeschlossen werden
+            if (gegenstand.Seriennummer != null && neu == 1)
+            {
+                var hindernis = await GeraetVorhandenAsync(gegenstand);
+                if (hindernis != null)
+                {
+                    return hindernis;
+                }
+            }
+
+            if (bestand == null)
+            {
+                _context.Raumbestand.Add(new Raumbestand { GegenstandID = gegenstand.ID, RaumID = raumID, Menge = neu });
+            }
+            else if (neu == 0)
+            {
+                _context.Raumbestand.Remove(bestand);
+            }
+            else
+            {
+                bestand.Menge = neu;
+            }
+
+            _context.Lagerbewegung.Add(new Lagerbewegung
+            {
+                Menge = neu - aktuell,
+                ErstelltAm = jetzt,
+                BestaetigtAm = jetzt,
+                BewegungsartID = bewegungsartID,
+                VonRaumID = raumID,
+                NachRaumID = raumID,
+                GegenstandID = gegenstand.ID,
+                PersonID = personID
+            });
+            return null;
+        }
+
+        /// <summary>
         /// Methode, die eine Lagerbewegung prüft, anlegt und im Raumbestand bucht, ohne zu speichern.
         /// </summary>
         /// <param name="gegenstandID">Die ID des Gegenstands, der bewegt wird</param>
@@ -280,10 +410,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                 return "Bitte eine Bewegungsart auswählen.";
             }
 
-            // Sonst wäre die Bewegung schon beim Anlegen storniert, aber trotzdem offen
-            if (bewegungsart.Name == Bewegungsart.Storniert)
+            // Sonst wäre die Bewegung z. B. schon beim Anlegen storniert, aber trotzdem offen
+            var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
+            if (nurVergebenFuer != null)
             {
-                return $"Die Bewegungsart \"{Bewegungsart.Storniert}\" wird nur beim Ablehnen oder Zurückziehen vergeben. Bitte eine andere auswählen.";
+                return $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen nur {nurVergebenFuer}. Bitte eine andere auswählen.";
             }
 
             var vonRaum = await _context.Raum.Include(r => r.Raumart).FirstOrDefaultAsync(r => r.ID == vonRaumID);

@@ -1,53 +1,160 @@
-@model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Raumbestand>
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.KorrekturViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Lagerbestand";
+
+    var raum = Model.Raum;
 }
 
-<h1>Index</h1>
+<h1>Lagerbestand</h1>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
+<p class="text-muted">
+    Hier sehen Sie den Bestand eines Raums und können ihn korrigieren, z. B. nach einer Inventur. Jede geänderte Menge wird als
+    sofort bestätigte Lagerbewegung mit der Bewegungsart „@Bewegungsart.Korrektur“ gebucht und steht danach in der Historie und im Verlauf des Gegenstands.
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.GegenstandID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Gegenstand.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RaumID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Menge)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.GegenstandID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Gegenstand.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.RaumID)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Menge)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-gegenstandID="@item.GegenstandID" asp-route-raumID="@item.RaumID">Edit</a> |
-                <a asp-action="Details" asp-route-gegenstandID="@item.GegenstandID" asp-route-raumID="@item.RaumID">Details</a> |
-                <a asp-action="Delete" asp-route-gegenstandID="@item.GegenstandID" asp-route-raumID="@item.RaumID">Delete</a>
-            </td>
-        </tr>
+
+<partial name="_Meldungen" />
+
+@* Raum auswählen: die Auswahl lädt die Seite mit dem Bestand dieses Raums (data-auto-absenden, site.js) *@
+<form asp-action="Index" method="get" class="row g-2 mb-4">
+    <div class="col-md-6 col-lg-4">
+        <label for="raumAuswahl" class="form-label">Raum</label>
+        <select id="raumAuswahl" name="id" class="form-select" data-auto-absenden>
+            <option value="">Raum auswählen</option>
+            @foreach (var r in Model.Raeume)
+            {
+                <option value="@r.ID" selected="@(r.ID == raum?.ID)">@r.ID · @r.Raumart.Name</option>
+            }
+        </select>
+    </div>
+    <noscript>
+        <div class="col-auto d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary">Anzeigen</button>
+        </div>
+    </noscript>
+</form>
+
+@if (raum == null)
+{
+    <p class="text-muted">Bitte einen Raum auswählen, um seinen Bestand zu sehen und zu korrigieren.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <form asp-action="Index" method="post">
+        <input type="hidden" asp-for="RaumID" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <h2 class="h4">Bestand von Raum @raum.ID</h2>
+
+        @if (!Model.Bestand.Any())
+        {
+            <p class="text-muted">Im Raum @raum.ID liegt derzeit nichts.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Gegenstand</th>
+                            <th class="d-none d-md-table-cell">Kategorie</th>
+                            <th class="text-end">Bestand</th>
+                            <th class="text-end">Neue Menge</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bestand in Model.Bestand)
+                        {
+                            var gegenstand = bestand.Gegenstand;
+
+                            // Nach einem Fehler die eingegebene Menge wieder anzeigen, sonst den aktuellen Bestand
+                            if (!Model.Mengen.TryGetValue(gegenstand.ID, out var neu) || neu == null)
+                            {
+                                neu = bestand.Menge;
+                            }
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">@gegenstand.Name</div>
+                                    <div class="small text-muted">@(gegenstand.Seriennummer ?? "ohne Seriennummer")</div>
+                                </td>
+                                <td class="d-none d-md-table-cell">@gegenstand.Kategorie.Name</td>
+                                <td class="text-end">@bestand.Menge</td>
+                                <td>
+                                    @* Bisher immer aus der Datenbank, damit der LagerService erkennt, ob sich der Bestand inzwischen geändert hat.
+                                       Ein Gerät mit Seriennummer ist einmal oder gar nicht im Raum (0 = ausbuchen) *@
+                                    <input type="hidden" name="Bisher[@gegenstand.ID]" value="@bestand.Menge" />
+                                    <span class="menge-auswahl justify-content-end">
+                                        <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@neu"
+                                               min="0" max="@(gegenstand.Seriennummer != null ? "1" : null)" step="1" required
+                                               aria-label="Neue Menge von @gegenstand.Name" />
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-text mb-3">
+                Ein Gerät mit Seriennummer ist entweder im Raum (1) oder nicht (0). Mit 0 wird es ausgebucht, z. B. wenn es fehlt oder ausgeschieden ist.
+            </div>
+        }
+
+        <h2 class="h5 mt-4">Gegenstand hinzufügen</h2>
+        <p class="text-muted small">Für Gegenstände, die im Raum liegen, aber noch nicht in seinem Bestand stehen.</p>
+        <div class="row g-2 mb-4">
+            <div class="col-md-8 col-lg-6">
+                <label asp-for="NeuGegenstandID" class="form-label"></label>
+                <select asp-for="NeuGegenstandID" class="form-select" id="neuGegenstand">
+                    <option value="">Keinen Gegenstand hinzufügen</option>
+                    @foreach (var gegenstand in Model.Hinzufuegbar)
+                    {
+                        <option value="@gegenstand.ID" data-seriennummer="@gegenstand.Seriennummer">
+                            @gegenstand.Name · @(gegenstand.Seriennummer ?? "ohne Seriennummer") · @gegenstand.Kategorie.Name
+                        </option>
+                    }
+                </select>
+                <div class="form-text">Geräte mit Seriennummer, die schon in einem Raum liegen oder unterwegs sind, fehlen in der Liste.</div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <label asp-for="NeuMenge" class="form-label"></label>
+                <input asp-for="NeuMenge" type="number" min="1" step="1" class="form-control" id="neuMenge" />
+                <span asp-validation-for="NeuMenge" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Korrektur buchen</button>
+            <a asp-action="Index" asp-route-id="@raum.ID" class="btn btn-outline-secondary">Zurücksetzen</a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        // Gegenstand hinzufügen: Die Menge zählt nur mit Gegenstand, bei einem Gerät mit Seriennummer ist sie immer 1
+        (function () {
+            var auswahl = document.getElementById('neuGegenstand');
+            var menge = document.getElementById('neuMenge');
+            if (!auswahl || !menge) {
+                return;
+            }
+
+            function aktualisieren() {
+                var gewaehlt = auswahl.value !== '';
+                var einzelgeraet = gewaehlt && auswahl.selectedOptions[0].dataset.seriennummer;
+                if (einzelgeraet || (gewaehlt && menge.value === '')) {
+                    menge.value = 1;
+                }
+                menge.readOnly = !!einzelgeraet;
+                menge.required = gewaehlt;
+                // Ohne Gegenstand wird die Menge nicht mitgeschickt
+                menge.disabled = !gewaehlt;
+            }
+
+            auswahl.addEventListener('change', aktualisieren);
+            aktualisieren();
+        })();
+    </script>
+}

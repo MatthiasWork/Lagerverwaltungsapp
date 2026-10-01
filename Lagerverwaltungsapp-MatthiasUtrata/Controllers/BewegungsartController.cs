@@ -53,7 +53,7 @@ public class BewegungsartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("ID,Name")] Bewegungsart bewegungsart)
     {
-        StorniertNichtNeuVergeben(bewegungsart);
+        FesteNichtNeuVergeben(bewegungsart);
 
         if (ModelState.IsValid)
         {
@@ -98,18 +98,19 @@ public class BewegungsartController : Controller
             return NotFound();
         }
 
-        if (bisherigerName == Bewegungsart.Storniert)
+        var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bisherigerName);
+        if (nurVergebenFuer != null)
         {
             // Der LagerService sucht sie über den Namen, umbenannt gäbe es sie beim nächsten Start doppelt
-            if (bewegungsart.Name != Bewegungsart.Storniert)
+            if (bewegungsart.Name != bisherigerName)
             {
                 ModelState.AddModelError(nameof(Bewegungsart.Name),
-                    $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht umbenannt werden.");
+                    $"Die Bewegungsart \"{bisherigerName}\" bekommen {nurVergebenFuer}, daher kann sie nicht umbenannt werden.");
             }
         }
         else
         {
-            StorniertNichtNeuVergeben(bewegungsart);
+            FesteNichtNeuVergeben(bewegungsart);
         }
 
         if (ModelState.IsValid)
@@ -161,9 +162,10 @@ public class BewegungsartController : Controller
         var bewegungsart = await _context.Bewegungsart.FindAsync(id);
         if (bewegungsart != null)
         {
-            if (bewegungsart.Name == Bewegungsart.Storniert)
+            var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
+            if (nurVergebenFuer != null)
             {
-                TempData["Fehler"] = $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht gelöscht werden.";
+                TempData["Fehler"] = $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen {nurVergebenFuer}, daher kann sie nicht gelöscht werden.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -180,16 +182,17 @@ public class BewegungsartController : Controller
     }
 
     /// <summary>
-    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" heißt. Die gibt es schon (der Start legt sie an),
-    /// und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
+    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. Die gibt es schon (der Start legt
+    /// sie an), und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
     /// </summary>
     /// <param name="bewegungsart">Die Bewegungsart aus dem Formular</param>
-    private void StorniertNichtNeuVergeben(Bewegungsart bewegungsart)
+    private void FesteNichtNeuVergeben(Bewegungsart bewegungsart)
     {
-        if (string.Equals(bewegungsart.Name?.Trim(), Bewegungsart.Storniert, StringComparison.OrdinalIgnoreCase))
+        var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
+        if (nurVergebenFuer != null)
         {
             ModelState.AddModelError(nameof(Bewegungsart.Name),
-                $"Die Bewegungsart \"{Bewegungsart.Storniert}\" gibt es schon. Sie wird nur beim Ablehnen oder Zurückziehen vergeben.");
+                $"Die Bewegungsart \"{bewegungsart.Name!.Trim()}\" gibt es schon. Sie bekommen nur {nurVergebenFuer}.");
         }
     }
 }

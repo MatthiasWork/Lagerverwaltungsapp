@@ -10,7 +10,10 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 // wer angefragt hat. Meist fragt die Person des Von-Raums an (Transfer aus dem eigenen Raum), dann gibt der Nach-Raum frei.
 // Holt die Person des Nach-Raums Geräte aus einem Lager in ihren Raum, gibt der Von-Raum (das Lager) frei.
 // Welche Seite angefragt hat, steht nicht in der Tabelle: Erkannt wird es an der Person, die die Lagerbewegung angelegt hat
-// (PersonID), verglichen mit der aktuell für den Nach-Raum verantwortlichen Person
+// (PersonID), verglichen mit der aktuell für den Nach-Raum verantwortlichen Person.
+//
+// Eine Korrektur (Bewegungsart "Korrektur") bucht ein Admin direkt im Bestand eines Raums: Von- und Nach-Raum sind dieser Raum,
+// sie ist sofort bestätigt und die Menge ist die Änderung des Bestands, also negativ, wenn danach weniger im Raum ist
 public partial class Lagerbewegung
 {
     /// <summary>
@@ -54,6 +57,12 @@ public partial class Lagerbewegung
     /// Gibt an, ob die Lagerbewegung abgelehnt oder zurückgezogen wurde. Dafür muss die Bewegungsart geladen sein.
     /// </summary>
     public bool Storniert => BestaetigtAm != null && Bewegungsart?.Name == Models.Bewegungsart.Storniert;
+
+    /// <summary>
+    /// Gibt an, ob die Lagerbewegung eine Korrektur des Bestands durch einen Admin ist (Menge = Änderung, auch negativ).
+    /// Dafür muss die Bewegungsart geladen sein.
+    /// </summary>
+    public bool IstKorrektur => Bewegungsart?.Name == Models.Bewegungsart.Korrektur;
 
     /// <summary>
     /// Gibt an, ob die Person des Nach-Raums die Lagerbewegung angefragt hat (aus einem Lager in ihren Raum geholt).

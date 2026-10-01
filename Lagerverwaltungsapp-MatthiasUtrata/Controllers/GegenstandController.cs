@@ -181,11 +181,27 @@ public class GegenstandController : Controller
         foreach (var l in gegenstand.Lagerbewegung)
         {
             var person = l.Person.VollerName;
-            // Bei einem Gerät mit Seriennummer ist die Menge immer 1 und wird daher nicht genannt
+            // Bei einem Gerät mit Seriennummer ist die Menge immer 1 und wird daher nicht genannt.
+            // Bei einer Korrektur ist sie die Änderung und kann negativ sein, die Richtung steht im Text
             var menge = "";
             if (gegenstand.Seriennummer == null)
             {
-                menge = $"{l.Menge} Stück ";
+                menge = $"{Math.Abs(l.Menge)} Stück ";
+            }
+
+            if (l.IstKorrektur)
+            {
+                string text;
+                if (l.Menge > 0)
+                {
+                    text = $"{menge}in {l.NachRaumID} eingebucht von {person} (Korrektur)";
+                }
+                else
+                {
+                    text = $"{menge}aus {l.NachRaumID} ausgebucht von {person} (Korrektur)";
+                }
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang(text) });
+                continue;
             }
 
             // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung und ihre ursprüngliche Bewegungsart verloren

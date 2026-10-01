@@ -34,7 +34,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
             await LehrerInRolleAnlegenAsync();
             await RaumartenAnlegenAsync();
             await BewegungsartenAnlegenAsync();
-            await StorniertAnlegenAsync();
+            await FesteBewegungsartenAnlegenAsync();
             await RaeumeAnlegenAsync();
         }
 
@@ -122,18 +122,22 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
-        /// Methode, die die Bewegungsart "Storniert" anlegt, die abgelehnte und zurückgezogene Transfers bekommen.
-        /// Anders als die Beispiel-Bewegungsarten bei jedem Start, da der LagerService sie zum Stornieren braucht.
-        /// Sie muss nach den Beispiel-Bewegungsarten kommen, sonst gäbe es schon eine Bewegungsart und diese würden übersprungen.
+        /// Methode, die die Bewegungsarten anlegt, die nur der LagerService vergibt: "Storniert" für abgelehnte und zurückgezogene
+        /// Transfers und "Korrektur" für Korrekturbuchungen im Lagerbestand. Anders als die Beispiel-Bewegungsarten bei jedem Start,
+        /// da der LagerService sie braucht. Sie müssen nach den Beispiel-Bewegungsarten kommen, sonst gäbe es schon eine Bewegungsart
+        /// und diese würden übersprungen.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
-        private async Task StorniertAnlegenAsync()
+        private async Task FesteBewegungsartenAnlegenAsync()
         {
-            if (!await _context.Bewegungsart.AnyAsync(b => b.Name == Bewegungsart.Storniert))
+            foreach (var name in new[] { Bewegungsart.Storniert, Bewegungsart.Korrektur })
             {
-                _context.Bewegungsart.Add(new Bewegungsart { Name = Bewegungsart.Storniert });
-                await _context.SaveChangesAsync();
+                if (!await _context.Bewegungsart.AnyAsync(b => b.Name == name))
+                {
+                    _context.Bewegungsart.Add(new Bewegungsart { Name = name });
+                }
             }
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>

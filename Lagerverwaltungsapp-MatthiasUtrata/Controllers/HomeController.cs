@@ -86,14 +86,31 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             foreach (var l in letzte)
             {
                 var person = l.Person.VollerName;
+                // Bei einer Korrektur ist die Menge die Änderung und kann negativ sein, die Richtung steht im Text
+                var menge = Math.Abs(l.Menge);
                 string was;
-                if (l.Menge == 1)
+                if (menge == 1)
                 {
                     was = l.Gegenstand.Name;
                 }
                 else
                 {
-                    was = $"{l.Menge} × {l.Gegenstand.Name}";
+                    was = $"{menge} × {l.Gegenstand.Name}";
+                }
+
+                if (l.IstKorrektur)
+                {
+                    string text;
+                    if (l.Menge > 0)
+                    {
+                        text = $"{person} hat {was} in {l.NachRaumID} eingebucht (Korrektur)";
+                    }
+                    else
+                    {
+                        text = $"{person} hat {was} aus {l.NachRaumID} ausgebucht (Korrektur)";
+                    }
+                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
+                    continue;
                 }
 
                 // Zuerst prüfen: Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung
