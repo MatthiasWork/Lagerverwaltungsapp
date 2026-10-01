@@ -11,7 +11,8 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Wareneingang" class="btn btn-outline-secondary"><i data-lucide="package-plus"></i>Wareneingang</a>
-        <a asp-action="Ausborgen" class="btn btn-primary"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+        <a asp-controller="Lager" asp-action="Index" class="btn btn-outline-secondary"><i data-lucide="warehouse"></i>Aus dem Lager holen</a>
+        <a asp-controller="Ausleihe" asp-action="Index" class="btn btn-primary"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
     </div>
 </div>
 <hr />
@@ -31,9 +32,9 @@
     <div class="col-sm-4">
         <div class="card h-100">
             <div class="card-body">
-                <h2 class="h6 card-subtitle text-muted">Ausgeborgt</h2>
+                <h2 class="h6 card-subtitle text-muted">Angefragt</h2>
                 <p class="display-6 mb-1">@Model.Unterwegs.Sum(l => l.Menge)</p>
-                <p class="small text-muted mb-0">Stück warten auf die Übernahme</p>
+                <p class="small text-muted mb-0">Stück warten auf die Freigabe</p>
             </div>
         </div>
     </div>
@@ -57,10 +58,10 @@
 
 @if (Model.Unterwegs.Any())
 {
-    <h2 class="h4">Ausgeborgt, noch nicht übernommen</h2>
+    <h2 class="h4">Angefragt, noch nicht freigegeben</h2>
     <p class="text-muted">
-        Diese Gegenstände sind schon aus Raum @Model.Raum.ID abgebucht. Im Zielraum kommen sie an, sobald die dort verantwortliche Person die Übernahme bestätigt.
-        Bis dahin kann der Transfer zurückgezogen werden, dann kommen sie wieder in Raum @Model.Raum.ID.
+        Transfers aus Raum @Model.Raum.ID und aus einem Lager geholte Geräte. Sie sind schon im Von-Raum abgebucht und kommen im Nach-Raum an,
+        sobald die andere Seite freigibt. Bis dahin kann die Anfrage zurückgezogen werden, dann kommen sie wieder in den Von-Raum.
     </p>
     <div class="table-responsive mb-4">
         <table class="table table-hover align-middle">
@@ -68,8 +69,8 @@
                 <tr>
                     <th>Gegenstand</th>
                     <th class="text-end">Menge</th>
-                    <th>An Raum</th>
-                    <th>Ausgeborgt am</th>
+                    <th>Von → Nach</th>
+                    <th>Angefragt am</th>
                     <th>Status</th>
                     <th class="text-end">Aktionen</th>
                 </tr>
@@ -83,15 +84,15 @@
                             <div class="small text-muted">@(bewegung.Gegenstand.Seriennummer ?? "ohne Seriennummer") · @bewegung.Bewegungsart.Name</div>
                         </td>
                         <td class="text-end">@bewegung.Menge</td>
-                        <td>@bewegung.NachRaumID</td>
+                        <td class="text-nowrap">@bewegung.VonRaumID → @bewegung.NachRaumID</td>
                         <td class="text-nowrap">@bewegung.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</td>
                         <td>
-                            <span class="tag tag-outline">Übernahme offen</span>
-                            <div class="small text-muted">wartet auf @(bewegung.NachRaum.Person == null ? "–" : $"{bewegung.NachRaum.Person.Vorname} {bewegung.NachRaum.Person.Nachname}")</div>
+                            <span class="tag tag-outline">Freigabe offen</span>
+                            <div class="small text-muted">wartet auf @(bewegung.FreigabeRaum.Person == null ? "–" : $"{bewegung.FreigabeRaum.Person.Vorname} {bewegung.FreigabeRaum.Person.Nachname}")</div>
                         </td>
                         <td class="text-end">
                             <form asp-action="Zurueckziehen" asp-route-id="@bewegung.ID" method="post"
-                                  data-bestaetigen="Transfer zurückziehen? @bewegung.Gegenstand.Name kommt wieder in Raum @Model.Raum.ID.">
+                                  data-bestaetigen="Anfrage zurückziehen? @bewegung.Gegenstand.Name kommt wieder in Raum @bewegung.VonRaumID.">
                                 <button type="submit" class="btn btn-sm btn-outline-secondary">Zurückziehen</button>
                             </form>
                         </td>

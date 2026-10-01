@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 {
-    // Neue Ausleihe: Eine Ausleihe ist eine Lagerbewegung wie ein Transfer. Die für einen Raum verantwortliche Person bucht
-    // Gegenstände aus ihrem Raum in einen anderen Raum, dessen verantwortliche Person die Übernahme unter "Freigaben" bestätigt.
-    // Daher dasselbe ViewModel und dieselbe Buchung wie beim Transfer (MeinRaum/Ausborgen), nur mit der Oberfläche aus dem Design.
-    // Zeitraum und Zweck zeigt das Formular an, gespeichert werden sie (wie beim Transfer) nicht
+    // Neue Ausleihe: die Seite für Transfers aus dem eigenen Raum (eine eigene Transfer-Seite gibt es nicht mehr). Die für einen Raum
+    // verantwortliche Person bucht Gegenstände aus ihrem Raum in einen anderen Raum, dessen verantwortliche Person die Übernahme
+    // unter "Freigaben" bestätigt. Die Buchung macht LagerService.AusborgenAsync.
+    // Zeitraum und Zweck zeigt das Formular an, gespeichert werden sie nicht
     public class AusleiheController : Controller
     {
         private readonly LagerverwaltungContext _context;

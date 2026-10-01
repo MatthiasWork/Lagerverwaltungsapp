@@ -7,9 +7,8 @@
     var aktion = ViewContext.ActionDescriptor as ControllerActionDescriptor;
     var aktiv = aktion?.ControllerName switch
     {
-        // Neue Ausleihe und Transfer sind im Design Abläufe ohne hervorgehobenen Tab
-        "Ausleihe" => null,
-        "MeinRaum" when aktion.ActionName == "Ausborgen" => null,
+        // Neue Ausleihe und Holen aus dem Lager sind Abläufe ohne hervorgehobenen Tab
+        "Ausleihe" or "Lager" => null,
         "Home" or "MeinRaum" or "Rueckgabe" or "Raum" => "Übersicht",
         "Gegenstand" => "Katalog",
         "Scan" => "Scannen",

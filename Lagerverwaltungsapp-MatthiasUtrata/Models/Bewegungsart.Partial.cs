@@ -4,7 +4,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 public partial class Bewegungsart
 {
     /// <summary>
-    /// Name der Bewegungsart, die beim Ausborgen vorausgewählt wird. Sie ist nur beschreibend und kann im Formular geändert werden.
+    /// Name der Bewegungsart, die bei einer neuen Ausleihe vorausgewählt wird. Sie ist nur beschreibend und kann im Formular geändert werden.
     /// </summary>
     public const string Ausgabe = "Ausgabe";
 

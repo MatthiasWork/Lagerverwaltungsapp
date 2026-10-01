@@ -9,10 +9,10 @@
     var aktiv = aktion?.ControllerName switch
     {
         "Home" => "Übersicht",
-        "MeinRaum" when aktion.ActionName == "Ausborgen" => "Transfers",
         "MeinRaum" => "Mein Raum",
         "Gegenstand" => "Katalog",
         "Ausleihe" => "Ausleihen",
+        "Lager" => "Aus dem Lager",
         "Rueckgabe" => "Rückgaben",
         "Uebernahme" => "Freigaben",
         // Der Grundriss ist "Räume" wie im Design, Liste, Anlegen und Bearbeiten gehören zu den Stammdaten
@@ -71,7 +71,8 @@
     }
     @if (Model.RaumID != null)
     {
-        await Eintrag("Transfers", "MeinRaum", "Ausborgen", "arrow-right-left");
+        @* Geräte aus einem Lager in den eigenen Raum holen, daher wie "Mein Raum" nur mit eigenem Raum *@
+        await Eintrag("Aus dem Lager", "Lager", "Index", "warehouse");
     }
     @if (Model.IstAdmin)
     {

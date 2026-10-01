@@ -1447,61 +1447,10 @@ dl.row dd {
     flex-direction: column;
 }
 
-/* Von → Nach: zwei Karten mit Pfeil dazwischen, "Nach" mit Akzentrahmen */
-.transfer-route {
-    display: grid;
-    grid-template-columns: 1fr 64px 1fr;
-}
-
-.route-karte {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 16px 18px;
-}
-
-    .route-karte.ziel {
-        border-color: var(--color-accent);
-    }
-
-.route-raum {
-    font: 600 26px var(--font-heading);
-}
-
 .route-info {
     font-size: 13px;
     color: var(--color-neutral-700);
 }
-
-.ziel .route-info {
-    color: var(--color-accent-800);
-}
-
-.route-pfeil {
-    place-items: center;
-    color: var(--color-accent-700);
-}
-
-    .route-pfeil .lucide {
-        width: 28px;
-        height: 28px;
-    }
-
-/* Zielraum als Auswahlliste, die wie die Überschrift der Karte aussieht */
-.raum-auswahl {
-    appearance: none;
-    width: 100%;
-    padding: 0 28px 0 0;
-    color: var(--color-text);
-    border: 0;
-    border-radius: 0;
-    background: var(--chevron) no-repeat right center / 20px;
-    cursor: pointer;
-}
-
-    .raum-auswahl:hover {
-        color: var(--color-accent-800);
-    }
 
 .transfer-raster {
     display: grid;
@@ -1672,18 +1621,6 @@ dl.row dd {
     gap: 28px;
 }
 
-.datum-feld {
-    width: 200px;
-}
-
-.grund-feld {
-    max-width: 600px;
-}
-
-    .grund-feld textarea {
-        min-height: 60px;
-    }
-
 /* Ablauf in nummerierten Schritten, der aktuelle gefüllt */
 .ablauf {
     flex-direction: column;
@@ -1742,64 +1679,6 @@ dl.row dd {
     .transfer-titel-mobil {
         margin: 8px 0 0;
         font-size: 30px;
-    }
-
-    /* Von und Nach untereinander in einer gerahmten Karte, "Nach" auf hellem Akzentgrund */
-    .transfer-route {
-        position: relative;
-        grid-template-columns: 1fr;
-        border: 1px solid var(--color-divider);
-    }
-
-        .transfer-route::before {
-            content: "";
-            position: absolute;
-            inset: -6px;
-            pointer-events: none;
-            background-image: var(--corner-mark), var(--corner-mark), var(--corner-mark), var(--corner-mark);
-            background-position: left top, right top, left bottom, right bottom;
-            background-repeat: no-repeat;
-        }
-
-    .route-karte {
-        gap: 0;
-        padding: 12px 14px;
-        border: 0;
-    }
-
-        .route-karte::before {
-            display: none;
-        }
-
-        .route-karte:first-child {
-            border-bottom: 1px solid var(--color-divider);
-        }
-
-        .route-karte.ziel {
-            background: var(--color-accent-100);
-        }
-
-        .route-karte .card-kicker {
-            font-size: 11px;
-            letter-spacing: 0.08em;
-            color: var(--color-neutral-700);
-        }
-
-        .route-karte.ziel .card-kicker {
-            color: var(--color-accent-800);
-        }
-
-    .route-raum {
-        font-size: 22px;
-    }
-
-    .ziel .route-raum,
-    .ziel .route-info {
-        color: var(--color-accent-900);
-    }
-
-    .ziel .route-info {
-        font-size: 12.5px;
     }
 
     .transfer-raster {
@@ -1883,6 +1762,62 @@ dl.row dd {
             .transfer-seite .btn-cta::before {
                 display: none;
             }
+}
+
+/* Aus dem Lager holen: Aufbau wie "Transfer anfragen", darüber die Lager als Karten zur Auswahl, das gewählte mit Akzentrahmen */
+.lager-liste {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.lager-karte {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 14px 16px;
+    overflow-wrap: anywhere;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+    .lager-karte:hover {
+        color: var(--color-text);
+        background: color-mix(in srgb, var(--color-text) 4%, transparent);
+    }
+
+    .lager-karte.aktiv {
+        background: var(--color-accent-100);
+        border-color: var(--color-accent);
+    }
+
+        .lager-karte.aktiv .route-info {
+            color: var(--color-accent-800);
+        }
+
+.lager-name {
+    font: 600 22px var(--font-heading);
+}
+
+@media (max-width: 991.98px) {
+    /* Mobil zwei Lager nebeneinander, kleiner und ohne Eckmarken */
+    .lager-liste {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .lager-karte {
+        padding: 10px 12px;
+    }
+
+        .lager-karte::before {
+            display: none;
+        }
+
+    .lager-name {
+        font-size: 18px;
+    }
 }
 
 /* Liste als Zeilen mit Trennlinie (mobil statt Tabelle) */

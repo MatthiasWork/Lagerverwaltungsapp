@@ -31,9 +31,10 @@
         ("Bestand", $"{Model.Eintrag.Stueck} Stück" + (unterwegsStueck > 0 ? $" · {unterwegsStueck} unterwegs" : ""))
     };
 
-    // Hinweis wie im Design, hier für die älteste Bewegung, die noch auf die Übernahme wartet
+    // Hinweis wie im Design, hier für die älteste Bewegung, die noch auf die Freigabe wartet (beim Holen aus einem Lager
+    // durch die Person des Lagers, sonst durch die des Zielraums)
     var unterwegs = Model.Unterwegs.FirstOrDefault();
-    var wartetAuf = unterwegs?.NachRaum.Person == null ? "–" : $"{unterwegs.NachRaum.Person.Vorname} {unterwegs.NachRaum.Person.Nachname}";
+    var wartetAuf = unterwegs?.FreigabeRaum.Person == null ? "–" : $"{unterwegs.FreigabeRaum.Person.Vorname} {unterwegs.FreigabeRaum.Person.Nachname}";
     var unterwegsText = unterwegs != null && gegenstand.Seriennummer == null ? $"{unterwegs.Menge} Stück unterwegs" : "Unterwegs";
 
     // Datum im Verlauf: im laufenden Jahr ohne Jahreszahl
@@ -76,16 +77,16 @@
                     <i data-lucide="truck"></i>
                     <div class="hinweis-box-text">
                         <b>@unterwegsText von @unterwegs.VonRaumID nach @unterwegs.NachRaumID</b> seit @unterwegs.ErstelltAm.ToString("dd.MM."), gebucht von @unterwegs.Person.Vorname @unterwegs.Person.Nachname.
-                        Wartet auf die Übernahme durch @wartetAuf.
+                        Wartet auf die Freigabe durch @wartetAuf.
                         @if (Model.Unterwegs.Count > 1)
                         {
                             <text>Dazu @(Model.Unterwegs.Count - 1) weitere Transfers.</text>
                         }
                     </div>
-                    @* Bestätigen darf nur, wer für den Zielraum verantwortlich ist *@
-                    @if (Model.EigenerRaumID == unterwegs.NachRaumID)
+                    @* Freigeben darf nur, wer für den freigebenden Raum verantwortlich ist *@
+                    @if (Model.EigenerRaumID == unterwegs.FreigabeRaum.ID)
                     {
-                        <a class="btn btn-primary" asp-controller="Uebernahme" asp-action="Index">Übernahme bestätigen</a>
+                        <a class="btn btn-primary" asp-controller="Uebernahme" asp-action="Index">Freigeben</a>
                     }
                 </div>
             }
@@ -105,7 +106,7 @@
                 <div class="detail-aktionen">
                     @if (kannTransfer)
                     {
-                        <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Ausborgen"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+                        <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
                     }
                     @if (kannWareneingang)
                     {
@@ -167,7 +168,7 @@
         </div>
         @if (unterwegs != null)
         {
-            <div class="hinweis-flaeche"><b>@unterwegsText nach @unterwegs.NachRaumID</b>, wartet auf die Übernahme durch @wartetAuf.</div>
+            <div class="hinweis-flaeche"><b>@unterwegsText nach @unterwegs.NachRaumID</b>, wartet auf die Freigabe durch @wartetAuf.</div>
         }
         @foreach (var angabe in angaben)
         {
@@ -183,7 +184,7 @@
         <div class="aktionsleiste">
             @if (kannTransfer)
             {
-                <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Ausborgen">Transfer</a>
+                <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index">Transfer</a>
             }
             @if (kannWareneingang)
             {

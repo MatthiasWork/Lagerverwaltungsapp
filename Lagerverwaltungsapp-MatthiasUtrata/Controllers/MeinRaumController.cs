@@ -24,8 +24,9 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die den Raum der angemeldeten Person mit seinem Bestand anzeigt, dazu die ausgeborgten Gegenstände,
-        /// deren Übernahme noch nicht bestätigt ist. Der Bestand kann nach Suchbegriff und Kategorie gefiltert werden.
+        /// Methode, die den Raum der angemeldeten Person mit seinem Bestand anzeigt, dazu die für den Raum angefragten
+        /// Lagerbewegungen (Transfers aus dem Raum, aus einem Lager geholte Geräte), die noch nicht freigegeben sind.
+        /// Der Bestand kann nach Suchbegriff und Kategorie gefiltert werden.
         /// </summary>
         /// <param name="suche">Suchbegriff für Bezeichnung oder Seriennummer</param>
         /// <param name="kategorieID">Die ID der Kategorie, nach der gefiltert werden soll</param>
@@ -62,16 +63,20 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 Bestand = await abfrage.OrderBy(r => r.Gegenstand.Name).ThenBy(r => r.Gegenstand.Seriennummer).ToListAsync(),
                 AnzahlGesamt = await _context.Raumbestand.CountAsync(r => r.RaumID == raumID),
                 StueckGesamt = await _context.Raumbestand.Where(r => r.RaumID == raumID).SumAsync(r => r.Menge),
-                // Ein Wareneingang ist immer sofort bestätigt, offene Bewegungen aus dem Raum sind also immer ausgeborgt
+                // Was die Person angefragt hat und daher zurückziehen kann. Ein Wareneingang ist immer sofort bestätigt
                 Unterwegs = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
                     .Include(l => l.Bewegungsart)
+                    .Include(l => l.VonRaum).ThenInclude(r => r.Person)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Person)
                     .Where(Lagerbewegung.IstOffen)
-                    .Where(l => l.VonRaumID == raumID)
+                    .Where(Lagerbewegung.AngefragtFuer(raumID))
                     .OrderByDescending(l => l.ErstelltAm)
                     .ToListAsync(),
-                OffeneUebernahmen = await _context.Lagerbewegung.Where(Lagerbewegung.IstOffen).CountAsync(l => l.NachRaumID == raumID),
+                OffeneUebernahmen = await _context.Lagerbewegung
+                    .Where(Lagerbewegung.IstOffen)
+                    .Where(Lagerbewegung.FreigabeFuer(raumID))
+                    .CountAsync(),
                 Suche = suche,
                 KategorieID = kategorieID,
                 // Nur Kategorien, von denen es im Raum auch etwas gibt
@@ -85,72 +90,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die das Formular zum Ausborgen von Gegenständen aus dem eigenen Raum an einen anderen Raum anzeigt.
-        /// </summary>
-        /// <returns>Gibt eine Task zurück</returns>
-        // GET: MeinRaum/Ausborgen
-        public async Task<IActionResult> Ausborgen()
-        {
-            var raumID = await EigenerRaumAsync();
-            if (raumID == null)
-            {
-                return Forbid();
-            }
-
-            var ausborgen = new AusborgenViewModel
-            {
-                BewegungsartID = await _context.Bewegungsart
-                    .Where(b => b.Name == Bewegungsart.Ausgabe)
-                    .Select(b => (int?)b.ID)
-                    .FirstOrDefaultAsync()
-            };
-            await AnzeigeSetzenAsync(ausborgen, raumID);
-            return View(ausborgen);
-        }
-
-        /// <summary>
-        /// Methode, die die ausgewählten Gegenstände an den gewählten Raum ausborgt.
-        /// </summary>
-        /// <param name="ausborgen">Das AusborgenViewModel mit Zielraum, Bewegungsart und Mengen aus dem Formular</param>
-        /// <returns>Gibt eine Task zurück</returns>
-        // POST: MeinRaum/Ausborgen
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Ausborgen([Bind("NachRaumID,BewegungsartID,Mengen")] AusborgenViewModel ausborgen)
-        {
-            var personID = User.GetPersonID();
-            var raumID = await EigenerRaumAsync();
-            if (personID == null || raumID == null)
-            {
-                return Forbid();
-            }
-
-            if (ModelState.IsValid)
-            {
-                // Ein leeres Feld oder 0 heißt "nicht ausborgen". Negative Mengen bleiben drin, damit der LagerService sie ablehnt
-                var positionen = ausborgen.Mengen
-                    .Where(m => m.Value != null && m.Value != 0)
-                    .ToDictionary(m => m.Key, m => m.Value!.Value);
-
-                var fehler = await _lagerService.AusborgenAsync(positionen, raumID, ausborgen.NachRaumID!, ausborgen.BewegungsartID!.Value, personID.Value);
-                if (fehler == null)
-                {
-                    var nachRaum = await _context.Raum.Include(r => r.Person).FirstAsync(r => r.ID == ausborgen.NachRaumID);
-                    var wartetAuf = nachRaum.Person == null ? "die verantwortliche Person" : $"{nachRaum.Person.Vorname} {nachRaum.Person.Nachname}";
-                    var anzahl = positionen.Count == 1 ? "1 Gerät" : $"{positionen.Count} Geräte";
-                    TempData["Meldung"] = $"Transfer von {anzahl} nach Raum {nachRaum.ID} angefragt. Bis {wartetAuf} ihn freigibt, sind die Geräte unterwegs.";
-                    return RedirectToAction(nameof(Index));
-                }
-                ModelState.AddModelError(string.Empty, fehler);
-            }
-
-            await AnzeigeSetzenAsync(ausborgen, raumID);
-            return View(ausborgen);
-        }
-
-        /// <summary>
-        /// Methode, mit der die angemeldete Person einen Transfer aus ihrem Raum zurückzieht, solange der Zielraum ihn noch nicht
-        /// bestätigt hat. Die Menge kommt wieder in den eigenen Raum.
+        /// Methode, mit der die angemeldete Person eine Lagerbewegung zurückzieht, die sie angefragt hat (Transfer aus ihrem Raum
+        /// oder aus einem Lager geholte Geräte), solange sie noch nicht freigegeben ist. Die Menge kommt wieder in den Von-Raum.
         /// </summary>
         /// <param name="id">Die ID der Lagerbewegung, die zurückgezogen werden soll</param>
         /// <returns>Gibt eine Task zurück</returns>
@@ -173,7 +114,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             else
             {
                 var vonRaumID = await _context.Lagerbewegung.Where(l => l.ID == id).Select(l => l.VonRaumID).FirstAsync();
-                TempData["Meldung"] = $"Der Transfer wurde zurückgezogen. Das Gerät ist wieder im Bestand von Raum {vonRaumID}.";
+                TempData["Meldung"] = $"Die Anfrage wurde zurückgezogen. Das Gerät ist wieder im Bestand von Raum {vonRaumID}.";
             }
 
             return RedirectToAction(nameof(Index));
@@ -252,32 +193,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die alles für die Anzeige des Formulars zum Ausborgen setzt.
-        /// </summary>
-        /// <param name="ausborgen">Das AusborgenViewModel, das angezeigt werden soll</param>
-        /// <param name="raumID">Die ID des eigenen Raums, aus dem ausgeborgt wird</param>
-        /// <returns>Gibt eine Task zurück</returns>
-        private async Task AnzeigeSetzenAsync(AusborgenViewModel ausborgen, string raumID)
-        {
-            ausborgen.VonRaum = await _context.Raum.Include(r => r.Raumart).Include(r => r.Person).FirstAsync(r => r.ID == raumID);
-
-            ausborgen.Bestand = await _context.Raumbestand
-                .Include(r => r.Gegenstand).ThenInclude(g => g.Kategorie)
-                .Where(r => r.RaumID == raumID)
-                .OrderBy(r => r.Gegenstand.Name).ThenBy(r => r.Gegenstand.Seriennummer)
-                .ToListAsync();
-
-            ausborgen.Raeume = await _context.Raum
-                .Include(r => r.Raumart)
-                .Include(r => r.Person)
-                .Where(r => r.ID != raumID && r.PersonID != null)
-                .OrderBy(r => r.ID)
-                .ToListAsync();
-
-            ausborgen.Bewegungsarten = await WaehlbareBewegungsartenAsync(ausborgen.BewegungsartID);
-        }
-
-        /// <summary>
         /// Methode, die alles für die Anzeige des Formulars für einen Wareneingang setzt.
         /// </summary>
         /// <param name="wareneingang">Das WareneingangViewModel, das angezeigt werden soll</param>
@@ -299,7 +214,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Bewegungsarten für die Auswahl im Formular liefert.
+        /// Methode, die die Bewegungsarten für die Auswahl im Formular für einen Wareneingang liefert. "Storniert" fehlt,
+        /// da sie nur der LagerService beim Ablehnen oder Zurückziehen vergibt.
         /// </summary>
         /// <param name="bewegungsartID">Die ID der Bewegungsart, die vorausgewählt werden soll</param>
         /// <returns>Die Auswahlliste der Bewegungsarten</returns>
