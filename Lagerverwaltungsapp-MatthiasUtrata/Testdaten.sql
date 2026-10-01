@@ -2,6 +2,9 @@ USE [Lagerverwaltung];
 GO
 
 SET NOCOUNT ON;
+-- Der gefilterte Index UX_Raum_PersonID verlangt diese Einstellungen (in SSMS Standard, in sqlcmd nur mit -I)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 -- Falls bei der Ausführung ein Fehler auftritt, wird die Transaktion abgebrochen und der Fortschritt zurückgesetzt.
 SET XACT_ABORT ON;
 
@@ -38,6 +41,7 @@ FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Raumart r WHERE r.Name = v.Name);
 
 /* ---------- Bewegungsart (höchstens 20 Zeichen) ---------- */
+-- "Storniert" muss genau so heißen, da abgelehnte und zurückgezogene Transfers diese Bewegungsart bekommen (Bewegungsart.Storniert)
 INSERT INTO dbo.Bewegungsart (Name)
 SELECT v.Name
 FROM (VALUES
@@ -139,33 +143,91 @@ FROM (VALUES
 ) AS v(Name)
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Hersteller h WHERE h.Name = v.Name);
 
-/* ---------- Raum (Raumnummer höchstens 8 Zeichen) ---------- */
-INSERT INTO dbo.Raum (ID, RaumartID, PersonID)
-SELECT v.ID,
-       ra.ID,
-       (SELECT p.ID
-        FROM dbo.Person p
-        WHERE p.Username = v.Verantwortlich
-          AND NOT EXISTS (SELECT 1 FROM dbo.Raum x WHERE x.PersonID = p.ID))
+/* ---------- Person (Benutzername höchstens 20 Zeichen) ---------- */
+-- Die Passwörter sind wie im PasswordService samt Pepper aus der appsettings.json ("AlleMeineEntchen") gehasht.
+-- Wird der Pepper geändert, passen diese Hashes nicht mehr und die Konten können sich nicht mehr anmelden.
+-- Die Startkonten legt sonst die Ersteinrichtung an (Passwort = Benutzername), mit ihnen kann das Skript auch vor dem ersten Start laufen.
+-- Alle anderen Konten haben das Passwort "Test1234".
+DECLARE @Test1234 varchar(max) = 'AQAAAAIAAYagAAAAEJnadFfrRR04RxK+beY0E2wLIrxiY3Xnij7Brc7ggfkMZkWost2mV4enzJlR7KKPQw==';
+
+INSERT INTO dbo.Person (Vorname, Nachname, Username, Password, Email, RolleID)
+SELECT v.Vorname, v.Nachname, v.Username, v.Password, v.Email, r.ID
 FROM (VALUES
-    ('HL',   'Hauptlager',      'hauptlager'),
-    ('UL',   'Umbuchungslager', 'umbuchungslager'),
-    ('101',  'Klassenzimmer',   NULL),
-    ('102',  'Klassenzimmer',   NULL),
-    ('103',  'Klassenzimmer',   NULL),
-    ('205',  'Fachraum',        NULL), -- Physik und Biologie
-    ('309',  'Labor',           NULL), -- EDV-Labor
-    ('310',  'Labor',           NULL), -- EDV-Labor
-    ('311',  'Labor',           NULL), -- Netzwerklabor
-    ('312',  'Labor',           NULL), -- Elektroniklabor
-    ('W01',  'Werkstatt',       NULL),
-    ('TS1',  'Turnsaal',        NULL),
-    ('BIB',  'Bibliothek',      NULL),
-    ('KONF', 'Konferenzzimmer', NULL),
-    ('SEK',  'Verwaltung',      NULL)  -- Sekretariat
-) AS v(ID, Raumart, Verantwortlich)
+    -- Startkonten
+    ('Admin',     'Admin',           'admin',           'AQAAAAIAAYagAAAAECwy1wqfPxqlVjPvCA6QHCcHx6JoT3XSmvtihIU4eszuJsm8o0MGhmG++xR+vzqT4g==', 'admin@lagerverwaltung.local',           'Administrator'),
+    ('Lehrer',    'Hauptlager',      'hauptlager',      'AQAAAAIAAYagAAAAEBMzkETmS8S6jKneiDBFDI6TgtkXP3yW7D7ttOhlf0uTvf73QKkkeMmOF6/WJhRtpw==', 'hauptlager@lagerverwaltung.local',      'LehrerIn'),
+    ('Lehrer',    'Umbuchungslager', 'umbuchungslager', 'AQAAAAIAAYagAAAAENUEVxB5yMOZnLGW8L+F+R+43AT10I3e+Hs7qEc7Lwsq9fEpG8VzQp7U4ANRj57CRQ==', 'umbuchungslager@lagerverwaltung.local', 'LehrerIn'),
+    -- Testkonten
+    ('Wolfgang',  'Fuchs',           'wfuchs',          @Test1234, 'wolfgang.fuchs@lagerverwaltung.local',    'Administrator'), -- Direktor
+    ('Martina',   'Eder',            'meder',           @Test1234, 'martina.eder@lagerverwaltung.local',      'Administrator'), -- Sekretariat
+    ('Anna',      'Huber',           'ahuber',          @Test1234, 'anna.huber@lagerverwaltung.local',        'LehrerIn'),
+    ('Thomas',    'Gruber',          'tgruber',         @Test1234, 'thomas.gruber@lagerverwaltung.local',     'LehrerIn'),
+    ('Sabine',    'Wagner',          'swagner',         @Test1234, 'sabine.wagner@lagerverwaltung.local',     'LehrerIn'),
+    ('Julia',     'Pichler',         'jpichler',        @Test1234, 'julia.pichler@lagerverwaltung.local',     'LehrerIn'),
+    ('Eva',       'Berger',          'eberger',         @Test1234, 'eva.berger@lagerverwaltung.local',        'LehrerIn'),
+    ('Katharina', 'Wimmer',          'kwimmer',         @Test1234, 'katharina.wimmer@lagerverwaltung.local',  'LehrerIn'),
+    ('Michael',   'Bauer',           'mbauer',          @Test1234, 'michael.bauer@lagerverwaltung.local',     'Laborvorstand'),
+    ('Stefan',    'Moser',           'smoser',          @Test1234, 'stefan.moser@lagerverwaltung.local',      'Laborvorstand'),
+    ('Andreas',   'Steiner',         'asteiner',        @Test1234, 'andreas.steiner@lagerverwaltung.local',   'Laborvorstand'),
+    ('Claudia',   'Mayer',           'cmayer',          @Test1234, 'claudia.mayer@lagerverwaltung.local',     'KustodIn'),      -- Physik und Biologie
+    ('Lisa',      'Leitner',         'lleitner',        @Test1234, 'lisa.leitner@lagerverwaltung.local',      'KustodIn'),      -- Bewegung und Sport
+    ('Franz',     'Schmid',          'fschmid',         @Test1234, 'franz.schmid@lagerverwaltung.local',      'SchulwartIn'),
+    ('Johann',    'Brunner',         'jbrunner',        @Test1234, 'johann.brunner@lagerverwaltung.local',    'SchulwartIn')
+) AS v(Vorname, Nachname, Username, Password, Email, Rolle)
+JOIN dbo.Rolle r ON r.Name = v.Rolle
+WHERE NOT EXISTS (SELECT 1 FROM dbo.Person p WHERE p.Username = v.Username);
+
+/* ---------- Raum (Raumnummer höchstens 8 Zeichen) ---------- */
+INSERT INTO dbo.Raum (ID, RaumartID)
+SELECT v.ID, ra.ID
+FROM (VALUES
+    ('HL',   'Hauptlager'),
+    ('UL',   'Umbuchungslager'),
+    ('101',  'Klassenzimmer'),
+    ('102',  'Klassenzimmer'),
+    ('103',  'Klassenzimmer'),
+    ('205',  'Fachraum'),        -- Physik und Biologie
+    ('309',  'Labor'),           -- EDV-Labor
+    ('310',  'Labor'),           -- EDV-Labor
+    ('311',  'Labor'),           -- Netzwerklabor
+    ('312',  'Labor'),           -- Elektroniklabor
+    ('W01',  'Werkstatt'),
+    ('TS1',  'Turnsaal'),
+    ('BIB',  'Bibliothek'),
+    ('KONF', 'Konferenzzimmer'),
+    ('SEK',  'Verwaltung')       -- Sekretariat
+) AS v(ID, Raumart)
 JOIN dbo.Raumart ra ON ra.Name = v.Raumart
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Raum r WHERE r.ID = v.ID);
+
+/* ---------- Verantwortliche Person je Raum ---------- */
+-- Auch Räume, die schon ohne verantwortliche Person angelegt waren (z. B. von einer früheren Version dieses Skripts), bekommen eine.
+-- Ein Raum, der schon eine verantwortliche Person hat, bleibt unverändert. Eine Person ist für höchstens einen Raum verantwortlich
+-- (Index UX_Raum_PersonID), daher wird sie nur eingetragen, wenn sie noch keinen Raum hat.
+-- Ohne Raum bleiben admin (Administrator), kwimmer (LehrerIn) und jbrunner (SchulwartIn).
+UPDATE r
+SET PersonID = p.ID
+FROM (VALUES
+    ('HL',   'hauptlager'),
+    ('UL',   'umbuchungslager'),
+    ('101',  'ahuber'),
+    ('102',  'tgruber'),
+    ('103',  'swagner'),
+    ('205',  'cmayer'),
+    ('309',  'mbauer'),
+    ('310',  'jpichler'),
+    ('311',  'smoser'),
+    ('312',  'asteiner'),
+    ('W01',  'fschmid'),
+    ('TS1',  'lleitner'),
+    ('BIB',  'eberger'),
+    ('KONF', 'wfuchs'),
+    ('SEK',  'meder')
+) AS v(RaumID, Username)
+JOIN dbo.Raum r ON r.ID = v.RaumID
+JOIN dbo.Person p ON p.Username = v.Username
+WHERE r.PersonID IS NULL
+  AND NOT EXISTS (SELECT 1 FROM dbo.Raum x WHERE x.PersonID = p.ID);
 
 /* ---------- Gegenstand ---------- */
 INSERT INTO dbo.Gegenstand (Name, Seriennummer, KategorieID, HerstellerID)
@@ -296,11 +358,11 @@ FROM (VALUES
     ('Weichbodenmatte 300 x 200 cm',          NULL,               'Sportgeräte',                 'Kübler Sport'),
     ('Casio HS-3V Stoppuhr',                  NULL,               'Sportgeräte',                 'Casio'),
     -- Sicherheit und Erste Hilfe
-    ('Erste-Hilfe-Koffer',                    NULL,               'Sicherheit und Erste Hilfe',  'Söhngen'),
-    ('Schutzbrille',                          NULL,               'Sicherheit und Erste Hilfe',  'uvex'),
+    ('Erste-Hilfe-Koffer',                    NULL,               N'Sicherheit und Erste Hilfe',  N'Söhngen'),
+    ('Schutzbrille',                          NULL,               N'Sicherheit und Erste Hilfe',  N'uvex'),
     -- Bücher
-    ('Österreichisches Wörterbuch',           NULL,               'Bücher',                      'ÖBV'),
-    ('PONS Schulwörterbuch Englisch',         NULL,               'Bücher',                      'PONS')
+    ('Österreichisches Wörterbuch',           NULL,               N'Bücher',                      N'ÖBV'),
+    ('PONS Schulwörterbuch Englisch',         NULL,               N'Bücher',                      N'PONS')
 ) AS v(Name, Seriennummer, Kategorie, Hersteller)
 JOIN dbo.Kategorie k ON k.Name = v.Kategorie
 JOIN dbo.Hersteller h ON h.Name = v.Hersteller
@@ -515,15 +577,136 @@ WHERE NOT EXISTS (SELECT 1 FROM dbo.Raumbestand rb WHERE rb.GegenstandID = g.ID 
           NOT EXISTS (SELECT 1 FROM dbo.Raumbestand rb WHERE rb.GegenstandID = g.ID)
       AND NOT EXISTS (SELECT 1 FROM dbo.Lagerbewegung l WHERE l.GegenstandID = g.ID AND l.BestaetigtAm IS NULL)));
 
+/* ---------- Lagerbewegung ---------- */
+-- Die Historie erklärt den Raumbestand oben: Ende August kommt alles per Wareneingang ins Hauptlager, Anfang September gibt das
+-- Hauptlager jedem Raum seine Grundausstattung aus, danach folgen die einzelnen Vorgänge im September (Rückgaben, Reparatur,
+-- abgelehnte und zurückgezogene sowie noch offene Transfers). Bucht man alle Bewegungen wie der LagerService, ergibt sich genau der Raumbestand.
+-- Daher wird sie nur in eine leere Tabelle eingefügt: Wurde schon in der Anwendung gebucht, hat sich der Bestand inzwischen geändert.
+IF NOT EXISTS (SELECT 1 FROM dbo.Lagerbewegung)
+BEGIN
+    CREATE TABLE #Bewegung (
+        GegenstandID int          NOT NULL,
+        Menge        int          NOT NULL,
+        Bewegungsart nvarchar(20) NOT NULL,
+        VonRaumID    varchar(8)   NOT NULL,
+        NachRaumID   varchar(8)   NOT NULL,
+        ErstelltAm   datetime     NOT NULL,
+        BestaetigtAm datetime     NULL);
+
+    -- Einzelne Vorgänge im September. Der Gegenstand wird wie beim Raumbestand über Seriennummer oder Bezeichnung gefunden.
+    -- Offen = BestaetigtAm leer. Abgelehnte und zurückgezogene Transfers haben die Bewegungsart "Storniert" und in BestaetigtAm den Zeitpunkt der Stornierung.
+    -- Bei einem Wareneingang sind Von- und Nach-Raum gleich und er ist sofort bestätigt.
+    INSERT INTO #Bewegung (GegenstandID, Menge, Bewegungsart, VonRaumID, NachRaumID, ErstelltAm, BestaetigtAm)
+    SELECT g.ID, v.Menge, v.Bewegungsart, v.Von, v.Nach, v.ErstelltAm, v.BestaetigtAm
+    FROM (VALUES
+        -- Beamer in 103 defekt: zur Reparatur in die Werkstatt, als Ersatz kommt ein Beamer aus dem Hauptlager
+        ('EP-EBW49-006',                    1,  'Reparatur',    '103',  'W01',  '2026-09-08T08:20:00', '2026-09-08T10:05:00'),
+        ('EP-EBW49-003',                    1,  'Ausgabe',      'HL',   '103',  '2026-09-08T09:10:00', '2026-09-08T11:40:00'),
+        -- 309 will Tastaturen an 310 abgeben, 310 lehnt ab
+        ('Logitech K120 Tastatur',          4,  'Storniert',    '309',  '310',  '2026-09-09T09:00:00', '2026-09-09T11:30:00'),
+        -- Notebook aus 310 zurückgegeben und wieder im Hauptlager eingelagert
+        ('LN-L14G4-002',                    1,  'Rueckgabe',    '310',  'UL',   '2026-09-10T09:30:00', '2026-09-10T12:00:00'),
+        ('LN-L14G4-002',                    1,  'Einlagerung',  'UL',   'HL',   '2026-09-11T08:15:00', '2026-09-11T09:00:00'),
+        -- Das Elektroniklabor gibt eine Lötstation an die Werkstatt ab
+        ('WL-WE1010-002',                   1,  'Ausgabe',      '312',  'W01',  '2026-09-11T10:00:00', '2026-09-11T13:15:00'),
+        ('HP-PB450-001',                    1,  'Rueckgabe',    '310',  'UL',   '2026-09-14T10:15:00', '2026-09-14T13:00:00'),
+        ('HDMI-Kabel 2 m',                  1,  'Rueckgabe',    '102',  'UL',   '2026-09-15T07:50:00', '2026-09-15T09:30:00'),
+        ('Kopierpapier A4 (500 Blatt)',     20, 'Wareneingang', 'HL',   'HL',   '2026-09-15T11:00:00', '2026-09-15T11:00:00'),
+        ('HDMI-Kabel 2 m',                  1,  'Einlagerung',  'UL',   'HL',   '2026-09-16T08:00:00', '2026-09-16T08:45:00'),
+        ('USB-C auf HDMI Adapter',          2,  'Rueckgabe',    'KONF', 'UL',   '2026-09-16T09:00:00', '2026-09-16T11:30:00'),
+        ('Patchkabel Cat6 2 m',             3,  'Rueckgabe',    '309',  'UL',   '2026-09-17T12:40:00', '2026-09-18T08:10:00'),
+        -- Der reparierte Beamer kommt ins Hauptlager
+        ('EP-EBW49-006',                    1,  'Reparatur',    'W01',  'HL',   '2026-09-18T14:00:00', '2026-09-21T07:40:00'),
+        ('Casio fx-991DE X Schulrechner',   4,  'Rueckgabe',    '101',  'UL',   '2026-09-21T11:05:00', '2026-09-21T14:20:00'),
+        ('Breadboard 830 Kontakte',         10, 'Wareneingang', '312',  '312',  '2026-09-22T09:30:00', '2026-09-22T09:30:00'),
+        ('Gymnastikmatte',                  2,  'Rueckgabe',    'TS1',  'UL',   '2026-09-22T15:30:00', '2026-09-23T07:45:00'),
+        -- Das Hauptlager zieht einen Transfer an 205 zurück, 102 lehnt ein Display ab
+        ('Raspberry Pi 5 (8 GB)',           5,  'Storniert',    'HL',   '205',  '2026-09-24T10:00:00', '2026-09-24T10:20:00'),
+        ('BQ-RP6502-002',                   1,  'Storniert',    'HL',   '102',  '2026-09-25T08:30:00', '2026-09-25T12:00:00'),
+        -- Noch offen: warten auf die Freigabe durch den Nach-Raum
+        ('CS-ISR1100-001',                  1,  'Ausgabe',      'HL',   '311',  '2026-09-29T10:20:00', NULL),
+        ('HDMI-Kabel 2 m',                  2,  'Ausgabe',      'HL',   '309',  '2026-09-30T08:05:00', NULL),
+        ('Logitech R400 Presenter',         1,  'Ausgabe',      'HL',   'KONF', '2026-09-30T08:10:00', NULL),
+        ('Bresser Erudit DLX Mikroskop',    1,  'Rueckgabe',    '205',  'UL',   '2026-09-30T13:40:00', NULL),
+        ('Arduino Uno R4 WiFi',             6,  'Ausgabe',      '312',  '310',  '2026-09-30T14:10:00', NULL)
+    ) AS v(Gegenstand, Menge, Bewegungsart, Von, Nach, ErstelltAm, BestaetigtAm)
+    JOIN dbo.Gegenstand g
+        ON g.Seriennummer = v.Gegenstand
+        OR (g.Seriennummer IS NULL AND g.Name = v.Gegenstand);
+
+    -- Bestand jedes Raums nach der Grundausstattung: der heutige Raumbestand ohne das, was die Vorgänge oben bewirkt haben.
+    -- Wie im LagerService wird im Von-Raum abgebucht, sobald eine Bewegung angelegt ist (nicht beim Wareneingang),
+    -- und im Nach-Raum erst mit der Bestätigung zugebucht. Eine stornierte Bewegung hebt sich auf.
+    SELECT x.GegenstandID, x.RaumID, SUM(x.Menge) AS Menge
+    INTO #Grundausstattung
+    FROM (
+        SELECT rb.GegenstandID, rb.RaumID, rb.Menge
+        FROM dbo.Raumbestand rb
+        UNION ALL
+        -- Abgebuchtes wieder dazuzählen
+        SELECT b.GegenstandID, b.VonRaumID, b.Menge
+        FROM #Bewegung b
+        WHERE b.VonRaumID <> b.NachRaumID AND b.Bewegungsart <> 'Storniert'
+        UNION ALL
+        -- Zugebuchtes wieder abziehen
+        SELECT b.GegenstandID, b.NachRaumID, -b.Menge
+        FROM #Bewegung b
+        WHERE b.BestaetigtAm IS NOT NULL AND b.Bewegungsart <> 'Storniert'
+    ) AS x
+    GROUP BY x.GegenstandID, x.RaumID
+    HAVING SUM(x.Menge) > 0;
+
+    -- Ausgabe der Grundausstattung vom Hauptlager an die Räume (1. bis 4. September, vier Räume am Tag im Abstand von zwei Stunden).
+    -- Jeder Raum bekommt alles auf einmal, die verantwortliche Person bestätigt eineinhalb Stunden später.
+    INSERT INTO #Bewegung (GegenstandID, Menge, Bewegungsart, VonRaumID, NachRaumID, ErstelltAm, BestaetigtAm)
+    SELECT a.GegenstandID, a.Menge, 'Ausgabe', 'HL', a.RaumID, z.Zeit, DATEADD(MINUTE, 90, z.Zeit)
+    FROM (
+        SELECT ga.GegenstandID, ga.RaumID, ga.Menge, DENSE_RANK() OVER (ORDER BY ga.RaumID) - 1 AS Nr
+        FROM #Grundausstattung ga
+        WHERE ga.RaumID <> 'HL'
+    ) AS a
+    CROSS APPLY (SELECT DATEADD(MINUTE, 120 * (a.Nr % 4), DATEADD(DAY, a.Nr / 4, CAST('2026-09-01T08:00:00' AS datetime))) AS Zeit) AS z;
+
+    -- Wareneingang ins Hauptlager: je Gegenstand die gesamte Grundausstattung aller Räume samt Hauptlager
+    -- (24. bis 27. August, 30 Gegenstände am Tag im Abstand von zehn Minuten)
+    INSERT INTO #Bewegung (GegenstandID, Menge, Bewegungsart, VonRaumID, NachRaumID, ErstelltAm, BestaetigtAm)
+    SELECT w.GegenstandID, w.Menge, 'Wareneingang', 'HL', 'HL', z.Zeit, z.Zeit
+    FROM (
+        SELECT ga.GegenstandID, SUM(ga.Menge) AS Menge, ROW_NUMBER() OVER (ORDER BY ga.GegenstandID) - 1 AS Nr
+        FROM #Grundausstattung ga
+        GROUP BY ga.GegenstandID
+    ) AS w
+    CROSS APPLY (SELECT DATEADD(MINUTE, 10 * (w.Nr % 30), DATEADD(DAY, w.Nr / 30, CAST('2026-08-24T08:00:00' AS datetime))) AS Zeit) AS z;
+
+    -- Angelegt hat jede Bewegung die Person, die für den Von-Raum verantwortlich ist (Zuständigkeitsregel im LagerService).
+    -- Sortiert eingefügt, damit die IDs der zeitlichen Reihenfolge folgen
+    INSERT INTO dbo.Lagerbewegung (Menge, ErstelltAm, BestaetigtAm, BewegungsartID, VonRaumID, NachRaumID, GegenstandID, PersonID)
+    SELECT b.Menge, b.ErstelltAm, b.BestaetigtAm, ba.ID, b.VonRaumID, b.NachRaumID, b.GegenstandID, von.PersonID
+    FROM #Bewegung b
+    JOIN dbo.Bewegungsart ba ON ba.Name = b.Bewegungsart
+    JOIN dbo.Raum von ON von.ID = b.VonRaumID
+    WHERE von.PersonID IS NOT NULL
+    ORDER BY b.ErstelltAm, b.GegenstandID;
+
+    DROP TABLE #Grundausstattung;
+    DROP TABLE #Bewegung;
+END
+ELSE
+BEGIN
+    PRINT 'Lagerbewegung: Es gibt schon Lagerbewegungen, daher wird keine Historie eingefügt.';
+END;
+
 COMMIT TRANSACTION;
 
 /* ---------- Kontrolle: Anzahl der Datensätze je Tabelle ---------- */
 SELECT 'Rolle' AS Tabelle, COUNT(*) AS Anzahl FROM dbo.Rolle
-UNION ALL SELECT 'Raumart',      COUNT(*) FROM dbo.Raumart
-UNION ALL SELECT 'Bewegungsart', COUNT(*) FROM dbo.Bewegungsart
-UNION ALL SELECT 'Kategorie',    COUNT(*) FROM dbo.Kategorie
-UNION ALL SELECT 'Hersteller',   COUNT(*) FROM dbo.Hersteller
-UNION ALL SELECT 'Raum',         COUNT(*) FROM dbo.Raum
-UNION ALL SELECT 'Gegenstand',   COUNT(*) FROM dbo.Gegenstand
-UNION ALL SELECT 'Raumbestand',  COUNT(*) FROM dbo.Raumbestand;
+UNION ALL SELECT 'Raumart',       COUNT(*) FROM dbo.Raumart
+UNION ALL SELECT 'Bewegungsart',  COUNT(*) FROM dbo.Bewegungsart
+UNION ALL SELECT 'Kategorie',     COUNT(*) FROM dbo.Kategorie
+UNION ALL SELECT 'Hersteller',    COUNT(*) FROM dbo.Hersteller
+UNION ALL SELECT 'Person',        COUNT(*) FROM dbo.Person
+UNION ALL SELECT 'Raum',          COUNT(*) FROM dbo.Raum
+UNION ALL SELECT 'Gegenstand',    COUNT(*) FROM dbo.Gegenstand
+UNION ALL SELECT 'Raumbestand',   COUNT(*) FROM dbo.Raumbestand
+UNION ALL SELECT 'Lagerbewegung', COUNT(*) FROM dbo.Lagerbewegung;
 GO
