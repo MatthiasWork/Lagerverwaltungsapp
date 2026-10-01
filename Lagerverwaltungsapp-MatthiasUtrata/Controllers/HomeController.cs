@@ -47,18 +47,25 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         {
             var personID = User.GetPersonID();
             var istAdmin = User.IsInRole("Admin");
-            var raumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value);
+            var raumID = await _lagerService.RaumDerPersonAsync(personID);
 
             var offen = _context.Lagerbewegung.Where(Lagerbewegung.IstOffen);
             var uebersicht = new UebersichtViewModel
             {
-                Verfuegbar = await _context.Raumbestand.SumAsync(r => r.Menge),
-                OffeneFreigaben = istAdmin ? await offen.CountAsync()
-                    : raumID != null ? await offen.CountAsync(l => l.NachRaumID == raumID)
-                    : 0
+                Verfuegbar = await _context.Raumbestand.SumAsync(r => r.Menge)
             };
             // Unterwegs ist, was schon abgebucht, aber noch nicht übernommen wurde
             uebersicht.Gesamt = uebersicht.Verfuegbar + await offen.SumAsync(l => l.Menge);
+
+            // Admins sehen alle offenen Freigaben, alle anderen nur die für ihren Raum (ohne Raum keine)
+            if (istAdmin)
+            {
+                uebersicht.OffeneFreigaben = await offen.CountAsync();
+            }
+            else if (raumID != null)
+            {
+                uebersicht.OffeneFreigaben = await offen.Where(Lagerbewegung.FreigabeFuer(raumID)).CountAsync();
+            }
 
             var bewegungen = _context.Lagerbewegung.AsQueryable();
             if (!istAdmin)
@@ -78,15 +85,30 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             foreach (var l in letzte)
             {
-                var person = $"{l.Person.Vorname} {l.Person.Nachname}";
-                var was = l.Menge == 1 ? l.Gegenstand.Name : $"{l.Menge} × {l.Gegenstand.Name}";
+                var person = l.Person.VollerName;
+                string was;
+                if (l.Menge == 1)
+                {
+                    was = l.Gegenstand.Name;
+                }
+                else
+                {
+                    was = $"{l.Menge} × {l.Gegenstand.Name}";
+                }
 
+                // Zuerst prüfen: Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung
                 if (!l.Storniert && l.BestaetigtAm == l.ErstelltAm)
                 {
                     // Sofort bestätigt: Wareneingang oder Umbuchung zwischen zwei eigenen Räumen
-                    var text = l.VonRaumID == l.NachRaumID
-                        ? $"{person} hat {was} in {l.NachRaumID} eingebucht"
-                        : $"{person} hat {was} von {l.VonRaumID} nach {l.NachRaumID} umgebucht";
+                    string text;
+                    if (l.VonRaumID == l.NachRaumID)
+                    {
+                        text = $"{person} hat {was} in {l.NachRaumID} eingebucht";
+                    }
+                    else
+                    {
+                        text = $"{person} hat {was} von {l.VonRaumID} nach {l.NachRaumID} umgebucht";
+                    }
                     uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
                     continue;
                 }
@@ -160,24 +182,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 return View(login);
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Email, person.Email),
-                new Claim(ClaimTypes.Sid, person.ID.ToString()),
-                new Claim(ClaimTypes.Name, person.Username),
-                new Claim(ClaimTypes.Surname, person.Nachname),
-                new Claim(ClaimTypes.GivenName, person.Vorname),
-                new Claim(ClaimTypes.Role, person.Rolle.Name)
-            };
-
-            if (person.Rolle.Admin)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            }
-
-            ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+            await AnmeldenAsync(person);
 
             if (Url.IsLocalUrl(returnUrl))
             {
@@ -242,20 +247,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             _context.Person.Add(person);
             await _context.SaveChangesAsync();
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Email, person.Email),
-                new Claim(ClaimTypes.Sid, person.ID.ToString()),
-                new Claim(ClaimTypes.Name, person.Username),
-                new Claim(ClaimTypes.Surname, person.Nachname),
-                new Claim(ClaimTypes.GivenName, person.Vorname),
-                new Claim(ClaimTypes.Role, person.Rolle.Name)
-            };
-
-            // Keine Admin-Prüfung nötig, da neu registrierte Benutzer immer die LehrerIn-Rolle ohne Admin-Rechte bekommen
-            ClaimsIdentity claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+            // Neu registrierte Benutzer haben immer die LehrerIn-Rolle ohne Admin-Rechte, bekommen also keine Admin-Rolle
+            await AnmeldenAsync(person);
 
             return RedirectToAction(nameof(Index));
         }
@@ -281,6 +274,35 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        /// <summary>
+        /// Methode, die eine Person per Cookie anmeldet (nach dem Login und nach der Registrierung).
+        /// Die ID steht im Sid-Claim (siehe ClaimsPrincipalExtensions.GetPersonID); wer eine Admin-Rolle hat,
+        /// bekommt zusätzlich die Rolle "Admin".
+        /// </summary>
+        /// <param name="person">Die Person, die angemeldet wird; ihre Rolle muss geladen sein</param>
+        /// <returns>Gibt eine Task zurück</returns>
+        private async Task AnmeldenAsync(Person person)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, person.Email),
+                new Claim(ClaimTypes.Sid, person.ID.ToString()),
+                new Claim(ClaimTypes.Name, person.Username),
+                new Claim(ClaimTypes.Surname, person.Nachname),
+                new Claim(ClaimTypes.GivenName, person.Vorname),
+                new Claim(ClaimTypes.Role, person.Rolle.Name)
+            };
+
+            if (person.Rolle.Admin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
         }
 
         /// <summary>

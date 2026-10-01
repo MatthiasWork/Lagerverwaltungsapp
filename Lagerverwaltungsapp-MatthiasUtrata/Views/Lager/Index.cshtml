@@ -1,0 +1,252 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.HolenViewModel
+
+@{
+    ViewData["Title"] = "Aus dem Lager holen";
+
+    var lager = Model.VonRaum;
+    var freigabePerson = lager?.Person?.VollerName ?? "Die verantwortliche Person";
+
+    // Nach einem Fehler die bisherige Auswahl wieder anzeigen; das Skript unten hält die Anzahl danach aktuell
+    var anzahlGewaehlt = Model.Mengen.Count(m => m.Value > 0);
+}
+
+<div class="seite transfer holen">
+    <div class="seiten-kopf d-none d-lg-flex">
+        <div>
+            <h1>Aus dem Lager holen</h1>
+            <div class="seiten-untertitel">Geräte aus einem Lager in Raum @Model.NachRaum.ID holen.</div>
+        </div>
+    </div>
+    <div class="transfer-kopf-mobil d-lg-none">
+        <a class="abbrechen-link" asp-controller="MeinRaum" asp-action="Index">Abbrechen</a>
+        <h1 class="transfer-titel-mobil">Aus dem Lager</h1>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    @if (lager == null)
+    {
+        <p class="text-muted mb-0">
+            Derzeit gibt es kein Lager, aus dem Sie Geräte holen können. Ein Lager ist ein Raum, dessen Raumart „Lager“ im Namen hat
+            (z. B. Hauptlager), mit einer verantwortlichen Person, die freigibt.
+        </p>
+    }
+    else
+    {
+        @* Lager zur Auswahl: ein Klick lädt die Seite mit dem Bestand dieses Lagers *@
+        <nav class="lager-liste" aria-label="Lager auswählen">
+            @foreach (var raum in Model.Lager)
+            {
+                var aktiv = raum.ID == lager.ID;
+                <a class="blueprint lager-karte @(aktiv ? "aktiv" : null)" asp-action="Index" asp-route-id="@raum.ID" aria-current="@(aktiv ? "true" : null)">
+                    <span class="card-kicker">@raum.Raumart.Name</span>
+                    <span class="lager-name">@raum.ID</span>
+                    <span class="route-info">Freigabe: @raum.Person!.Vorname @raum.Person.Nachname</span>
+                </a>
+            }
+        </nav>
+
+        @* Ohne _ValidationScriptsPartial: Bewegungsart und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
+        <form asp-action="Index" method="post" id="holenFormular" class="transfer-formular">
+            <input type="hidden" asp-for="VonRaumID" />
+
+            <div class="transfer-raster">
+                <div class="transfer-auswahl">
+                    <div class="geraete-liste">
+                        <h4>Geräte aus @lager.ID · <span data-holen="anzahl">@anzahlGewaehlt</span></h4>
+
+                        @* Alle Geräte des Lagers sind da, aber nur die ausgewählten sichtbar; nicht ausgewählte Felder
+                           sind deaktiviert und werden daher nicht mitgeschickt. Hinzufügen über die Suche darunter *@
+                        @foreach (var bestand in Model.Bestand)
+                        {
+                            var gegenstand = bestand.Gegenstand;
+                            Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
+                            var gewaehlt = menge > 0;
+                            if (!gewaehlt)
+                            {
+                                // Vorschlag, falls das Gerät über die Suche hinzugefügt wird
+                                menge = 1;
+                            }
+                            <div class="geraet-zeile" hidden="@(!gewaehlt)"
+                                 data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
+                                 data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Lager")">
+                                <div class="geraet-bild" aria-hidden="true"></div>
+                                <div>
+                                    <div class="fw-medium">@gegenstand.Name</div>
+                                    <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name)</div>
+                                </div>
+                                @* Ein Gerät mit Seriennummer wird immer einzeln gebucht (Menge 1), sonst die Menge eingeben *@
+                                @if (gegenstand.Seriennummer != null)
+                                {
+                                    <span class="tag tag-accent d-none d-lg-inline-flex">Verfügbar</span>
+                                    <input type="hidden" name="Mengen[@gegenstand.ID]" value="1" disabled="@(!gewaehlt)" />
+                                }
+                                else
+                                {
+                                    <span class="menge-auswahl">
+                                        <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@menge"
+                                               min="1" max="@bestand.Menge" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
+                                        <span>von @bestand.Menge</span>
+                                    </span>
+                                }
+                                <button type="button" class="entfernen" data-entfernen aria-label="@gegenstand.Name entfernen"><i data-lucide="x"></i></button>
+                            </div>
+                        }
+                        <p class="geraete-leer" hidden="@(anzahlGewaehlt > 0)">
+                            @if (Model.Bestand.Any())
+                            {
+                                <text>Noch keine Geräte ausgewählt.</text>
+                            }
+                            else
+                            {
+                                <text>Im Lager @lager.ID liegt derzeit nichts, das geholt werden kann.</text>
+                            }
+                        </p>
+
+                        @if (Model.Bestand.Any())
+                        {
+                            <div class="geraet-hinzufuegen">
+                                <i data-lucide="scan-line"></i>
+                                <input type="search" id="geraetSuche" placeholder="Gerät im Lager suchen oder Seriennummer eingeben" autocomplete="off"
+                                       aria-label="Gerät hinzufügen" aria-controls="geraetVorschlaege" />
+                                <div class="vorschlaege" id="geraetVorschlaege" hidden></div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="transfer-optionen">
+                        <div>
+                            <span class="form-label d-none d-lg-block">Art</span>
+                            <div class="seg transfer-art" role="radiogroup" aria-label="Bewegungsart">
+                                @foreach (var art in Model.Bewegungsarten)
+                                {
+                                    <label class="seg-opt">
+                                        <input type="radio" name="BewegungsartID" value="@art.Value" checked="@art.Selected" required />@art.Text
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="BewegungsartID" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transfer-seite">
+                    <div class="blueprint ablauf d-none d-lg-flex">
+                        <span class="card-kicker">Ablauf</span>
+                        <div class="ablauf-schritt"><span class="schritt-nummer aktuell">1</span><span>Sie fragen die Geräte an, sie werden in @lager.ID für Sie reserviert</span></div>
+                        <div class="ablauf-schritt"><span class="schritt-nummer">2</span><span>@freigabePerson gibt unter „Freigaben“ frei</span></div>
+                        <div class="ablauf-schritt"><span class="schritt-nummer">3</span><span>Bis dahin sind die Geräte unterwegs, unter „Mein Raum“ können Sie die Anfrage zurückziehen</span></div>
+                        <div class="ablauf-schritt"><span class="schritt-nummer">4</span><span>Danach sind sie im Bestand von Raum @Model.NachRaum.ID</span></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())">Holen anfragen</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Geräteauswahl wie beim Transfer: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen
+        (function () {
+            var formular = document.getElementById('holenFormular');
+            if (!formular) {
+                return;
+            }
+            var zeilen = Array.prototype.slice.call(formular.querySelectorAll('.geraet-zeile'));
+            var suchfeld = document.getElementById('geraetSuche');
+            var vorschlaege = document.getElementById('geraetVorschlaege');
+
+            // Anzahl und Hinweis ohne Auswahl neu anzeigen
+            function aktualisieren() {
+                var anzahl = zeilen.filter(function (zeile) { return !zeile.hidden; }).length;
+                formular.querySelector('[data-holen="anzahl"]').textContent = anzahl;
+                formular.querySelector('.geraete-leer').hidden = anzahl > 0;
+            }
+
+            // Zeile zeigen und ihre Felder mitschicken oder ausblenden und nicht mitschicken
+            function auswaehlen(zeile, gewaehlt) {
+                zeile.hidden = !gewaehlt;
+                zeile.querySelectorAll('input').forEach(function (feld) {
+                    feld.disabled = !gewaehlt;
+                });
+                aktualisieren();
+            }
+
+            function hinzufuegen(zeile) {
+                auswaehlen(zeile, true);
+                suchfeld.value = '';
+                vorschlaege.hidden = true;
+                var menge = zeile.querySelector('input[type="number"]');
+                (menge || suchfeld).focus();
+            }
+
+            // Vorschläge: noch nicht ausgewählte Geräte, deren Name, Seriennummer oder Kategorie den Suchbegriff enthält
+            function vorschlaegeZeigen() {
+                var begriff = suchfeld.value.trim().toLowerCase();
+                vorschlaege.replaceChildren();
+                if (begriff === '') {
+                    vorschlaege.hidden = true;
+                    return;
+                }
+
+                var treffer = zeilen.filter(function (zeile) {
+                    return zeile.hidden && zeile.dataset.suchtext.indexOf(begriff) !== -1;
+                }).slice(0, 8);
+
+                treffer.forEach(function (zeile) {
+                    var knopf = document.createElement('button');
+                    knopf.type = 'button';
+                    knopf.className = 'vorschlag';
+                    var name = document.createElement('span');
+                    name.textContent = zeile.dataset.name;
+                    var info = document.createElement('span');
+                    info.className = 'nebeninfo';
+                    info.textContent = zeile.dataset.info;
+                    knopf.append(name, info);
+                    knopf.addEventListener('click', function () {
+                        hinzufuegen(zeile);
+                    });
+                    vorschlaege.append(knopf);
+                });
+
+                if (treffer.length === 0) {
+                    var leer = document.createElement('div');
+                    leer.className = 'vorschlag-leer';
+                    leer.textContent = 'Kein passendes Gerät in diesem Lager';
+                    vorschlaege.append(leer);
+                }
+                vorschlaege.hidden = false;
+            }
+
+            zeilen.forEach(function (zeile) {
+                zeile.querySelector('[data-entfernen]').addEventListener('click', function () {
+                    auswaehlen(zeile, false);
+                });
+            });
+
+            if (suchfeld) {
+                suchfeld.addEventListener('input', vorschlaegeZeigen);
+                suchfeld.addEventListener('keydown', function (e) {
+                    // Enter übernimmt den ersten Vorschlag (z. B. nach dem Scannen einer Seriennummer) statt das Formular abzuschicken
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        var erster = vorschlaege.querySelector('.vorschlag');
+                        if (erster) {
+                            erster.click();
+                        }
+                    } else if (e.key === 'Escape') {
+                        vorschlaege.hidden = true;
+                    }
+                });
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.geraet-hinzufuegen')) {
+                        vorschlaege.hidden = true;
+                    }
+                });
+            }
+
+            aktualisieren();
+        })();
+    </script>
+}

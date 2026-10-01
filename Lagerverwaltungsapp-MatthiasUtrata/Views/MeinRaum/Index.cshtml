@@ -2,6 +2,16 @@
 
 @{
     ViewData["Title"] = $"Mein Raum ({Model.Raum.ID})";
+
+    string eintraege;
+    if (Model.AnzahlGesamt == 1)
+    {
+        eintraege = "1 Eintrag";
+    }
+    else
+    {
+        eintraege = $"{Model.AnzahlGesamt} Einträgen";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
@@ -25,7 +35,7 @@
             <div class="card-body">
                 <h2 class="h6 card-subtitle text-muted">Im Bestand</h2>
                 <p class="display-6 mb-1">@Model.StueckGesamt</p>
-                <p class="small text-muted mb-0">Stück in @Model.AnzahlGesamt @(Model.AnzahlGesamt == 1 ? "Eintrag" : "Einträgen")</p>
+                <p class="small text-muted mb-0">Stück in @eintraege</p>
             </div>
         </div>
     </div>
@@ -88,7 +98,7 @@
                         <td class="text-nowrap">@bewegung.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</td>
                         <td>
                             <span class="tag tag-outline">Freigabe offen</span>
-                            <div class="small text-muted">wartet auf @(bewegung.FreigabeRaum.Person == null ? "–" : $"{bewegung.FreigabeRaum.Person.Vorname} {bewegung.FreigabeRaum.Person.Nachname}")</div>
+                            <div class="small text-muted">wartet auf @(bewegung.FreigabeRaum.Person?.VollerName ?? "–")</div>
                         </td>
                         <td class="text-end">
                             <form asp-action="Zurueckziehen" asp-route-id="@bewegung.ID" method="post"
@@ -122,7 +132,14 @@
 
 @if (!Model.Bestand.Any())
 {
-    <p class="text-muted">@(Model.AnzahlGesamt == 0 ? $"Im Raum {Model.Raum.ID} liegt derzeit nichts." : "Keine Gegenstände gefunden.")</p>
+    @if (Model.AnzahlGesamt == 0)
+    {
+        <p class="text-muted">Im Raum @Model.Raum.ID liegt derzeit nichts.</p>
+    }
+    else
+    {
+        <p class="text-muted">Keine Gegenstände gefunden.</p>
+    }
 }
 else
 {

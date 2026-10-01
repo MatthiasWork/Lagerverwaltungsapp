@@ -26,7 +26,7 @@ else
         <dd class="col-sm-9">@Model.Raumart.Name</dd>
 
         <dt class="col-sm-3">Verantwortliche Person</dt>
-        <dd class="col-sm-9">@(Model.Person == null ? "–" : $"{Model.Person.Vorname} {Model.Person.Nachname}")</dd>
+        <dd class="col-sm-9">@(Model.Person?.VollerName ?? "–")</dd>
     </dl>
     <form asp-action="Delete">
         <input type="hidden" asp-for="ID" />

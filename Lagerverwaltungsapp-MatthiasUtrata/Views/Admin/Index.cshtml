@@ -10,6 +10,17 @@
     // Räume, für die eine Person verantwortlich ist, z. B. "HL · Hauptlager"
     List<string> Raeume(Person person) => person.Raum.OrderBy(r => r.ID).Select(r => $"{r.ID} · {r.Raumart.Name}").ToList();
 
+    // Dieselben Räume als Text für die Listen, "–" ohne Raum
+    string RaeumeText(Person person)
+    {
+        var raeume = Raeume(person);
+        if (raeume.Count == 0)
+        {
+            return "–";
+        }
+        return string.Join(", ", raeume);
+    }
+
     int Offen(Person person) => Model.OffeneTransfers.GetValueOrDefault(person.ID);
 
     var ausgewaehlt = Model.Ausgewaehlt;
@@ -67,7 +78,6 @@
                     <tbody>
                         @foreach (var person in Model.Benutzer)
                         {
-                            var raeume = Raeume(person);
                             var offen = Offen(person);
                             <tr class="@(person.ID == ausgewaehlt?.ID ? "ausgewaehlt" : null)" data-href="@AuswahlLink(person.ID)">
                                 <td>
@@ -80,8 +90,15 @@
                                     </div>
                                 </td>
                                 <td>@person.Rolle.Name</td>
-                                <td>@(raeume.Count == 0 ? "–" : string.Join(", ", raeume))</td>
-                                <td class="@(offen > 0 ? "transfers-offen" : null)">@(offen > 0 ? $"{offen} offen" : "0")</td>
+                                <td>@RaeumeText(person)</td>
+                                @if (offen > 0)
+                                {
+                                    <td class="transfers-offen">@offen offen</td>
+                                }
+                                else
+                                {
+                                    <td>0</td>
+                                }
                             </tr>
                         }
                     </tbody>
@@ -155,12 +172,11 @@
         <div class="d-lg-none">
             @foreach (var person in Model.Benutzer)
             {
-                var raeume = Raeume(person);
                 <a class="benutzer-zeile" asp-controller="Profil" asp-action="Index" asp-route-id="@person.ID">
                     <span class="avatar" aria-hidden="true">@person.Initialen</span>
                     <span class="benutzer-zeile-text">
                         <b class="fw-medium">@person.Vorname @person.Nachname</b><br />
-                        <span class="nebeninfo">@person.Rolle.Name · @(raeume.Count == 0 ? "–" : string.Join(", ", raeume))</span>
+                        <span class="nebeninfo">@person.Rolle.Name · @RaeumeText(person)</span>
                     </span>
                     <i data-lucide="chevron-right"></i>
                 </a>

@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -6,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Benutzerverwaltung darf nur ein Admin, sonst könnte sich jeder selbst zum Admin machen
 [Authorize(Roles = "Admin")]
@@ -65,11 +66,11 @@ public class PersonController : Controller
     /// <summary>
     /// Methode, die das Formular zum Anlegen einer neuen Person anzeigt.
     /// </summary>
-    /// <returns>Gibt ein IActionResult zurück</returns>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Person/Create
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name");
+        await RollenSetzenAsync(null);
         return View();
     }
 
@@ -105,7 +106,7 @@ public class PersonController : Controller
             TempData["Meldung"] = $"Benutzer \"{person.Username}\" wurde angelegt.";
             return RedirectToAction("Index", "Admin");
         }
-        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
+        await RollenSetzenAsync(person.RolleID);
         return View(person);
     }
 
@@ -127,7 +128,7 @@ public class PersonController : Controller
         {
             return NotFound();
         }
-        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
+        await RollenSetzenAsync(person.RolleID);
         return View(person);
     }
 
@@ -208,7 +209,7 @@ public class PersonController : Controller
             TempData["Meldung"] = $"Benutzer \"{person.Username}\" wurde gespeichert.";
             return RedirectToAction("Index", "Admin");
         }
-        ViewData["RolleID"] = new SelectList(_context.Rolle, "ID", "Name", person.RolleID);
+        await RollenSetzenAsync(person.RolleID);
         return View(person);
     }
 
@@ -278,6 +279,16 @@ public class PersonController : Controller
     private bool PersonExists(int? id)
     {
         return _context.Person.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die die Auswahlliste der Rollen für das Formular setzt.
+    /// </summary>
+    /// <param name="rolleID">Die ID der Rolle, die vorausgewählt werden soll, oder null bei einer neuen Person</param>
+    /// <returns>Gibt eine Task zurück</returns>
+    private async Task RollenSetzenAsync(int? rolleID)
+    {
+        ViewData["RolleID"] = new SelectList(await _context.Rolle.OrderBy(r => r.Name).ToListAsync(), "ID", "Name", rolleID);
     }
 
     /// <summary>

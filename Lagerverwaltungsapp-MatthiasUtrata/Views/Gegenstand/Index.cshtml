@@ -12,22 +12,15 @@
     // Link auf den Katalog mit einer anderen Kategorie; Suche, Raum und Status bleiben erhalten
     string KategorieLink(int? kategorieID) => Url.Action("Index", new { suche = Model.Suche, kategorieID, raumID = Model.RaumID, status = Model.Status })!;
 
-    // Standort: der Raum mit der größten Menge, bei mehreren Räumen mit der Zahl der übrigen
-    string Standort(KatalogEintrag eintrag)
-    {
-        if (eintrag.Standorte.Count == 0)
-        {
-            return "–";
-        }
-        var raum = eintrag.Standorte[0].Raum;
-        var text = $"{raum.ID} · {raum.Raumart.Name}";
-        return eintrag.Standorte.Count > 1 ? $"{text} +{eintrag.Standorte.Count - 1}" : text;
-    }
-
     // Unter dem Namen: Kategorie, bei Gegenständen ohne Seriennummer auch die Stückzahl
-    string Zusatz(KatalogEintrag eintrag) => eintrag.Gegenstand.Seriennummer == null && eintrag.Stueck > 1
-        ? $"{eintrag.Gegenstand.Kategorie.Name} · {eintrag.Stueck} Stück"
-        : eintrag.Gegenstand.Kategorie.Name;
+    string Zusatz(KatalogEintrag eintrag)
+    {
+        if (eintrag.Gegenstand.Seriennummer == null && eintrag.Stueck > 1)
+        {
+            return $"{eintrag.Gegenstand.Kategorie.Name} · {eintrag.Stueck} Stück";
+        }
+        return eintrag.Gegenstand.Kategorie.Name;
+    }
 
     var statusWerte = new[] { GegenstandUebersichtViewModel.Verfuegbar, GegenstandUebersichtViewModel.InTransfer, GegenstandUebersichtViewModel.KeinBestand };
 }
@@ -130,7 +123,7 @@
                                 <div class="nebeninfo">@Zusatz(eintrag)</div>
                             </td>
                             <td class="zahlen">@(eintrag.Gegenstand.Seriennummer ?? "–")</td>
-                            <td>@Standort(eintrag)</td>
+                            <td>@(eintrag.Standort ?? "–")</td>
                             <td><span class="tag @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span></td>
                             <td>@(eintrag.Hinweis ?? "–")</td>
                         </tr>
@@ -147,7 +140,7 @@
                     <div class="geraet-bild" aria-hidden="true"></div>
                     <div class="katalog-zeile-text">
                         <span class="katalog-zeile-name">@eintrag.Gegenstand.Name</span>
-                        <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@Standort(eintrag)</span>
+                        <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@(eintrag.Standort ?? "–")</span>
                     </div>
                 </a>
             }

@@ -7,8 +7,35 @@
     // Begrüßung wie im Design: Datum und Gruß je nach Tageszeit mit dem Vornamen aus dem Login
     var kultur = new CultureInfo("de-AT");
     var jetzt = DateTime.Now;
-    var gruss = jetzt.Hour < 11 ? "Guten Morgen" : jetzt.Hour < 18 ? "Guten Tag" : "Guten Abend";
     var vorname = User.FindFirstValue(ClaimTypes.GivenName);
+    string gruss;
+    if (jetzt.Hour < 11)
+    {
+        gruss = "Guten Morgen";
+    }
+    else if (jetzt.Hour < 18)
+    {
+        gruss = "Guten Tag";
+    }
+    else
+    {
+        gruss = "Guten Abend";
+    }
+
+    // Unter der Zahl der offenen Freigaben
+    string freigabenInfo;
+    if (Model.OffeneFreigaben == 0)
+    {
+        freigabenInfo = "nichts offen";
+    }
+    else if (Model.OffeneFreigaben == 1)
+    {
+        freigabenInfo = "1 Transfer";
+    }
+    else
+    {
+        freigabenInfo = $"{Model.OffeneFreigaben} Transfers";
+    }
 
     // Zeitangabe in der Aktivitätsliste: heute die Uhrzeit, gestern "Gestern", sonst das Datum
     string Zeit(DateTime zeitpunkt)
@@ -17,7 +44,11 @@
         {
             return zeitpunkt.ToString("HH:mm");
         }
-        return zeitpunkt.Date == jetzt.Date.AddDays(-1) ? "Gestern" : zeitpunkt.ToString("dd.MM.");
+        if (zeitpunkt.Date == jetzt.Date.AddDays(-1))
+        {
+            return "Gestern";
+        }
+        return zeitpunkt.ToString("dd.MM.");
     }
 }
 
@@ -47,7 +78,7 @@
         <div class="kennzahl blueprint">
             <span class="kennzahl-label">Freigaben offen</span>
             <span class="kennzahl-wert">@Model.OffeneFreigaben</span>
-            <span class="kennzahl-info">@(Model.OffeneFreigaben == 0 ? "nichts offen" : Model.OffeneFreigaben == 1 ? "1 Transfer" : $"{Model.OffeneFreigaben} Transfers")</span>
+            <span class="kennzahl-info">@freigabenInfo</span>
         </div>
     </div>
 

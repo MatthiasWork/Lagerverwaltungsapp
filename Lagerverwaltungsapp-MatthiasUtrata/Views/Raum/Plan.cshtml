@@ -18,7 +18,28 @@
     var bestand = new (string Kategorie, int Anzahl)[] { ("Tablets", 18), ("Robotik", 12), ("Messgeräte", 8), ("Laptops", 4) };
 
     // Der WC-Raum ist kein Lagerraum und wird grau dargestellt
-    string Klasse(string nummer) => nummer == ausgewaehlt ? "plan-raum ausgewaehlt" : nummer == "WC" ? "plan-raum nebenraum" : "plan-raum";
+    string Klasse(string nummer)
+    {
+        if (nummer == ausgewaehlt)
+        {
+            return "plan-raum ausgewaehlt";
+        }
+        if (nummer == "WC")
+        {
+            return "plan-raum nebenraum";
+        }
+        return "plan-raum";
+    }
+
+    // Anzahl der Geräte im Grundriss; Räume ohne Geräte bleiben leer
+    string Anzahl(int geraete)
+    {
+        if (geraete > 0)
+        {
+            return geraete.ToString();
+        }
+        return "";
+    }
 }
 
 @* Desktop *@
@@ -43,7 +64,7 @@
                 <div class="@Klasse(raum.Nummer)" style="grid-area: @raum.Bereich">
                     <span class="plan-raum-nummer">@raum.Nummer</span>
                     <span class="plan-raum-fach">@raum.Fach</span>
-                    <span class="plan-raum-fuss"><span>@(raum.Geraete > 0 ? raum.Geraete.ToString() : "")</span><span>@raum.Kuerzel</span></span>
+                    <span class="plan-raum-fuss"><span>@Anzahl(raum.Geraete)</span><span>@raum.Kuerzel</span></span>
                 </div>
             }
             <div class="plan-flur">Flur</div>
@@ -78,7 +99,7 @@
         {
             <div class="@Klasse(raum.Nummer)" style="grid-area: @raum.Bereich">
                 <span class="plan-raum-nummer">@raum.Nummer</span>
-                <span class="plan-raum-anzahl">@(raum.Geraete > 0 ? raum.Geraete.ToString() : "")</span>
+                <span class="plan-raum-anzahl">@Anzahl(raum.Geraete)</span>
             </div>
         }
     </div>

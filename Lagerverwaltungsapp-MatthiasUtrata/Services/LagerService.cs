@@ -32,14 +32,32 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         /// Methode, die den Raum ermittelt, für den eine Person verantwortlich ist (z. B. für das Menü).
         /// Eine Person ist für höchstens einen Raum verantwortlich.
         /// </summary>
-        /// <param name="personID">Die ID der Person</param>
+        /// <param name="personID">Die ID der Person oder null, wenn niemand angemeldet ist (z. B. User.GetPersonID())</param>
         /// <returns>Die ID ihres Raums oder null, wenn sie für keinen Raum verantwortlich ist</returns>
-        public async Task<string?> RaumDerPersonAsync(int personID)
+        public async Task<string?> RaumDerPersonAsync(int? personID)
         {
+            if (personID == null)
+            {
+                return null;
+            }
+
             return await _context.Raum
                 .Where(r => r.PersonID == personID)
                 .Select(r => r.ID)
                 .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Methode, die die Bewegungsarten liefert, die man beim Buchen auswählen kann (für die Auswahllisten in den Formularen).
+        /// "Storniert" fehlt, da sie nur beim Ablehnen oder Zurückziehen vergeben wird.
+        /// </summary>
+        /// <returns>Die Bewegungsarten nach Namen sortiert</returns>
+        public async Task<List<Bewegungsart>> WaehlbareBewegungsartenAsync()
+        {
+            return await _context.Bewegungsart
+                .Where(b => b.Name != Bewegungsart.Storniert)
+                .OrderBy(b => b.Name)
+                .ToListAsync();
         }
 
         /// <summary>
@@ -180,11 +198,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         {
             return await BuchenAsync(async () =>
             {
-                var lagerbewegung = await _context.Lagerbewegung
-                    .Include(l => l.Bewegungsart)
-                    .Include(l => l.VonRaum)
-                    .Include(l => l.NachRaum)
-                    .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+                var lagerbewegung = await LagerbewegungLadenAsync(lagerbewegungID);
                 var fehler = NichtOffenFehler(lagerbewegung);
                 if (fehler != null)
                 {
@@ -213,11 +227,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         {
             return await BuchenAsync(async () =>
             {
-                var lagerbewegung = await _context.Lagerbewegung
-                    .Include(l => l.Bewegungsart)
-                    .Include(l => l.VonRaum)
-                    .Include(l => l.NachRaum)
-                    .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+                var lagerbewegung = await LagerbewegungLadenAsync(lagerbewegungID);
                 var fehler = NichtOffenFehler(lagerbewegung);
                 if (fehler != null)
                 {
@@ -288,13 +298,24 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
             var ausLagerGeholt = vonRaum.PersonID != personID && nachRaum.PersonID == personID && vonRaum.Raumart.IstLager;
             if (vonRaum.PersonID != personID && !ausLagerGeholt)
             {
-                return nachRaum.PersonID == personID
-                    ? $"Raum {vonRaum.ID} ist kein Lager. Geräte holen kann man nur aus einem Lager, aus anderen Räumen muss die dort verantwortliche Person sie verlegen."
-                    : $"Nur die für den Raum {vonRaum.ID} verantwortliche Person darf Gegenstände aus diesem Raum buchen.";
+                if (nachRaum.PersonID == personID)
+                {
+                    return $"Raum {vonRaum.ID} ist kein Lager. Geräte holen kann man nur aus einem Lager, aus anderen Räumen muss die dort verantwortliche Person sie verlegen.";
+                }
+                return $"Nur die für den Raum {vonRaum.ID} verantwortliche Person darf Gegenstände aus diesem Raum buchen.";
             }
 
             // Freigeben muss die andere Seite. Ohne verantwortliche Person könnte das niemand und die Menge bliebe für immer unterwegs
-            var freigabeRaum = ausLagerGeholt ? vonRaum : nachRaum;
+            Raum freigabeRaum;
+            if (ausLagerGeholt)
+            {
+                freigabeRaum = vonRaum;
+            }
+            else
+            {
+                freigabeRaum = nachRaum;
+            }
+
             if (freigabeRaum.PersonID == null)
             {
                 return $"Für den Raum {freigabeRaum.ID} ist niemand verantwortlich, der die Lagerbewegung freigeben könnte. Weise dem Raum zuerst eine verantwortliche Person zu.";
@@ -356,11 +377,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         /// <returns>Die Fehlermeldung oder null, wenn die Lagerbewegung bestätigt wurde</returns>
         private async Task<string?> BewegungBestaetigenAsync(int lagerbewegungID, int personID)
         {
-            var lagerbewegung = await _context.Lagerbewegung
-                .Include(l => l.Bewegungsart)
-                .Include(l => l.VonRaum)
-                .Include(l => l.NachRaum)
-                .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+            var lagerbewegung = await LagerbewegungLadenAsync(lagerbewegungID);
             var fehler = NichtOffenFehler(lagerbewegung);
             if (fehler != null)
             {
@@ -404,6 +421,21 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
         }
 
         /// <summary>
+        /// Methode, die eine Lagerbewegung mit allem lädt, was zum Bestätigen, Ablehnen oder Zurückziehen nötig ist:
+        /// die Bewegungsart (für NichtOffenFehler) sowie Von- und Nach-Raum (für FreigabeRaum und AnfrageRaum).
+        /// </summary>
+        /// <param name="lagerbewegungID">Die ID der Lagerbewegung</param>
+        /// <returns>Die Lagerbewegung oder null, wenn es sie nicht gibt</returns>
+        private async Task<Lagerbewegung?> LagerbewegungLadenAsync(int lagerbewegungID)
+        {
+            return await _context.Lagerbewegung
+                .Include(l => l.Bewegungsart)
+                .Include(l => l.VonRaum)
+                .Include(l => l.NachRaum)
+                .FirstOrDefaultAsync(l => l.ID == lagerbewegungID);
+        }
+
+        /// <summary>
         /// Methode, die überprüft, ob es eine Lagerbewegung gibt und ob sie noch offen ist. Eine abgeschlossene Lagerbewegung
         /// darf nicht noch einmal abgeschlossen werden, sonst würde dieselbe Menge ein zweites Mal zugebucht.
         /// Die Bewegungsart muss dafür geladen sein.
@@ -417,13 +449,17 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                 return "Diese Lagerbewegung gibt es nicht.";
             }
 
-            if (lagerbewegung.BestaetigtAm != null)
+            if (lagerbewegung.BestaetigtAm == null)
             {
-                var wie = lagerbewegung.Storniert ? "storniert" : "bestätigt";
-                return $"Diese Lagerbewegung wurde bereits am {lagerbewegung.BestaetigtAm.Value:dd.MM.yyyy HH:mm} {wie}.";
+                return null;
             }
 
-            return null;
+            var zeitpunkt = lagerbewegung.BestaetigtAm.Value.ToString("dd.MM.yyyy HH:mm");
+            if (lagerbewegung.Storniert)
+            {
+                return $"Diese Lagerbewegung wurde bereits am {zeitpunkt} storniert.";
+            }
+            return $"Diese Lagerbewegung wurde bereits am {zeitpunkt} bestätigt.";
         }
 
         /// <summary>
@@ -519,10 +555,13 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
             {
                 await using var transaktion = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-                // Liefert die Buchung eine Fehlermeldung, wird die Transaktion ohne Speichern beendet
+                // Liefert die Buchung eine Fehlermeldung, wird die Transaktion ohne Speichern beendet. Was sie bis dahin geändert hat
+                // (z. B. bei einer Ausleihe die schon abgebuchten Positionen), wird verworfen, sonst zeigt das Formular danach
+                // den verringerten Bestand an
                 var fehler = await buchung();
                 if (fehler != null)
                 {
+                    _context.ChangeTracker.Clear();
                     return fehler;
                 }
 

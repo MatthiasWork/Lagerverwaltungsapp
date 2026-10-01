@@ -5,10 +5,10 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Der Raum, für den die angemeldete Person verantwortlich ist
         public Raum? Raum { get; set; }
 
-        // Offene Lagerbewegungen in den Raum, die die Person bestätigen muss
+        // Offene Lagerbewegungen, die die Person freigeben muss (Transfers in den Raum, aus ihm geholte Geräte)
         public List<Lagerbewegung> Offen { get; set; } = new List<Lagerbewegung>();
 
-        // Die zuletzt bestätigten Lagerbewegungen in den Raum
+        // Die zuletzt erledigten (bestätigten oder stornierten) Lagerbewegungen, die die Person freigeben musste
         public List<Lagerbewegung> Erledigt { get; set; } = new List<Lagerbewegung>();
     }
 }

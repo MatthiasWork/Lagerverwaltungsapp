@@ -1,8 +1,9 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Kategorien verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]
@@ -243,7 +244,15 @@ public class KategorieController : Controller
         var anzahlGegenstaende = await _context.Gegenstand.CountAsync(g => g.KategorieID == kategorie.ID);
         if (anzahlGegenstaende > 0)
         {
-            var gegenstaende = anzahlGegenstaende == 1 ? "ist noch 1 Gegenstand" : $"sind noch {anzahlGegenstaende} Gegenstände";
+            string gegenstaende;
+            if (anzahlGegenstaende == 1)
+            {
+                gegenstaende = "ist noch 1 Gegenstand";
+            }
+            else
+            {
+                gegenstaende = $"sind noch {anzahlGegenstaende} Gegenstände";
+            }
             return $"Der Kategorie \"{kategorie.Name}\" {gegenstaende} zugeordnet. "
                 + "Diese müssen zuerst einer anderen Kategorie zugeordnet oder gelöscht werden.";
         }

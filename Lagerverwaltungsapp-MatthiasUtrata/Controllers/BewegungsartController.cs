@@ -1,8 +1,9 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Bewegungsarten verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]
@@ -16,7 +17,7 @@ public class BewegungsartController : Controller
     }
 
     // GET: Bewegungsart
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index()    
     {
         return View(await _context.Bewegungsart.ToListAsync());
     }
@@ -97,12 +98,16 @@ public class BewegungsartController : Controller
             return NotFound();
         }
 
-        if (bisherigerName == Bewegungsart.Storniert && bewegungsart.Name != Bewegungsart.Storniert)
+        if (bisherigerName == Bewegungsart.Storniert)
         {
-            ModelState.AddModelError(nameof(Bewegungsart.Name),
-                $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht umbenannt werden.");
+            // Der LagerService sucht sie über den Namen, umbenannt gäbe es sie beim nächsten Start doppelt
+            if (bewegungsart.Name != Bewegungsart.Storniert)
+            {
+                ModelState.AddModelError(nameof(Bewegungsart.Name),
+                    $"Die Bewegungsart \"{Bewegungsart.Storniert}\" bekommen abgelehnte und zurückgezogene Transfers, daher kann sie nicht umbenannt werden.");
+            }
         }
-        else if (bisherigerName != Bewegungsart.Storniert)
+        else
         {
             StorniertNichtNeuVergeben(bewegungsart);
         }

@@ -53,15 +53,25 @@
     else
     {
         var vonRaum = Model!.VonRaum;
-        var verantwortlich = vonRaum.Person == null ? "–" : $"{vonRaum.Person.Vorname} {vonRaum.Person.Nachname}";
+        var verantwortlich = vonRaum.Person?.VollerName ?? "–";
         var rolle = User.FindFirstValue(ClaimTypes.Role);
 
         // Nach einem Fehler die bisherige Auswahl wieder anzeigen; das Skript unten hält die Werte danach aktuell
         var zielraum = Model.Raeume.FirstOrDefault(r => r.ID == Model.NachRaumID);
         var anzahlGewaehlt = Model.Mengen.Count(m => m.Value > 0);
+        string ziel;
+        if (zielraum != null)
+        {
+            ziel = $"{zielraum.ID} · {zielraum.Raumart.Name}";
+        }
+        else
+        {
+            ziel = "–";
+        }
 
         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
+        @* Ohne _ValidationScriptsPartial: Zielraum, Bewegungsart und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
         <form asp-action="Index" method="post" id="ausleiheFormular">
             <div class="ausleihe-raster">
                 <div class="ausleihe-auswahl">
@@ -93,11 +103,18 @@
                     <div class="geraete-liste">
                         <h4>Geräte · <span data-ausleihe="anzahl">@anzahlGewaehlt</span></h4>
 
+                        @* Alle Geräte des eigenen Raums sind da, aber nur die ausgewählten sichtbar; nicht ausgewählte Felder
+                           sind deaktiviert und werden daher nicht mitgeschickt. Hinzufügen über die Suche darunter *@
                         @foreach (var bestand in Model.Bestand)
                         {
                             var gegenstand = bestand.Gegenstand;
                             Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
                             var gewaehlt = menge > 0;
+                            if (!gewaehlt)
+                            {
+                                // Vorschlag, falls das Gerät über die Suche hinzugefügt wird
+                                menge = 1;
+                            }
                             <div class="geraet-zeile" hidden="@(!gewaehlt)"
                                  data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
                                  data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Raum")">
@@ -106,6 +123,7 @@
                                     <div class="fw-medium">@gegenstand.Name</div>
                                     <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name) · @vonRaum.ID</div>
                                 </div>
+                                @* Ein Gerät mit Seriennummer wird immer einzeln gebucht (Menge 1), sonst die Menge eingeben *@
                                 @if (gegenstand.Seriennummer != null)
                                 {
                                     <span class="tag tag-accent d-none d-lg-inline-flex">Verfügbar</span>
@@ -114,7 +132,7 @@
                                 else
                                 {
                                     <span class="menge-auswahl">
-                                        <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@(gewaehlt ? menge : 1)"
+                                        <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@menge"
                                                min="1" max="@bestand.Menge" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
                                         <span>von @bestand.Menge</span>
                                     </span>
@@ -123,7 +141,14 @@
                             </div>
                         }
                         <p class="geraete-leer" hidden="@(anzahlGewaehlt > 0)">
-                            @(Model.Bestand.Any() ? "Noch keine Geräte ausgewählt." : $"Im Raum {vonRaum.ID} liegt derzeit nichts, das ausgeliehen werden kann.")
+                            @if (Model.Bestand.Any())
+                            {
+                                <text>Noch keine Geräte ausgewählt.</text>
+                            }
+                            else
+                            {
+                                <text>Im Raum @vonRaum.ID liegt derzeit nichts, das ausgeliehen werden kann.</text>
+                            }
                         </p>
 
                         @if (Model.Bestand.Any())
@@ -137,6 +162,8 @@
                         }
                     </div>
 
+                    @* Zeitraum und Zweck wie im Design. Gespeichert werden sie wie beim Transfer nicht: Datum und Zweck haben keinen name,
+                       und der Controller übernimmt nur Zielraum, Bewegungsart und Mengen *@
                     <div class="zeitraum">
                         <h4>Zeitraum</h4>
                         <div class="seg" role="radiogroup" aria-label="Zeitraum">
@@ -173,7 +200,7 @@
                     </div>
                     <div class="angabe">
                         <span class="angabe-label">An</span>
-                        <span class="fw-medium" data-ausleihe="ziel">@(zielraum == null ? "–" : $"{zielraum.ID} · {zielraum.Raumart.Name}")</span>
+                        <span class="fw-medium" data-ausleihe="ziel">@ziel</span>
                     </div>
                     <div class="angabe">
                         <span class="angabe-label">Zeitraum</span>
@@ -228,15 +255,24 @@
             function freigabeZeigen(anzahl) {
                 var raum = raumAuswahl.selectedOptions[0];
                 var gewaehlt = raum && raum.value !== '';
-                feld('ziel').textContent = gewaehlt ? raum.value + ' · ' + raum.dataset.raumart : '–';
                 feld('freigeber').hidden = !gewaehlt;
                 feld('keine-freigabe').hidden = gewaehlt;
-                if (gewaehlt) {
-                    feld('initialen').textContent = raum.dataset.initialen;
-                    feld('person').textContent = raum.dataset.person;
-                    feld('freigabe-info').textContent = 'Raum ' + raum.value + ' · ' + anzahl + (anzahl === 1 ? ' Gerät' : ' Geräte');
+                if (!gewaehlt) {
+                    feld('ziel').textContent = '–';
+                    return false;
                 }
-                return gewaehlt;
+
+                feld('ziel').textContent = raum.value + ' · ' + raum.dataset.raumart;
+                feld('initialen').textContent = raum.dataset.initialen;
+                feld('person').textContent = raum.dataset.person;
+                var geraete;
+                if (anzahl === 1) {
+                    geraete = '1 Gerät';
+                } else {
+                    geraete = anzahl + ' Geräte';
+                }
+                feld('freigabe-info').textContent = 'Raum ' + raum.value + ' · ' + geraete;
+                return true;
             }
 
             // Zeitraum in der Zusammenfassung; liefert, ob er gültig ist
@@ -253,10 +289,21 @@
                     ausgabe.textContent = 'Rückgabe liegt vor der Abholung';
                     return false;
                 }
+                // "05.10." bzw. mit Jahr "09.10.2026"
                 var format = function (datum, mitJahr) {
-                    return String(datum.getDate()).padStart(2, '0') + '.' + String(datum.getMonth() + 1).padStart(2, '0') + '.' + (mitJahr ? datum.getFullYear() : '');
+                    var text = String(datum.getDate()).padStart(2, '0') + '.' + String(datum.getMonth() + 1).padStart(2, '0') + '.';
+                    if (mitJahr) {
+                        text += datum.getFullYear();
+                    }
+                    return text;
                 };
-                ausgabe.textContent = format(von, false) + ' – ' + format(bis, true) + ' · ' + tage + (tage === 1 ? ' Tag' : ' Tage');
+                var dauer;
+                if (tage === 1) {
+                    dauer = '1 Tag';
+                } else {
+                    dauer = tage + ' Tage';
+                }
+                ausgabe.textContent = format(von, false) + ' – ' + format(bis, true) + ' · ' + dauer;
                 return true;
             }
 
@@ -264,9 +311,13 @@
             function schritteZeigen(erledigt) {
                 var schritte = document.querySelectorAll('[data-schritt]');
                 var aktuell = erledigt.indexOf(false);
+                if (aktuell === -1) {
+                    // Alles erledigt: der letzte Schritt bleibt aktuell
+                    aktuell = schritte.length - 1;
+                }
                 schritte.forEach(function (schritt, i) {
                     var fertig = erledigt[i] === true;
-                    var istAktuell = i === (aktuell === -1 ? schritte.length - 1 : aktuell);
+                    var istAktuell = i === aktuell;
                     schritt.classList.toggle('erledigt', fertig);
                     schritt.classList.toggle('aktuell', istAktuell);
                     schritt.querySelector('[data-marke="nummer"]').hidden = fertig;
@@ -384,8 +435,14 @@
                 heute.setHours(0, 0, 0, 0);
                 var bis = new Date(heute);
                 if (wahl === 'woche') {
-                    // Bis Freitag dieser Woche, am Wochenende bis Freitag der nächsten Woche
-                    bis.setDate(heute.getDate() + (heute.getDay() === 6 ? 6 : (5 - heute.getDay() + 7) % 7));
+                    // Bis Freitag dieser Woche, am Wochenende bis Freitag der nächsten (getDay: 0 = Sonntag, 6 = Samstag)
+                    var tageBisFreitag;
+                    if (heute.getDay() === 6) {
+                        tageBisFreitag = 6;
+                    } else {
+                        tageBisFreitag = (5 - heute.getDay() + 7) % 7;
+                    }
+                    bis.setDate(heute.getDate() + tageBisFreitag);
                 } else if (wahl === 'zweiWochen') {
                     bis.setDate(heute.getDate() + 13);
                 }

@@ -11,7 +11,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Extensions
         /// <returns>Die ID der Person oder null, wenn niemand angemeldet ist</returns>
         public static int? GetPersonID(this ClaimsPrincipal user)
         {
-            return int.TryParse(user.FindFirstValue(ClaimTypes.Sid), out var id) ? id : null;
+            if (int.TryParse(user.FindFirstValue(ClaimTypes.Sid), out var id))
+            {
+                return id;
+            }
+            return null;
         }
     }
 }

@@ -25,7 +25,11 @@
         {
             return $"vor {(int)vergangen.TotalHours} Std.";
         }
-        return zeitpunkt.Date == DateTime.Today.AddDays(-1) ? "gestern" : Datum(zeitpunkt);
+        if (zeitpunkt.Date == DateTime.Today.AddDays(-1))
+        {
+            return "gestern";
+        }
+        return Datum(zeitpunkt);
     }
 
     // Erledigt: "heute 07:48", "gestern 16:10", sonst das Datum
@@ -35,10 +39,32 @@
         {
             return $"heute {zeitpunkt:HH:mm}";
         }
-        return zeitpunkt.Date == DateTime.Today.AddDays(-1) ? $"gestern {zeitpunkt:HH:mm}" : Datum(zeitpunkt);
+        if (zeitpunkt.Date == DateTime.Today.AddDays(-1))
+        {
+            return $"gestern {zeitpunkt:HH:mm}";
+        }
+        return Datum(zeitpunkt);
     }
 
-    string Menge(Lagerbewegung bewegung) => bewegung.Menge > 1 ? $" × {bewegung.Menge}" : "";
+    // Menge hinter dem Namen, z. B. "Tablet × 5"; bei einem Stück nichts
+    string Menge(Lagerbewegung bewegung)
+    {
+        if (bewegung.Menge > 1)
+        {
+            return $" × {bewegung.Menge}";
+        }
+        return "";
+    }
+
+    // Unter dem Namen: Menge bzw. Seriennummer
+    string Angabe(Lagerbewegung bewegung)
+    {
+        if (bewegung.Gegenstand.Seriennummer == null)
+        {
+            return $"{bewegung.Menge} Stück, ohne Seriennummer";
+        }
+        return $"Seriennummer {bewegung.Gegenstand.Seriennummer}";
+    }
 }
 
 <div class="seite freigaben">
@@ -76,7 +102,8 @@
     }
     else
     {
-        @* Jede Anfrage ist eine Lagerbewegung in den eigenen Raum; "Freigeben" bestätigt die Übernahme und bucht sie dort ein *@
+        @* Jede Anfrage ist eine Lagerbewegung: ein Transfer in den eigenen Raum oder Geräte, die jemand aus dem eigenen Lager holt.
+           "Freigeben" bestätigt sie und bucht die Geräte im Nach-Raum ein *@
         <div class="freigaben-raster">
             @foreach (var bewegung in Model.Offen)
             {
@@ -91,7 +118,7 @@
                         <span>@bewegung.VonRaumID · @bewegung.VonRaum.Raumart.Name → @bewegung.NachRaumID · @bewegung.NachRaum.Raumart.Name</span>
                     </div>
                     <div class="freigabe-info d-none d-lg-block">
-                        @bewegung.Bewegungsart.Name · @(bewegung.Gegenstand.Seriennummer == null ? $"{bewegung.Menge} Stück, ohne Seriennummer" : $"Seriennummer {bewegung.Gegenstand.Seriennummer}")
+                        @bewegung.Bewegungsart.Name · @Angabe(bewegung)
                     </div>
                     <div class="karte-fuss d-none d-lg-flex">
                         <span class="avatar avatar-sm" aria-hidden="true">@bewegung.Person.Initialen</span>
@@ -101,9 +128,9 @@
                         <input type="hidden" name="ids" value="@bewegung.ID" />
                         <button type="submit" class="btn btn-primary btn-cta w-100"><i data-lucide="check"></i>Freigeben</button>
                     </form>
-                    @* Nicht im Design: Wer den Transfer nicht übernehmen will, lehnt ihn ab und die Menge geht zurück in den Von-Raum *@
+                    @* Nicht im Design: Wer die Anfrage nicht freigeben will, lehnt sie ab und die Menge geht zurück in den Von-Raum *@
                     <form asp-action="Ablehnen" asp-route-id="@bewegung.ID" method="post"
-                          data-bestaetigen="Transfer ablehnen? @bewegung.Gegenstand.Name@Menge(bewegung) geht zurück in Raum @bewegung.VonRaumID.">
+                          data-bestaetigen="Anfrage ablehnen? @bewegung.Gegenstand.Name@Menge(bewegung) geht zurück in Raum @bewegung.VonRaumID.">
                         <button type="submit" class="btn btn-outline-secondary w-100"><i data-lucide="x"></i>Ablehnen</button>
                     </form>
                 </div>
@@ -120,9 +147,16 @@
                 @foreach (var bewegung in Model.Erledigt)
                 {
                     // Übernommen oder storniert (abgelehnt oder vom Von-Raum zurückgezogen)
+                    var text = $"{bewegung.Gegenstand.Name}{Menge(bewegung)} · Transfer {bewegung.VonRaumID} → {bewegung.NachRaumID}";
+                    var icon = "check";
+                    if (bewegung.Storniert)
+                    {
+                        text += " · storniert";
+                        icon = "x";
+                    }
                     <li>
-                        <i data-lucide="@(bewegung.Storniert ? "x" : "check")"></i>
-                        <span class="flex-grow-1">@bewegung.Gegenstand.Name@Menge(bewegung) · Transfer @bewegung.VonRaumID → @bewegung.NachRaumID@(bewegung.Storniert ? " · storniert" : "")</span>
+                        <i data-lucide="@icon"></i>
+                        <span class="flex-grow-1">@text</span>
                         <span class="erledigt-zeit">@Erledigt(bewegung.BestaetigtAm!.Value)</span>
                     </li>
                 }

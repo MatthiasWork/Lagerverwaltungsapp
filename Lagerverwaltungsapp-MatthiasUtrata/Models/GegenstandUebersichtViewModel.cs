@@ -40,6 +40,29 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Räume, in denen der Gegenstand liegt; der gefilterte Raum bzw. der mit der größten Menge zuerst
         public List<Raumbestand> Standorte { get; set; } = new List<Raumbestand>();
 
+        // Der erste Raum aus Standorte oder null, wenn der Gegenstand in keinem Raum liegt
+        public Raum? ErsterRaum => Standorte.FirstOrDefault()?.Raum;
+
+        // Standort für die Anzeige: der erste Raum mit Raumart, bei mehreren Räumen mit der Zahl der übrigen,
+        // z. B. "309 · Klassenraum +2". Null, wenn der Gegenstand in keinem Raum liegt
+        public string? Standort
+        {
+            get
+            {
+                if (ErsterRaum == null)
+                {
+                    return null;
+                }
+
+                var text = $"{ErsterRaum.ID} · {ErsterRaum.Raumart.Name}";
+                if (Standorte.Count > 1)
+                {
+                    text += $" +{Standorte.Count - 1}";
+                }
+                return text;
+            }
+        }
+
         // Stück in allen Räumen zusammen
         public int Stueck { get; set; }
 

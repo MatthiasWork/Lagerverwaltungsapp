@@ -16,10 +16,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Summe aller Mengen im Raum (für die Kennzahl oben)
         public int StueckGesamt { get; set; }
 
-        // Ausgeborgte Gegenstände, die schon abgebucht sind, deren Übernahme der Zielraum aber noch nicht bestätigt hat
+        // Für den Raum angefragte Lagerbewegungen (Transfers aus dem Raum, aus einem Lager geholte Geräte), die schon
+        // abgebucht, aber noch nicht freigegeben sind. Die Person kann sie zurückziehen
         public List<Lagerbewegung> Unterwegs { get; set; } = new List<Lagerbewegung>();
 
-        // Offene Bewegungen in den eigenen Raum, die die Person bestätigen muss
+        // Offene Bewegungen, die die Person freigeben muss: Transfers in den eigenen Raum und aus ihm geholte Geräte
         public int OffeneUebernahmen { get; set; }
 
         // Aktuelle Filterwerte, damit sie im Formular erhalten bleiben

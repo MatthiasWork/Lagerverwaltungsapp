@@ -1,8 +1,9 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Raumarten verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]

@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
@@ -65,11 +65,31 @@ public partial class Lagerbewegung
     /// Der Raum, dessen verantwortliche Person freigibt: der Von-Raum, wenn der Nach-Raum angefragt hat, sonst der Nach-Raum.
     /// Dafür müssen Von-Raum und Nach-Raum geladen sein.
     /// </summary>
-    public Raum FreigabeRaum => VomNachRaumAngefragt ? VonRaum : NachRaum;
+    public Raum FreigabeRaum
+    {
+        get
+        {
+            if (VomNachRaumAngefragt)
+            {
+                return VonRaum;
+            }
+            return NachRaum;
+        }
+    }
 
     /// <summary>
     /// Der Raum, für den angefragt wurde und dessen verantwortliche Person zurückziehen darf (das Gegenstück zu FreigabeRaum).
     /// Dafür müssen Von-Raum und Nach-Raum geladen sein.
     /// </summary>
-    public Raum AnfrageRaum => VomNachRaumAngefragt ? NachRaum : VonRaum;
+    public Raum AnfrageRaum
+    {
+        get
+        {
+            if (VomNachRaumAngefragt)
+            {
+                return NachRaum;
+            }
+            return VonRaum;
+        }
+    }
 }

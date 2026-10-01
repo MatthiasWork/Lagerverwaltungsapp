@@ -2,27 +2,86 @@
 
 @{
     var person = Model.Person;
-    ViewData["Title"] = Model.IstEigenesProfil ? "Mein Profil" : $"{person.Vorname} {person.Nachname}";
-
     var istAdmin = User.IsInRole("Admin");
+
+    // Offene Transfers, die die Person angelegt hat, je Von- und Nach-Raum zusammengefasst (z. B. "HL → 310")
+    var anfragen = Model.OffeneTransfers.GroupBy(l => $"{l.VonRaumID} → {l.NachRaumID}").ToList();
+    string anfragenTitel;
+    if (Model.IstEigenesProfil)
+    {
+        ViewData["Title"] = "Mein Profil";
+        anfragenTitel = "Meine Anfragen";
+    }
+    else
+    {
+        ViewData["Title"] = person.VollerName;
+        anfragenTitel = "Anfragen";
+    }
+
+    // Räume, für die die Person verantwortlich ist, z. B. "HL · Hauptlager", und was das für sie bedeutet
     var raeume = person.Raum.OrderBy(r => r.ID).ToList();
-    var raumText = raeume.Count == 0 ? null : string.Join(", ", raeume.Select(r => $"{r.ID} · {r.Raumart.Name}"));
+    string? raumText = null;
+    string raumInfo;
+    string rolleMitRaeumen = person.Rolle.Name;
+    if (raeume.Count == 0)
+    {
+        raumInfo = "Nicht für einen Raum verantwortlich";
+    }
+    else
+    {
+        raumText = string.Join(", ", raeume.Select(r => $"{r.ID} · {r.Raumart.Name}"));
+        rolleMitRaeumen += $" · verantwortlich für {string.Join(", ", raeume.Select(r => r.ID))}";
+
+        string welche;
+        if (raeume.Count == 1)
+        {
+            welche = "diesen Raum";
+        }
+        else
+        {
+            welche = "diese Räume";
+        }
+        raumInfo = $"{Model.StueckJeRaum.Values.Sum()} Geräte · gibt Anfragen für {welche} frei";
+    }
 
     // Verlauf: "Heute", "Gestern", sonst das Datum
-    string Datum(DateTime zeitpunkt) => zeitpunkt.Date == DateTime.Today ? "Heute"
-        : zeitpunkt.Date == DateTime.Today.AddDays(-1) ? "Gestern"
-        : zeitpunkt.ToString("dd.MM.");
+    string Datum(DateTime zeitpunkt)
+    {
+        if (zeitpunkt.Date == DateTime.Today)
+        {
+            return "Heute";
+        }
+        if (zeitpunkt.Date == DateTime.Today.AddDays(-1))
+        {
+            return "Gestern";
+        }
+        return zeitpunkt.ToString("dd.MM.");
+    }
 
     // "L. Brandt" für den Tag "wartet auf ..."
-    string Kurzname(Person? p) => p == null ? "–" : $"{(p.Vorname.Length > 0 ? p.Vorname[..1] + ". " : "")}{p.Nachname}";
-
-    // Offene Transfers, die die Person angelegt hat, je Zielraum zusammengefasst
-    var anfragen = Model.OffeneTransfers.GroupBy(l => l.NachRaumID).ToList();
-    var anfragenTitel = Model.IstEigenesProfil ? "Meine Anfragen" : "Anfragen";
+    string Kurzname(Person? p)
+    {
+        if (p == null)
+        {
+            return "–";
+        }
+        if (p.Vorname.Length == 0)
+        {
+            return p.Nachname;
+        }
+        return $"{p.Vorname[..1]}. {p.Nachname}";
+    }
 
     // Beschreibung einer Anfrage: erster Gegenstand und wie viele Positionen noch dazugehören
-    string AnfrageText(IGrouping<string, Lagerbewegung> anfrage) =>
-        anfrage.First().Gegenstand.Name + (anfrage.Count() > 1 ? $" + {anfrage.Count() - 1} Pos." : "");
+    string AnfrageText(IGrouping<string, Lagerbewegung> anfrage)
+    {
+        var text = anfrage.First().Gegenstand.Name;
+        if (anfrage.Count() > 1)
+        {
+            text += $" + {anfrage.Count() - 1} Pos.";
+        }
+        return text;
+    }
 }
 
 @* Desktop *@
@@ -51,8 +110,8 @@
             @foreach (var anfrage in anfragen)
             {
                 <div class="anfrage-zeile">
-                    <span><b class="fw-medium">Transfer nach @anfrage.Key</b><br /><span class="nebeninfo">@AnfrageText(anfrage)</span></span>
-                    <span class="tag tag-accent">wartet auf @Kurzname(anfrage.First().NachRaum.Person)</span>
+                    <span><b class="fw-medium">Transfer @anfrage.Key</b><br /><span class="nebeninfo">@AnfrageText(anfrage)</span></span>
+                    <span class="tag tag-accent">wartet auf @Kurzname(anfrage.First().FreigabeRaum.Person)</span>
                 </div>
             }
             @if (anfragen.Count == 0)
@@ -64,11 +123,7 @@
         <div class="blueprint profil-karte">
             <span class="card-kicker">Raumverantwortung</span>
             <div class="raum-titel">@(raumText ?? "Kein Raum")</div>
-            <div class="profil-info">
-                @(raeume.Count == 0
-                    ? "Nicht für einen Raum verantwortlich"
-                    : $"{Model.StueckJeRaum.Values.Sum()} Geräte · gibt eingehende Transfers für {(raeume.Count == 1 ? "diesen Raum" : "diese Räume")} frei")
-            </div>
+            <div class="profil-info">@raumInfo</div>
         </div>
 
         @* Beispiel aus dem Design: Benachrichtigungen gibt es noch nicht *@
@@ -102,7 +157,7 @@
         <span class="avatar" aria-hidden="true">@person.Initialen</span>
         <div>
             <h1>@person.Vorname @person.Nachname</h1>
-            <div class="profil-rolle">@person.Rolle.Name@(raeume.Count > 0 ? $" · verantwortlich für {string.Join(", ", raeume.Select(r => r.ID))}" : "")</div>
+            <div class="profil-rolle">@rolleMitRaeumen</div>
         </div>
     </div>
 
@@ -113,10 +168,10 @@
         {
             <div class="profil-zeile">
                 <span>
-                    <b class="fw-medium">Transfer nach @anfrage.Key</b><br />
+                    <b class="fw-medium">Transfer @anfrage.Key</b><br />
                     <span class="nebeninfo">@AnfrageText(anfrage)</span>
                 </span>
-                <span class="tag tag-outline">wartet auf @Kurzname(anfrage.First().NachRaum.Person)</span>
+                <span class="tag tag-outline">wartet auf @Kurzname(anfrage.First().FreigabeRaum.Person)</span>
             </div>
         }
         @if (anfragen.Count == 0)

@@ -34,7 +34,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         // GET: MeinRaum
         public async Task<IActionResult> Index(string? suche, int? kategorieID)
         {
-            var raumID = await EigenerRaumAsync();
+            var raumID = await _lagerService.RaumDerPersonAsync(User.GetPersonID());
             if (raumID == null)
             {
                 return Forbid();
@@ -128,7 +128,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         // GET: MeinRaum/Wareneingang
         public async Task<IActionResult> Wareneingang(int? gegenstandID)
         {
-            var raumID = await EigenerRaumAsync();
+            var raumID = await _lagerService.RaumDerPersonAsync(User.GetPersonID());
             if (raumID == null)
             {
                 return Forbid();
@@ -158,7 +158,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         public async Task<IActionResult> Wareneingang([Bind("GegenstandID,Menge,BewegungsartID")] WareneingangViewModel wareneingang)
         {
             var personID = User.GetPersonID();
-            var raumID = await EigenerRaumAsync();
+            var raumID = await _lagerService.RaumDerPersonAsync(personID);
             if (personID == null || raumID == null)
             {
                 return Forbid();
@@ -171,8 +171,18 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 if (fehler == null)
                 {
                     var gegenstand = await _context.Gegenstand.FirstAsync(g => g.ID == wareneingang.GegenstandID);
-                    var was = gegenstand.Seriennummer != null ? $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer})" : $"{wareneingang.Menge} Stück \"{gegenstand.Name}\"";
-                    TempData["Meldung"] = $"{was} {(wareneingang.Menge == 1 ? "wurde" : "wurden")} in Raum {raumID} eingebucht.";
+                    if (gegenstand.Seriennummer != null)
+                    {
+                        TempData["Meldung"] = $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) wurde in Raum {raumID} eingebucht.";
+                    }
+                    else if (wareneingang.Menge == 1)
+                    {
+                        TempData["Meldung"] = $"1 Stück \"{gegenstand.Name}\" wurde in Raum {raumID} eingebucht.";
+                    }
+                    else
+                    {
+                        TempData["Meldung"] = $"{wareneingang.Menge} Stück \"{gegenstand.Name}\" wurden in Raum {raumID} eingebucht.";
+                    }
                     return RedirectToAction(nameof(Index));
                 }
                 ModelState.AddModelError(string.Empty, fehler);
@@ -180,16 +190,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             await AnzeigeSetzenAsync(wareneingang, raumID);
             return View(wareneingang);
-        }
-
-        /// <summary>
-        /// Methode, die den Raum ermittelt, für den die angemeldete Person gerade verantwortlich ist.
-        /// </summary>
-        /// <returns>Die ID des Raums oder null, wenn die Person für keinen Raum verantwortlich ist</returns>
-        private async Task<string?> EigenerRaumAsync()
-        {
-            var personID = User.GetPersonID();
-            return personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value);
         }
 
         /// <summary>
@@ -210,22 +210,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(g => g.Name).ThenBy(g => g.Seriennummer)
                 .ToListAsync();
 
-            wareneingang.Bewegungsarten = await WaehlbareBewegungsartenAsync(wareneingang.BewegungsartID);
-        }
-
-        /// <summary>
-        /// Methode, die die Bewegungsarten für die Auswahl im Formular für einen Wareneingang liefert. "Storniert" fehlt,
-        /// da sie nur der LagerService beim Ablehnen oder Zurückziehen vergibt.
-        /// </summary>
-        /// <param name="bewegungsartID">Die ID der Bewegungsart, die vorausgewählt werden soll</param>
-        /// <returns>Die Auswahlliste der Bewegungsarten</returns>
-        private async Task<SelectList> WaehlbareBewegungsartenAsync(int? bewegungsartID)
-        {
-            var bewegungsarten = await _context.Bewegungsart
-                .Where(b => b.Name != Bewegungsart.Storniert)
-                .OrderBy(b => b.Name)
-                .ToListAsync();
-            return new SelectList(bewegungsarten, "ID", "Name", bewegungsartID);
+            wareneingang.Bewegungsarten = new SelectList(await _lagerService.WaehlbareBewegungsartenAsync(), "ID", "Name", wareneingang.BewegungsartID);
         }
     }
 }

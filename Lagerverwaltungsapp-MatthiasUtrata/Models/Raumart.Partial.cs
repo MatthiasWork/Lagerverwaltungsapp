@@ -1,4 +1,4 @@
-﻿namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
+namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
 // Ergänzung zur generierten Klasse Raumart, damit sie beim erneuten Generieren nicht überschrieben wird
 public partial class Raumart

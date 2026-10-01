@@ -1,4 +1,3 @@
-
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +5,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Räume verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]
@@ -271,7 +272,7 @@ public class RaumController : Controller
 
     /// <summary>
     /// Methode, die die Auswahllisten für Raumart und verantwortliche Person für das Formular setzt.
-    /// Es sind nur Personen verfügbar, die noch für keinen anderen Raum verantwortlich sind.
+    /// Angeboten werden nur Personen, die noch für keinen anderen Raum verantwortlich sind.
     /// </summary>
     /// <param name="raum">Der Raum, dessen Werte vorausgewählt werden sollen, oder null bei einem neuen Raum</param>
     /// <returns>Gibt eine Task zurück</returns>

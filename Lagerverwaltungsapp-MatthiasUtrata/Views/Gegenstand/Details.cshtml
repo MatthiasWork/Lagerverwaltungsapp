@@ -15,30 +15,58 @@
     var kennung = gegenstand.Seriennummer ?? $"ID {gegenstand.ID}";
 
     // Standort: der Raum mit der größten Menge, bei mehreren Räumen mit der Zahl der übrigen
-    var ersterRaum = Model.Eintrag.Standorte.FirstOrDefault()?.Raum;
-    var standort = ersterRaum == null ? "–"
-        : $"{ersterRaum.ID} · {ersterRaum.Raumart.Name}" + (Model.Eintrag.Standorte.Count > 1 ? $" +{Model.Eintrag.Standorte.Count - 1}" : "");
-    var verantwortlich = ersterRaum?.Person == null ? "–" : $"{ersterRaum.Person.Vorname} {ersterRaum.Person.Nachname}";
+    var standort = Model.Eintrag.Standort;
+    string standortZeile;
+    if (standort == null)
+    {
+        standortZeile = "kein Standort";
+    }
+    else
+    {
+        standortZeile = $"Standort {standort}";
+    }
+    var verantwortlich = Model.Eintrag.ErsterRaum?.Person?.VollerName ?? "–";
+
+    var bestandText = $"{Model.Eintrag.Stueck} Stück";
     var unterwegsStueck = Model.Unterwegs.Sum(l => l.Menge);
+    if (unterwegsStueck > 0)
+    {
+        bestandText += $" · {unterwegsStueck} unterwegs";
+    }
 
     var angaben = new (string Label, string Wert)[]
     {
         ("Seriennummer", gegenstand.Seriennummer ?? "–"),
         ("Kategorie", gegenstand.Kategorie.Name),
         ("Hersteller", gegenstand.Hersteller.Name),
-        ("Standort", standort),
+        ("Standort", standort ?? "–"),
         ("Raumverantwortlich", verantwortlich),
-        ("Bestand", $"{Model.Eintrag.Stueck} Stück" + (unterwegsStueck > 0 ? $" · {unterwegsStueck} unterwegs" : ""))
+        ("Bestand", bestandText)
     };
 
     // Hinweis wie im Design, hier für die älteste Bewegung, die noch auf die Freigabe wartet (beim Holen aus einem Lager
     // durch die Person des Lagers, sonst durch die des Zielraums)
     var unterwegs = Model.Unterwegs.FirstOrDefault();
-    var wartetAuf = unterwegs?.FreigabeRaum.Person == null ? "–" : $"{unterwegs.FreigabeRaum.Person.Vorname} {unterwegs.FreigabeRaum.Person.Nachname}";
-    var unterwegsText = unterwegs != null && gegenstand.Seriennummer == null ? $"{unterwegs.Menge} Stück unterwegs" : "Unterwegs";
+    var wartetAuf = unterwegs?.FreigabeRaum.Person?.VollerName ?? "–";
+    string unterwegsText;
+    if (unterwegs != null && gegenstand.Seriennummer == null)
+    {
+        unterwegsText = $"{unterwegs.Menge} Stück unterwegs";
+    }
+    else
+    {
+        unterwegsText = "Unterwegs";
+    }
 
     // Datum im Verlauf: im laufenden Jahr ohne Jahreszahl
-    string Datum(DateTime zeitpunkt) => zeitpunkt.Year == DateTime.Now.Year ? zeitpunkt.ToString("dd.MM.") : zeitpunkt.ToString("dd.MM.yy");
+    string Datum(DateTime zeitpunkt)
+    {
+        if (zeitpunkt.Year == DateTime.Now.Year)
+        {
+            return zeitpunkt.ToString("dd.MM.");
+        }
+        return zeitpunkt.ToString("dd.MM.yy");
+    }
 }
 
 @* Desktop *@
@@ -68,7 +96,7 @@
             <div class="detail-titel">
                 <span class="tag @StatusTag.Klasse(Model.Eintrag.Status)">@Model.Eintrag.Status</span>
                 <h1>@gegenstand.Name</h1>
-                <span class="detail-unterzeile">@gegenstand.Kategorie.Name · @(ersterRaum == null ? "kein Standort" : $"Standort {standort}")</span>
+                <span class="detail-unterzeile">@gegenstand.Kategorie.Name · @standortZeile</span>
             </div>
 
             @if (unterwegs != null)

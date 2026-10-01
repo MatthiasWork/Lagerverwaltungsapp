@@ -48,10 +48,11 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.ViewComponents
 
             if (raumID != null)
             {
-                // Offene Bewegungen in den eigenen Raum, die die Person daher bestätigen muss
+                // Offene Bewegungen, die die Person freigeben muss: Transfers in den eigenen Raum und aus ihm geholte Geräte
                 menue.OffeneUebernahmen = await _context.Lagerbewegung
                     .Where(Lagerbewegung.IstOffen)
-                    .CountAsync(l => l.NachRaumID == raumID);
+                    .Where(Lagerbewegung.FreigabeFuer(raumID))
+                    .CountAsync();
             }
 
             return View(ansicht, menue);

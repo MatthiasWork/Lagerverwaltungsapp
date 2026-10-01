@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -6,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Extensions;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
 using Lagerverwaltungsapp_MatthiasUtrata.Services;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 public class GegenstandController : Controller
 {
@@ -108,17 +109,34 @@ public class GegenstandController : Controller
         };
         eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
 
+        // Unterwegs ist, was schon abgebucht, aber weder im Zielraum übernommen noch storniert wurde
         var offen = gegenstand.Lagerbewegung.Where(l => l.Offen).ToList();
         var unterwegs = offen.Sum(l => l.Menge);
         if (unterwegs > 0)
         {
             var ziele = string.Join(", ", offen.Select(l => l.NachRaumID).Distinct());
-            eintrag.Hinweis = gegenstand.Seriennummer != null ? $"unterwegs nach {ziele}" : $"{unterwegs} Stück unterwegs nach {ziele}";
+            if (gegenstand.Seriennummer != null)
+            {
+                eintrag.Hinweis = $"unterwegs nach {ziele}";
+            }
+            else
+            {
+                eintrag.Hinweis = $"{unterwegs} Stück unterwegs nach {ziele}";
+            }
         }
 
-        eintrag.Status = eintrag.Stueck > 0 ? GegenstandUebersichtViewModel.Verfuegbar
-            : unterwegs > 0 ? GegenstandUebersichtViewModel.InTransfer
-            : GegenstandUebersichtViewModel.KeinBestand;
+        if (eintrag.Stueck > 0)
+        {
+            eintrag.Status = GegenstandUebersichtViewModel.Verfuegbar;
+        }
+        else if (unterwegs > 0)
+        {
+            eintrag.Status = GegenstandUebersichtViewModel.InTransfer;
+        }
+        else
+        {
+            eintrag.Status = GegenstandUebersichtViewModel.KeinBestand;
+        }
         return eintrag;
     }
 
@@ -142,6 +160,7 @@ public class GegenstandController : Controller
             .Include(g => g.Raumbestand).ThenInclude(r => r.Raum).ThenInclude(r => r.Raumart)
             .Include(g => g.Raumbestand).ThenInclude(r => r.Raum).ThenInclude(r => r.Person)
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.Bewegungsart)
+            .Include(g => g.Lagerbewegung).ThenInclude(l => l.VonRaum).ThenInclude(r => r.Person)
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.NachRaum).ThenInclude(r => r.Person)
             .Include(g => g.Lagerbewegung).ThenInclude(l => l.Person)
             .FirstOrDefaultAsync(m => m.ID == id);
@@ -150,18 +169,24 @@ public class GegenstandController : Controller
             return NotFound();
         }
 
-        var personID = User.GetPersonID();
         var details = new GegenstandDetailsViewModel
         {
             Eintrag = KatalogEintragErstellen(gegenstand),
             Unterwegs = gegenstand.Lagerbewegung.Where(l => l.Offen).OrderBy(l => l.ErstelltAm).ToList(),
-            EigenerRaumID = personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value)
+            EigenerRaumID = await _lagerService.RaumDerPersonAsync(User.GetPersonID())
         };
 
+        // Verlauf: jede Bewegung ergibt einen Eintrag beim Anlegen und, falls schon abgeschlossen, einen bei der Übernahme
+        // oder der Stornierung
         foreach (var l in gegenstand.Lagerbewegung)
         {
-            var person = $"{l.Person.Vorname} {l.Person.Nachname}";
-            var menge = gegenstand.Seriennummer == null ? $"{l.Menge} Stück " : "";
+            var person = l.Person.VollerName;
+            // Bei einem Gerät mit Seriennummer ist die Menge immer 1 und wird daher nicht genannt
+            var menge = "";
+            if (gegenstand.Seriennummer == null)
+            {
+                menge = $"{l.Menge} Stück ";
+            }
 
             // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung und ihre ursprüngliche Bewegungsart verloren
             if (l.Storniert)
@@ -174,9 +199,15 @@ public class GegenstandController : Controller
             if (l.BestaetigtAm == l.ErstelltAm)
             {
                 // Sofort bestätigt: Wareneingang oder Umbuchung zwischen zwei eigenen Räumen
-                var text = l.VonRaumID == l.NachRaumID
-                    ? $"{menge}in {l.NachRaumID} eingebucht von {person}"
-                    : $"{menge}von {l.VonRaumID} nach {l.NachRaumID} umgebucht von {person}";
+                string text;
+                if (l.VonRaumID == l.NachRaumID)
+                {
+                    text = $"{menge}in {l.NachRaumID} eingebucht von {person}";
+                }
+                else
+                {
+                    text = $"{menge}von {l.VonRaumID} nach {l.NachRaumID} umgebucht von {person}";
+                }
                 details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang(text) });
                 continue;
             }
@@ -199,7 +230,11 @@ public class GegenstandController : Controller
     /// <returns>Der Text mit großem Anfangsbuchstaben</returns>
     private static string GrossAnfang(string text)
     {
-        return text.Length == 0 ? text : char.ToUpper(text[0]) + text[1..];
+        if (text.Length == 0)
+        {
+            return text;
+        }
+        return char.ToUpper(text[0]) + text[1..];
     }
 
     /// <summary>
@@ -420,8 +455,15 @@ public class GegenstandController : Controller
     /// <returns>Gibt eine Task zurück</returns>
     private async Task EingabenPruefenAsync(Gegenstand gegenstand)
     {
-        // Leerzeichen am Rand würden sonst zu scheinbar unterschiedlichen Seriennummern führen
-        gegenstand.Seriennummer = string.IsNullOrWhiteSpace(gegenstand.Seriennummer) ? null : gegenstand.Seriennummer.Trim();
+        // Leerzeichen am Rand würden sonst zu scheinbar unterschiedlichen Seriennummern führen, ein leeres Feld heißt "ohne Seriennummer"
+        if (string.IsNullOrWhiteSpace(gegenstand.Seriennummer))
+        {
+            gegenstand.Seriennummer = null;
+        }
+        else
+        {
+            gegenstand.Seriennummer = gegenstand.Seriennummer.Trim();
+        }
 
         if (!await _context.Kategorie.AnyAsync(k => k.ID == gegenstand.KategorieID))
         {

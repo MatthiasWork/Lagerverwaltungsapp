@@ -773,9 +773,9 @@ dl.row dd {
     font-size: 13.5px;
 }
 
-.seiten-datum + h1 {
-    margin-top: 2px;
-}
+    .seiten-datum + h1 {
+        margin-top: 2px;
+    }
 
 .seiten-aktionen {
     gap: 8px;
@@ -842,9 +842,9 @@ dl.row dd {
         padding: 6.8px;
     }
 
-        .liste-tabelle > :not(caption) > * > *:first-child {
-            padding-left: var(--zelle-x);
-        }
+    .liste-tabelle > :not(caption) > * > *:first-child {
+        padding-left: var(--zelle-x);
+    }
 
     .liste-tabelle > tbody > tr > td:first-child {
         padding-top: var(--zelle-y);
@@ -2343,19 +2343,19 @@ a.tag-outline {
     border-top: 0;
 }
 
-.profil-menue .sidebar-user-link {
-    display: none;
-}
+    .profil-menue .sidebar-user-link {
+        display: none;
+    }
 
-.profil-menue .sidebar-user form {
-    flex: 1;
-}
+    .profil-menue .sidebar-user form {
+        flex: 1;
+    }
 
-.profil-menue .sidebar-user .btn-icon {
-    width: 100%;
-    height: 44px;
-    border-color: var(--color-divider);
-}
+    .profil-menue .sidebar-user .btn-icon {
+        width: 100%;
+        height: 44px;
+        border-color: var(--color-divider);
+    }
 
 .abmelden-text {
     display: none;
@@ -2549,12 +2549,12 @@ a.tag-outline {
         background: var(--color-divider);
     }
 
-    .zeitraum .seg-opt {
-        justify-content: center;
-        min-height: 44px;
-        background-color: var(--color-bg);
-        border-left: 0;
-    }
+        .zeitraum .seg-opt {
+            justify-content: center;
+            min-height: 44px;
+            background-color: var(--color-bg);
+            border-left: 0;
+        }
 
     .zusammenfassung .btn-cta {
         min-height: 48px;
@@ -2602,7 +2602,9 @@ span.seg-opt {
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: 1fr 70px 1fr;
     padding: 24px;
-    background: repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px);
+    background:
+        repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px),
+        repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--color-accent) 10%, transparent) 23px 24px);
 }
 
 /* Benachbarte Räume teilen sich die Wand (-1 px) */
@@ -2699,7 +2701,9 @@ span.seg-opt {
     grid-template-rows: 110px 36px 110px;
     padding: 10px;
     border: 1px solid var(--color-divider);
-    background: repeating-linear-gradient(0deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px), repeating-linear-gradient(90deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px);
+    background:
+        repeating-linear-gradient(0deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px),
+        repeating-linear-gradient(90deg, transparent 0 15px, color-mix(in srgb, var(--color-accent) 10%, transparent) 15px 16px);
 }
 
     .grundriss-klein .plan-raum {

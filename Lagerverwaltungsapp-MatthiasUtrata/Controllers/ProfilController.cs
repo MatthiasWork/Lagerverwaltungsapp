@@ -61,6 +61,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .ToDictionaryAsync(g => g.RaumID, g => g.Stueck),
                 OffeneTransfers = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
+                    .Include(l => l.VonRaum).ThenInclude(r => r.Person)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Person)
                     .Where(Lagerbewegung.IstOffen)
                     .Where(l => l.PersonID == anzeigenID)
@@ -68,6 +69,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .ToListAsync()
             };
 
+            // Verlauf: was die Person gebucht hat, was in ihre Räume übernommen wurde und welche Transfers von oder zu
+            // ihren Räumen storniert wurden. Jede Bewegung ergibt höchstens zwei Einträge, daher reichen die 8 neuesten Bewegungen für 8 Einträge
             var bewegungen = await _context.Lagerbewegung
                 .Include(l => l.Gegenstand)
                 .Include(l => l.Bewegungsart)
@@ -80,14 +83,30 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             foreach (var l in bewegungen)
             {
-                var was = l.Menge == 1 ? l.Gegenstand.Name : $"{l.Gegenstand.Name} × {l.Menge}";
+                var was = l.Gegenstand.Name;
+                if (l.Menge != 1)
+                {
+                    was += $" × {l.Menge}";
+                }
+
+                // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung, sie ist also nie "sofort bestätigt"
                 var sofortBestaetigt = !l.Storniert && l.BestaetigtAm == l.ErstelltAm;
 
                 if (l.PersonID == anzeigenID)
                 {
-                    var text = !sofortBestaetigt ? $"Transfer {was} {l.VonRaumID} → {l.NachRaumID} angefragt"
-                        : l.VonRaumID == l.NachRaumID ? $"{was} in {l.NachRaumID} eingebucht"
-                        : $"{was} {l.VonRaumID} → {l.NachRaumID} umgebucht";
+                    string text;
+                    if (!sofortBestaetigt)
+                    {
+                        text = $"Transfer {was} {l.VonRaumID} → {l.NachRaumID} angefragt";
+                    }
+                    else if (l.VonRaumID == l.NachRaumID)
+                    {
+                        text = $"{was} in {l.NachRaumID} eingebucht";
+                    }
+                    else
+                    {
+                        text = $"{was} {l.VonRaumID} → {l.NachRaumID} umgebucht";
+                    }
                     profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = text });
                 }
 

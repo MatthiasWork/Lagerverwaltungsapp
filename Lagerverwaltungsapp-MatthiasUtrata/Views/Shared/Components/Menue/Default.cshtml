@@ -33,7 +33,7 @@
     // Name und Rolle für den Block unten in der Seitenleiste (Claims aus dem Login)
     var vorname = User.FindFirstValue(ClaimTypes.GivenName) ?? "";
     var nachname = User.FindFirstValue(ClaimTypes.Surname) ?? "";
-    var initialen = (vorname.Length > 0 ? vorname.Substring(0, 1) : "") + (nachname.Length > 0 ? nachname.Substring(0, 1) : "");
+    var initialen = Person.InitialenAus(vorname, nachname);
     var rolle = User.FindFirstValue(ClaimTypes.Role) ?? "";
     if (Model.RaumID != null)
     {

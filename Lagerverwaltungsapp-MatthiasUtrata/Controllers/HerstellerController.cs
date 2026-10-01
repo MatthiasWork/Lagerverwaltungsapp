@@ -1,8 +1,9 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Lagerverwaltungsapp_MatthiasUtrata.Models;
+
+namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Hersteller verwalten darf nur ein Admin
 [Authorize(Roles = "Admin")]
@@ -243,7 +244,15 @@ public class HerstellerController : Controller
         var anzahlGegenstaende = await _context.Gegenstand.CountAsync(g => g.HerstellerID == hersteller.ID);
         if (anzahlGegenstaende > 0)
         {
-            var gegenstaende = anzahlGegenstaende == 1 ? "ist noch 1 Gegenstand" : $"sind noch {anzahlGegenstaende} Gegenstände";
+            string gegenstaende;
+            if (anzahlGegenstaende == 1)
+            {
+                gegenstaende = "ist noch 1 Gegenstand";
+            }
+            else
+            {
+                gegenstaende = $"sind noch {anzahlGegenstaende} Gegenstände";
+            }
             return $"Dem Hersteller \"{hersteller.Name}\" {gegenstaende} zugeordnet. "
                 + "Diese müssen zuerst einem anderen Hersteller zugeordnet oder gelöscht werden.";
         }

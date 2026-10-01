@@ -35,7 +35,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         // GET: Ausleihe
         public async Task<IActionResult> Index()
         {
-            var raumID = await EigenerRaumAsync();
+            var raumID = await _lagerService.RaumDerPersonAsync(User.GetPersonID());
             if (raumID == null)
             {
                 return View();
@@ -64,7 +64,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         public async Task<IActionResult> Index([Bind("NachRaumID,BewegungsartID,Mengen")] AusborgenViewModel ausleihe)
         {
             var personID = User.GetPersonID();
-            var raumID = await EigenerRaumAsync();
+            var raumID = await _lagerService.RaumDerPersonAsync(personID);
             if (personID == null || raumID == null)
             {
                 return Forbid();
@@ -81,9 +81,15 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 if (fehler == null)
                 {
                     var nachRaum = await _context.Raum.Include(r => r.Person).FirstAsync(r => r.ID == ausleihe.NachRaumID);
-                    var wartetAuf = nachRaum.Person == null ? "die verantwortliche Person" : $"{nachRaum.Person.Vorname} {nachRaum.Person.Nachname}";
-                    var anzahl = positionen.Count == 1 ? "1 Gerät" : $"{positionen.Count} Geräten";
-                    TempData["Meldung"] = $"Ausleihe von {anzahl} an Raum {nachRaum.ID} angefragt. Bis {wartetAuf} sie freigibt, sind die Geräte unterwegs.";
+                    var wartetAuf = nachRaum.Person?.VollerName ?? "die verantwortliche Person";
+                    if (positionen.Count == 1)
+                    {
+                        TempData["Meldung"] = $"Ausleihe von 1 Gerät an Raum {nachRaum.ID} angefragt. Bis {wartetAuf} sie freigibt, ist das Gerät unterwegs.";
+                    }
+                    else
+                    {
+                        TempData["Meldung"] = $"Ausleihe von {positionen.Count} Geräten an Raum {nachRaum.ID} angefragt. Bis {wartetAuf} sie freigibt, sind die Geräte unterwegs.";
+                    }
                     return RedirectToAction("Index", "MeinRaum");
                 }
                 ModelState.AddModelError(string.Empty, fehler);
@@ -91,16 +97,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
             await AnzeigeSetzenAsync(ausleihe, raumID);
             return View(ausleihe);
-        }
-
-        /// <summary>
-        /// Methode, die den Raum ermittelt, für den die angemeldete Person gerade verantwortlich ist.
-        /// </summary>
-        /// <returns>Die ID des Raums oder null, wenn die Person für keinen Raum verantwortlich ist</returns>
-        private async Task<string?> EigenerRaumAsync()
-        {
-            var personID = User.GetPersonID();
-            return personID == null ? null : await _lagerService.RaumDerPersonAsync(personID.Value);
         }
 
         /// <summary>
@@ -128,11 +124,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(r => r.ID)
                 .ToListAsync();
 
-            // "Storniert" vergibt nur der LagerService beim Ablehnen oder Zurückziehen
-            ausleihe.Bewegungsarten = new SelectList(await _context.Bewegungsart
-                .Where(b => b.Name != Bewegungsart.Storniert)
-                .OrderBy(b => b.Name)
-                .ToListAsync(), "ID", "Name", ausleihe.BewegungsartID);
+            ausleihe.Bewegungsarten = new SelectList(await _lagerService.WaehlbareBewegungsartenAsync(), "ID", "Name", ausleihe.BewegungsartID);
         }
     }
 }
