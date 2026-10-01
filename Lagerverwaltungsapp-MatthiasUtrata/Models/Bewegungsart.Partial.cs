@@ -7,4 +7,9 @@ public partial class Bewegungsart
     /// Name der Bewegungsart, die beim Ausborgen vorausgewählt wird. Sie ist nur beschreibend und kann im Formular geändert werden.
     /// </summary>
     public const string Ausgabe = "Ausgabe";
+
+    /// <summary>
+    /// Name der Bewegungsart, die beim Wareneingang vorausgewählt wird. Auch sie kann im Formular geändert werden.
+    /// </summary>
+    public const string Wareneingang = "Wareneingang";
 }

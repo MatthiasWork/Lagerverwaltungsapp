@@ -7,6 +7,9 @@
     var istAdmin = User.IsInRole("Admin");
     // Ein Transfer geht immer vom eigenen Raum aus, daher nur, wenn der Gegenstand dort liegt
     var kannTransfer = Model.EigenerRaumID != null && Model.Eintrag.Standorte.Any(r => r.RaumID == Model.EigenerRaumID);
+    // Einbuchen in den eigenen Raum; ein Gerät mit Seriennummer nur, solange es weder in einem Raum liegt noch unterwegs ist
+    var kannWareneingang = Model.EigenerRaumID != null
+        && (gegenstand.Seriennummer == null || Model.Eintrag.Status == GegenstandUebersichtViewModel.KeinBestand);
 
     // Kennung auf dem Etikett und im Pfad: Seriennummer, ohne Seriennummer die ID
     var kennung = gegenstand.Seriennummer ?? $"ID {gegenstand.ID}";
@@ -97,12 +100,16 @@
                 }
             </div>
 
-            @if (kannTransfer || istAdmin)
+            @if (kannTransfer || kannWareneingang || istAdmin)
             {
                 <div class="detail-aktionen">
                     @if (kannTransfer)
                     {
                         <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Ausborgen"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+                    }
+                    @if (kannWareneingang)
+                    {
+                        <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Wareneingang" asp-route-gegenstandID="@gegenstand.ID"><i data-lucide="package-plus"></i>Wareneingang in @Model.EigenerRaumID</a>
                     }
                     @* Den Katalog sehen alle, bearbeiten und löschen darf nur ein Admin *@
                     @if (istAdmin)
@@ -171,12 +178,16 @@
         }
     </div>
 
-    @if (kannTransfer || istAdmin)
+    @if (kannTransfer || kannWareneingang || istAdmin)
     {
         <div class="aktionsleiste">
             @if (kannTransfer)
             {
                 <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Ausborgen">Transfer</a>
+            }
+            @if (kannWareneingang)
+            {
+                <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Wareneingang" asp-route-gegenstandID="@gegenstand.ID">Einbuchen</a>
             }
             @if (istAdmin)
             {

@@ -1,0 +1,94 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.WareneingangViewModel
+
+@{
+    ViewData["Title"] = "Wareneingang";
+}
+
+<div>
+    <div class="mb-1 text-muted">Raum @Model.Raum.ID · @Model.Raum.Raumart.Name</div>
+    <h1 class="mb-0">Wareneingang</h1>
+</div>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <p class="text-muted">
+            Neue Gegenstände kommen hier in den Bestand von Raum @Model.Raum.ID. Die Buchung ist sofort bestätigt
+            und steht danach im Verlauf des Gegenstands. Neue Gegenstände legt ein Admin vorher im Katalog an.
+        </p>
+
+        @if (!Model.Gegenstaende.Any())
+        {
+            <p class="text-muted">Es gibt keinen Gegenstand, der eingebucht werden kann.</p>
+            <a asp-action="Index" class="btn btn-outline-secondary">Zurück zu Mein Raum</a>
+        }
+        else
+        {
+            <form asp-action="Wareneingang" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <label asp-for="GegenstandID" class="control-label"></label>
+                    <select asp-for="GegenstandID" class="form-select" id="gegenstandAuswahl">
+                        <option value="">Gegenstand auswählen</option>
+                        @foreach (var gegenstand in Model.Gegenstaende)
+                        {
+                            <option value="@gegenstand.ID" data-seriennummer="@gegenstand.Seriennummer">
+                                @gegenstand.Name · @(gegenstand.Seriennummer ?? "ohne Seriennummer") · @gegenstand.Kategorie.Name
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="GegenstandID" class="text-danger"></span>
+                    <div class="form-text">Geräte mit Seriennummer, die schon in einem Raum liegen oder unterwegs sind, fehlen in der Liste.</div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Menge" class="control-label"></label>
+                    <input asp-for="Menge" type="number" min="1" step="1" class="form-control" id="mengeFeld" />
+                    <span asp-validation-for="Menge" class="text-danger"></span>
+                    <div class="form-text">Ein Gerät mit Seriennummer wird immer mit der Menge 1 eingebucht.</div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="BewegungsartID" class="control-label"></label>
+                    <select asp-for="BewegungsartID" class="form-select" asp-items="Model.Bewegungsarten">
+                        <option value="">Bewegungsart auswählen</option>
+                    </select>
+                    <span asp-validation-for="BewegungsartID" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mt-3">
+                    <input type="submit" value="Einbuchen" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-outline-secondary">Abbrechen</a>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Bei einem Gerät mit Seriennummer ist die Menge immer 1 und kann nicht geändert werden
+        (function () {
+            var auswahl = document.getElementById('gegenstandAuswahl');
+            var menge = document.getElementById('mengeFeld');
+            if (!auswahl || !menge) {
+                return;
+            }
+
+            function aktualisieren() {
+                var option = auswahl.selectedOptions[0];
+                var einzelgeraet = option && option.dataset.seriennummer;
+                if (einzelgeraet) {
+                    menge.value = 1;
+                }
+                menge.readOnly = !!einzelgeraet;
+            }
+
+            auswahl.addEventListener('change', aktualisieren);
+            aktualisieren();
+        })();
+    </script>
+}

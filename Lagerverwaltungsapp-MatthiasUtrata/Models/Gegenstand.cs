@@ -6,8 +6,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
-// Die Validierungsattribute wurden von Hand ergänzt (Maximallängen wie in der Tabelle Gegenstand).
-// Achtung: Beim erneuten Generieren mit EF Core Power Tools wird diese Datei überschrieben und die Attribute gehen verloren
 public partial class Gegenstand
 {
     public int ID { get; set; }

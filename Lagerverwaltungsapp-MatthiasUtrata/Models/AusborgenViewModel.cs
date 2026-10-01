@@ -19,8 +19,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Ein Gerät mit Seriennummer schickt über die Checkbox 1, ein leeres Feld oder 0 heißt "nicht ausborgen"
         public Dictionary<int, int?> Mengen { get; set; } = new Dictionary<int, int?>();
 
-        // Ab hier nur für die Anzeige: Diese Werte kommen nicht aus dem Formular, daher nicht validieren
-
         // Der eigene Raum (mit Raumart und verantwortlicher Person), aus dem ausgeborgt wird
         [ValidateNever]
         public Raum VonRaum { get; set; } = null!;

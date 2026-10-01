@@ -271,7 +271,7 @@ public class RaumController : Controller
 
     /// <summary>
     /// Methode, die die Auswahllisten für Raumart und verantwortliche Person für das Formular setzt.
-    /// Angeboten werden nur Personen, die noch für keinen anderen Raum verantwortlich sind.
+    /// Es sind nur Personen verfügbar, die noch für keinen anderen Raum verantwortlich sind.
     /// </summary>
     /// <param name="raum">Der Raum, dessen Werte vorausgewählt werden sollen, oder null bei einem neuen Raum</param>
     /// <returns>Gibt eine Task zurück</returns>
