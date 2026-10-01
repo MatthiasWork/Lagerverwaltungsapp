@@ -296,11 +296,11 @@ FROM (VALUES
     ('Weichbodenmatte 300 x 200 cm',          NULL,               'Sportgeräte',                 'Kübler Sport'),
     ('Casio HS-3V Stoppuhr',                  NULL,               'Sportgeräte',                 'Casio'),
     -- Sicherheit und Erste Hilfe
-    ('Erste-Hilfe-Koffer',                    NULL,               N'Sicherheit und Erste Hilfe',  N'Söhngen'),
-    ('Schutzbrille',                          NULL,               N'Sicherheit und Erste Hilfe',  N'uvex'),
+    ('Erste-Hilfe-Koffer',                    NULL,               'Sicherheit und Erste Hilfe',  'Söhngen'),
+    ('Schutzbrille',                          NULL,               'Sicherheit und Erste Hilfe',  'uvex'),
     -- Bücher
-    ('Österreichisches Wörterbuch',           NULL,               N'Bücher',                      N'ÖBV'),
-    ('PONS Schulwörterbuch Englisch',         NULL,               N'Bücher',                      N'PONS')
+    ('Österreichisches Wörterbuch',           NULL,               'Bücher',                      'ÖBV'),
+    ('PONS Schulwörterbuch Englisch',         NULL,               'Bücher',                      'PONS')
 ) AS v(Name, Seriennummer, Kategorie, Hersteller)
 JOIN dbo.Kategorie k ON k.Name = v.Kategorie
 JOIN dbo.Hersteller h ON h.Name = v.Hersteller
