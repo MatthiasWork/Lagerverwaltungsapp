@@ -35,8 +35,6 @@
     --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
     /* "+"-Registermarke (11 × 11 px, Textfarbe mit 55 % Deckkraft) für die Ecken gerahmter Elemente */
     --corner-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11'%3E%3Cpath d='M5.5 0v11M0 5.5h11' stroke='%231d1f20' stroke-opacity='.55'/%3E%3C/svg%3E");
-    /* Dieselbe Marke hell für dunkle Flächen (z. B. das Kamerabild beim Scannen) */
-    --corner-mark-hell: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11'%3E%3Cpath d='M5.5 0v11M0 5.5h11' stroke='%23f2f2f3'/%3E%3C/svg%3E");
     /* Lucide "chevron-down" für Auswahllisten, in Textfarbe */
     --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d1f20' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     /* Bootstrap auf die Tokens umstellen */
@@ -914,47 +912,6 @@ dl.row dd {
     font-variant-numeric: tabular-nums;
 }
 
-/* Platzhalter für ein Gerätefoto (schraffiert wie im Design) */
-.geraet-bild {
-    width: 40px;
-    height: 40px;
-    background: repeating-linear-gradient(135deg, var(--color-neutral-200) 0 4px, var(--color-neutral-300) 4px 8px);
-}
-
-/* Segment-Schalter: nebeneinanderliegende Optionen, die gewählte gefüllt */
-.seg {
-    display: inline-flex;
-    overflow: hidden;
-    border: 1px solid var(--color-divider);
-}
-
-.seg-opt {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 12px;
-    font-size: 13px;
-    white-space: nowrap;
-    color: var(--color-text);
-    text-decoration: none;
-    background-color: transparent;
-    cursor: pointer;
-}
-
-    .seg-opt + .seg-opt {
-        border-left: 1px solid var(--color-divider);
-    }
-
-    .seg-opt:hover {
-        color: var(--color-text);
-        background-color: color-mix(in srgb, var(--color-text) 7%, transparent);
-    }
-
-    .seg-opt.active {
-        color: var(--color-bg);
-        background-color: var(--color-accent);
-    }
-
 /* Auswahllisten so breit wie der gewählte Eintrag statt wie der längste (wo der Browser es kann) */
 .filter-auswahl {
     field-sizing: content;
@@ -1019,20 +976,13 @@ dl.row dd {
     --zelle-y: 9px;
 }
 
-    .katalog-tabelle .spalte-bild {
-        width: 58px;
-    }
-
     .katalog-tabelle > tbody > tr > td:last-child {
         color: var(--color-neutral-800);
     }
 
 /* Mobil: Katalog als Liste */
 .katalog-zeile {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
+    display: block;
     padding: 6px 0;
     color: var(--color-text);
     text-decoration: none;
@@ -1041,11 +991,6 @@ dl.row dd {
 
     .katalog-zeile:hover {
         color: var(--color-text);
-    }
-
-    .katalog-zeile .geraet-bild {
-        width: 44px;
-        height: 44px;
     }
 
 .katalog-zeile-text {
@@ -1106,90 +1051,11 @@ dl.row dd {
         color: var(--color-text);
     }
 
-.detail-raster {
-    display: grid;
-    grid-template-columns: 380px minmax(0, 1fr);
-    gap: 32px;
-}
-
-.detail-links {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.detail-rechts {
+.detail-inhalt {
     display: flex;
     flex-direction: column;
     gap: 18px;
     min-width: 0;
-}
-
-/* Bild im Akzent eingefärbt (Duotone); mit Eckmarken darf der Rahmen nicht abgeschnitten werden */
-.duotone {
-    position: relative;
-    overflow: hidden;
-}
-
-    .duotone::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: var(--color-accent);
-        mix-blend-mode: color;
-    }
-
-.blueprint.duotone {
-    overflow: visible;
-}
-
-/* Platzhalter für das Produktfoto (schraffiert wie im Design) */
-.geraet-foto {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 4 / 3;
-    background: repeating-linear-gradient(135deg, var(--color-neutral-200) 0 8px, var(--color-neutral-300) 8px 16px);
-}
-
-.platzhalter-text {
-    padding: 3px 7px;
-    font: 11px ui-monospace, Menlo, monospace;
-    background: var(--color-bg);
-}
-
-/* QR-Etikett: Platzhalter-Code, Kennung und Drucken */
-.etikett {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px;
-}
-
-.qr-code {
-    width: 88px;
-    height: 88px;
-    flex: none;
-    border: 1px solid var(--color-text);
-    background: repeating-conic-gradient(var(--color-text) 0 25%, var(--color-bg) 0 50%) 0 0 / 11px 11px;
-}
-
-.etikett-text {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-    .etikett-text .nebeninfo {
-        font-size: 12.5px;
-    }
-
-    .etikett-text .btn {
-        align-self: flex-start;
-    }
-
-.etikett-kennung {
-    font: 600 20px var(--font-heading);
 }
 
 .detail-titel {
@@ -1331,13 +1197,6 @@ dl.row dd {
         height: 20px;
     }
 
-/* Foto über die ganze Breite, ohne Rahmen */
-.geraet-foto-mobil {
-    aspect-ratio: auto;
-    height: 200px;
-    margin: 0 -20px;
-}
-
 .detail-mobil-inhalt {
     display: flex;
     flex-direction: column;
@@ -1450,17 +1309,12 @@ dl.row dd {
 
 .geraet-zeile {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 14px;
     align-items: center;
     padding: 10px 12px;
     border: 1px solid var(--color-divider);
 }
-
-    .geraet-zeile .geraet-bild {
-        width: 44px;
-        height: 44px;
-    }
 
 .geraet-zeile-info {
     font-size: 12.5px;
@@ -1664,18 +1518,13 @@ dl.row dd {
     }
 
     .geraet-zeile {
-        grid-template-columns: 40px minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         gap: 12px;
         padding: 8px 0;
         font-size: 14px;
         border: 0;
         border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
     }
-
-        .geraet-zeile .geraet-bild {
-            width: 40px;
-            height: 40px;
-        }
 
     /* Zeilenhöhe wie die erste Zeile (14 px Schrift), so wird die Zeile gleich hoch wie im Design */
     .geraet-zeile-info {
@@ -2671,266 +2520,6 @@ a.tag-outline {
     }
 }
 
-/* Segment-Optionen ohne Link oder Radiobutton sind nur Anzeige (z. B. auf statischen Seiten) */
-span.seg-opt {
-    cursor: default;
-}
-
-    span.seg-opt:not(.active):hover {
-        background-color: transparent;
-    }
-
-/* Scannen (statisch) */
-.scan {
-    gap: 22px;
-}
-
-.scan-raster {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 420px;
-    gap: 28px;
-}
-
-/* Platzhalter für das Kamerabild: dunkel, in der Mitte der Rahmen mit Scanlinie */
-.kamerabild {
-    position: relative;
-    display: grid;
-    place-items: center;
-    background: var(--color-accent-900);
-}
-
-.kamerabild-text {
-    position: absolute;
-    top: 14px;
-    left: 16px;
-    font: 11px ui-monospace, Menlo, monospace;
-    color: var(--color-accent-300);
-}
-
-.kamerabild-hinweis {
-    position: absolute;
-    bottom: 18px;
-    font-size: 13.5px;
-    color: var(--color-accent-200);
-}
-
-.scan-rahmen {
-    position: relative;
-    width: 260px;
-    height: 260px;
-    border: 1px solid var(--color-accent-400);
-}
-
-    .scan-rahmen::before {
-        content: "";
-        position: absolute;
-        inset: -6px;
-        pointer-events: none;
-        background-image: var(--corner-mark-hell), var(--corner-mark-hell), var(--corner-mark-hell), var(--corner-mark-hell);
-        background-position: left top, right top, left bottom, right bottom;
-        background-repeat: no-repeat;
-    }
-
-.scan-linie {
-    position: absolute;
-    top: 48%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--color-accent-400);
-}
-
-.scan-seite {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-
-    .scan-seite .liste-titel {
-        margin-bottom: 6px;
-    }
-
-/* Erkanntes Gerät mit Akzentrahmen */
-.scan-treffer {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 18px;
-    border-color: var(--color-accent);
-}
-
-    .scan-treffer .tag {
-        border-width: 0;
-    }
-
-.scan-treffer-kopf {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.scan-geraet {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.scan-treffer .geraet-bild {
-    width: 64px;
-    height: 64px;
-    flex: none;
-}
-
-.scan-geraet-name {
-    font: 600 22px var(--font-heading);
-}
-
-.raum-panel-info {
-    font-size: 12.5px;
-    color: var(--color-neutral-700);
-}
-
-.scan-aktionen {
-    display: flex;
-    gap: 8px;
-}
-
-    .scan-aktionen .btn-primary {
-        --bs-btn-padding-y: 10px;
-        flex: 1;
-    }
-
-.scan-verlauf {
-    font-size: 13.5px;
-}
-
-.scan-verlauf-aktion {
-    font-size: 12.5px;
-    text-align: right;
-    color: var(--color-neutral-800);
-}
-
-    .scan-verlauf-aktion span {
-        color: var(--color-neutral-700);
-    }
-
-/* Scannen mobil: Vollbild ohne Tab-Leiste, hebt den Innenabstand von .app-content auf */
-.scan-mobil {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100dvh;
-    margin: -12px -20px calc(-78px - 24px - env(safe-area-inset-bottom, 0px));
-    color: var(--color-bg);
-    background: var(--color-accent-900);
-}
-
-.scan-mobil-leiste {
-    display: flex;
-    align-self: stretch;
-    justify-content: space-between;
-    padding: 8px 20px;
-}
-
-    .scan-mobil-leiste a {
-        display: flex;
-        color: inherit;
-    }
-
-    .scan-mobil-leiste .lucide {
-        width: 24px;
-        height: 24px;
-    }
-
-    .scan-mobil-leiste .lucide-flashlight {
-        width: 22px;
-        height: 22px;
-    }
-
-.scan-mobil .kamerabild-text {
-    position: static;
-    margin-top: 40px;
-    color: var(--color-accent-400);
-}
-
-.scan-mobil .scan-rahmen {
-    width: 240px;
-    height: 240px;
-    margin-top: 16px;
-    border-color: var(--color-accent-600);
-}
-
-.scan-mobil .scan-linie {
-    top: 52%;
-}
-
-.scan-mobil .kamerabild-hinweis {
-    position: static;
-    margin-top: 18px;
-    font-size: 14px;
-}
-
-/* Das Kamerabild ist schon dunkel und bleibt im Dark Mode, wie es ist: dort gelten weiter die Akzenttöne des hellen Modus.
-   Das Blatt mit dem erkannten Gerät (.scan-blatt) wird dagegen wie die übrige Seite dunkel */
-[data-bs-theme="dark"] .kamerabild,
-[data-bs-theme="dark"] .scan-mobil > :not(.scan-blatt) {
-    --color-accent-200: #d6ebff;
-    --color-accent-300: #b5d9fd;
-    --color-accent-400: #94bce3;
-    --color-accent-600: #597ea3;
-    --color-accent-900: #1d2d3d;
-}
-
-[data-bs-theme="dark"] .scan-mobil {
-    color: #f2f2f3;
-    background: #1d2d3d;
-}
-
-/* Blatt von unten mit dem erkannten Gerät */
-.scan-blatt {
-    display: flex;
-    flex-direction: column;
-    align-self: stretch;
-    gap: 12px;
-    margin-top: auto;
-    padding: 18px 20px 30px;
-    color: var(--color-text);
-    background: var(--color-bg);
-}
-
-.scan-blatt-griff {
-    align-self: center;
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--color-neutral-300);
-}
-
-.scan-blatt .scan-geraet {
-    gap: 12px;
-}
-
-.scan-blatt .geraet-bild {
-    width: 52px;
-    height: 52px;
-    flex: none;
-}
-
-.scan-blatt-kennung {
-    font-size: 12px;
-    color: var(--color-accent-700);
-}
-
-.scan-blatt-aktionen {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 8px;
-}
-
-    .scan-blatt-aktionen .btn {
-        min-height: 48px;
-    }
-
 /* ══════════ App-Hülle: Seitenleiste (Desktop) ══════════ */
 /* Ab 992 px fest links; darunter ersetzt sie die Tab-Leiste (siehe unten) */
 @media (min-width: 992px) {
@@ -3137,7 +2726,7 @@ span.seg-opt {
 }
 
 /* ══════════ App-Hülle: Tab-Leiste (Mobil) ══════════ */
-/* Unter 992 px fest am unteren Rand, fünf Tabs wie im Mobil-Design */
+/* Unter 992 px fest am unteren Rand, vier Tabs */
 .tabbar {
     position: fixed;
     left: 0;
@@ -3145,7 +2734,7 @@ span.seg-opt {
     bottom: 0;
     z-index: 1030;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     align-items: start;
     height: calc(78px + env(safe-area-inset-bottom, 0px));
     padding: 8px 6px env(safe-area-inset-bottom, 0px);
@@ -3183,14 +2772,6 @@ span.seg-opt {
         width: 20px;
         height: 20px;
     }
-
-/* "Scannen" als gefülltes Quadrat in der Mitte */
-.tabbar-link.scan .tabbar-icon {
-    width: 44px;
-    height: 44px;
-    background: var(--color-accent);
-    color: var(--color-bg);
-}
 
 /* Zahl der offenen Freigaben am Icon, wie .sidebar-badge */
 .tabbar-badge {

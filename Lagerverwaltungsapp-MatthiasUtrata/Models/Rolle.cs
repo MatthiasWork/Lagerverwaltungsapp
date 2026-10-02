@@ -2,15 +2,22 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 
+// Die Validierungsattribute wurden von Hand ergänzt (Maximallänge wie in der Tabelle Rolle).
+// Achtung: Beim erneuten Generieren mit EF Core Power Tools wird diese Datei überschrieben und die Attribute gehen verloren
 public partial class Rolle
 {
     public int ID { get; set; }
 
+    [Required(ErrorMessage = "Bitte einen Namen eingeben.")]
+    [StringLength(50, ErrorMessage = "Der Name darf höchstens {1} Zeichen lang sein.")]
+    [Display(Name = "Name")]
     public string Name { get; set; } = null!;
 
+    [Display(Name = "Admin-Rechte")]
     public bool Admin { get; set; }
 
     public virtual ICollection<Person> Person { get; set; } = new List<Person>();

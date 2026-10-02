@@ -130,6 +130,12 @@ public class LagerbewegungController : Controller
         }
 
         var lagerbewegung = await _context.Lagerbewegung
+            .Include(l => l.Gegenstand)
+            .Include(l => l.Bewegungsart)
+            .Include(l => l.Person)
+            // Mit den verantwortlichen Personen, damit bei einer offenen Lagerbewegung steht, wer freigeben muss (Lagerbewegung.FreigabeRaum)
+            .Include(l => l.VonRaum).ThenInclude(r => r.Person)
+            .Include(l => l.NachRaum).ThenInclude(r => r.Person)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (lagerbewegung == null)
         {

@@ -1,65 +1,76 @@
 @model Lagerverwaltungsapp_MatthiasUtrata.Models.Lagerbewegung
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Buchung";
+
+    var status = HistorieViewModel.StatusVon(Model);
+
+    // Bei einer Korrektur ist die Menge die Änderung des Bestands, daher mit Vorzeichen (wie in der Historie)
+    var menge = Model.Menge.ToString();
+    if (Model.IstKorrektur && Model.Menge > 0)
+    {
+        menge = $"+{Model.Menge}";
+    }
+    else if (Model.IstKorrektur && Model.Menge < 0)
+    {
+        menge = $"−{-Model.Menge}";
+    }
+
+    // Bei einem Wareneingang und einer Korrektur sind Von- und Nach-Raum gleich, dann steht der Raum nur einmal da
+    var weg = $"{Model.VonRaumID} → {Model.NachRaumID}";
+    if (Model.VonRaumID == Model.NachRaumID)
+    {
+        weg = Model.NachRaumID;
+    }
+
+    // Auf wen eine offene Lagerbewegung wartet, sonst wann sie bestätigt oder storniert wurde (wie in der Historie)
+    string statusZusatz;
+    if (Model.Offen)
+    {
+        statusZusatz = $"wartet auf {Model.FreigabeRaum.Person?.VollerName ?? "–"}";
+    }
+    else if (Model.BestaetigtAm == Model.ErstelltAm)
+    {
+        statusZusatz = "sofort gebucht";
+    }
+    else
+    {
+        statusZusatz = $"am {Model.BestaetigtAm:dd.MM.yyyy HH:mm}";
+    }
 }
 
-<h1>Details</h1>
-
+<h1>Buchung</h1>
+<hr />
 <div>
-    <h4>Lagerbewegung</h4>
-    <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Menge)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Menge)
+        <dt class="col-sm-3">Gerät</dt>
+        <dd class="col-sm-9">
+            <a asp-controller="Gegenstand" asp-action="Details" asp-route-id="@Model.GegenstandID">@Model.Gegenstand.Name</a>
+            <span class="text-muted">(@(Model.Gegenstand.Seriennummer ?? "ohne Seriennummer"))</span>
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ErstelltAm)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ErstelltAm)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BestaetigtAm)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BestaetigtAm)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BewegungsartID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BewegungsartID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.VonRaumID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.VonRaumID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NachRaumID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NachRaumID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.GegenstandID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.GegenstandID)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PersonID)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PersonID)
+
+        <dt class="col-sm-3">Menge</dt>
+        <dd class="col-sm-9">@menge</dd>
+
+        <dt class="col-sm-3">Von → Nach</dt>
+        <dd class="col-sm-9">@weg</dd>
+
+        <dt class="col-sm-3">Bewegungsart</dt>
+        <dd class="col-sm-9">@Model.Bewegungsart.Name</dd>
+
+        <dt class="col-sm-3">Gebucht am</dt>
+        <dd class="col-sm-9">@Model.ErstelltAm.ToString("dd.MM.yyyy HH:mm")</dd>
+
+        <dt class="col-sm-3">Gebucht von</dt>
+        <dd class="col-sm-9">@Model.Person.VollerName</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            <span class="tag @StatusTag.Klasse(status)">@status</span>
+            <span class="text-muted">@statusZusatz</span>
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Zurück zur Historie</a>
 </div>
