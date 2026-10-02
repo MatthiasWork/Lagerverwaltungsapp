@@ -27,15 +27,16 @@ public class GegenstandController : Controller
 
     /// <summary>
     /// Methode, die den Katalog anzeigt: alle Gegenstände mit Standort und Status.
-    /// Die Liste kann nach Suchbegriff, Kategorie, Raum und Status gefiltert werden.
+    /// Die Liste kann nach Suchbegriff, Kategorie, Hersteller, Raum und Status gefiltert werden.
     /// </summary>
     /// <param name="suche">Suchbegriff für Bezeichnung, Seriennummer oder Raum</param>
     /// <param name="kategorieID">Die ID der Kategorie, nach der gefiltert werden soll</param>
+    /// <param name="herstellerID">Die ID des Herstellers, nach dem gefiltert werden soll (Link bei den Herstellern)</param>
     /// <param name="raumID">Die ID des Raums, in dem der Gegenstand liegen muss</param>
     /// <param name="status">Der Status, nach dem gefiltert werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Gegenstand
-    public async Task<IActionResult> Index(string? suche, int? kategorieID, string? raumID, string? status)
+    public async Task<IActionResult> Index(string? suche, int? kategorieID, int? herstellerID, string? raumID, string? status)
     {
         suche = suche?.Trim();
 
@@ -56,6 +57,11 @@ public class GegenstandController : Controller
         if (kategorieID != null)
         {
             abfrage = abfrage.Where(g => g.KategorieID == kategorieID);
+        }
+
+        if (herstellerID != null)
+        {
+            abfrage = abfrage.Where(g => g.HerstellerID == herstellerID);
         }
 
         if (!string.IsNullOrEmpty(raumID))
@@ -79,11 +85,18 @@ public class GegenstandController : Controller
             AnzahlRaeume = await _context.Raum.CountAsync(),
             Suche = suche,
             KategorieID = kategorieID,
+            HerstellerID = herstellerID,
             RaumID = raumID,
             Status = status,
             Kategorien = await _context.Kategorie.OrderBy(k => k.Name).ToListAsync(),
             Raeume = await _context.Raum.OrderBy(r => r.ID).Select(r => r.ID).ToListAsync()
         };
+
+        // Den Filter "Hersteller" gibt es nur, wenn man über einen Link bei den Herstellern kommt, daher die Hersteller nur dann laden
+        if (herstellerID != null)
+        {
+            uebersicht.Hersteller = await _context.Hersteller.OrderBy(h => h.Name).ToListAsync();
+        }
 
         return View(uebersicht);
     }

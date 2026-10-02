@@ -25,9 +25,10 @@ public class RaumartController : Controller
     /// </summary>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Raumart
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index()
     {
-        return View(await _context.Raumart.ToListAsync());
+        // Die Räume werden mitgeladen, um anzuzeigen, welche Räume diese Raumart haben
+        return View(await _context.Raumart.Include(r => r.Raum).ToListAsync());
     }
 
     /// <summary>
@@ -166,6 +167,7 @@ public class RaumartController : Controller
             return NotFound();
         }
 
+        ViewData["LoeschHindernis"] = await LoeschHindernisAsync(raumart);
         return View(raumart);
     }
 
@@ -182,6 +184,14 @@ public class RaumartController : Controller
         var raumart = await _context.Raumart.FindAsync(id);
         if (raumart != null)
         {
+            // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
+            var hindernis = await LoeschHindernisAsync(raumart);
+            if (hindernis != null)
+            {
+                TempData["Fehler"] = hindernis;
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Raumart.Remove(raumart);
         }
 
@@ -197,5 +207,30 @@ public class RaumartController : Controller
     private bool RaumartExists(int? id)
     {
         return _context.Raumart.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob eine Raumart gelöscht werden darf. Jeder Raum braucht eine Raumart.
+    /// </summary>
+    /// <param name="raumart">Die Raumart, die gelöscht werden soll</param>
+    /// <returns>Der Grund, warum die Raumart nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
+    private async Task<string?> LoeschHindernisAsync(Raumart raumart)
+    {
+        var raeume = await _context.Raum.Where(r => r.RaumartID == raumart.ID).OrderBy(r => r.ID).Select(r => r.ID).ToListAsync();
+        if (raeume.Count > 0)
+        {
+            string zugeordnet;
+            if (raeume.Count == 1)
+            {
+                zugeordnet = $"ist noch der Raum {raeume[0]} zugeordnet. Dieser muss";
+            }
+            else
+            {
+                zugeordnet = $"sind noch {raeume.Count} Räume zugeordnet ({string.Join(", ", raeume)}). Diese müssen";
+            }
+            return $"Der Raumart \"{raumart.Name}\" {zugeordnet} zuerst eine andere Raumart bekommen oder gelöscht werden.";
+        }
+
+        return null;
     }
 }

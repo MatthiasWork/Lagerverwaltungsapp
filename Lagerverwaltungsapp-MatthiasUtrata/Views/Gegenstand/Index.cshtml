@@ -45,6 +45,17 @@
                 <option value="@kategorie.ID">Kategorie: @kategorie.Name</option>
             }
         </select>
+        @* Hersteller nur, wenn man über einen Link bei den Herstellern kommt, damit dieser Filter sichtbar ist und aufgehoben werden kann *@
+        @if (Model.HerstellerID != null)
+        {
+            <select asp-for="HerstellerID" class="filter-auswahl" data-auto-absenden aria-label="Hersteller">
+                <option value="">Hersteller: alle</option>
+                @foreach (var hersteller in Model.Hersteller)
+                {
+                    <option value="@hersteller.ID">Hersteller: @hersteller.Name</option>
+                }
+            </select>
+        }
 
         <select asp-for="RaumID" class="filter-auswahl ms-auto d-none d-lg-block" data-auto-absenden aria-label="Raum">
             <option value="">Raum: alle</option>

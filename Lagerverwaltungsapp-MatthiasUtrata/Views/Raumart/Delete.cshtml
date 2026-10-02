@@ -2,12 +2,20 @@
 
 @{
     ViewData["Title"] = "Raumart löschen";
+    var loeschHindernis = ViewData["LoeschHindernis"] as string;
 }
 
 <h1>Raumart löschen</h1>
 <hr />
 
-<h3>Soll diese Raumart wirklich gelöscht werden?</h3>
+@if (loeschHindernis != null)
+{
+    <div class="alert alert-danger">@loeschHindernis</div>
+}
+else
+{
+    <h3>Soll diese Raumart wirklich gelöscht werden?</h3>
+}
 
 <div>
     <dl class="row">
@@ -16,7 +24,10 @@
     </dl>
     <form asp-action="Delete">
         <input type="hidden" asp-for="ID" />
-        <input type="submit" value="Löschen" class="btn btn-danger" />
+        @if (loeschHindernis == null)
+        {
+            <input type="submit" value="Löschen" class="btn btn-danger" />
+        }
         <a asp-action="Index" class="btn btn-outline-secondary">Zurück zur Übersicht</a>
     </form>
 </div>

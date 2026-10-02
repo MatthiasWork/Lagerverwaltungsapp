@@ -166,6 +166,7 @@ public class RolleController : Controller
             return NotFound();
         }
 
+        ViewData["LoeschHindernis"] = await LoeschHindernisAsync(rolle);
         return View(rolle);
     }
 
@@ -182,6 +183,14 @@ public class RolleController : Controller
         var rolle = await _context.Rolle.FindAsync(id);
         if (rolle != null)
         {
+            // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
+            var hindernis = await LoeschHindernisAsync(rolle);
+            if (hindernis != null)
+            {
+                TempData["Fehler"] = hindernis;
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Rolle.Remove(rolle);
         }
 
@@ -197,5 +206,30 @@ public class RolleController : Controller
     private bool RolleExists(int? id)
     {
         return _context.Rolle.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob eine Rolle gelöscht werden darf. Jede Person braucht eine Rolle.
+    /// </summary>
+    /// <param name="rolle">Die Rolle, die gelöscht werden soll</param>
+    /// <returns>Der Grund, warum die Rolle nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
+    private async Task<string?> LoeschHindernisAsync(Rolle rolle)
+    {
+        var anzahlPersonen = await _context.Person.CountAsync(p => p.RolleID == rolle.ID);
+        if (anzahlPersonen > 0)
+        {
+            string personen;
+            if (anzahlPersonen == 1)
+            {
+                personen = "ist noch 1 Person zugeordnet. Diese muss";
+            }
+            else
+            {
+                personen = $"sind noch {anzahlPersonen} Personen zugeordnet. Diese müssen";
+            }
+            return $"Der Rolle \"{rolle.Name}\" {personen} zuerst eine andere Rolle bekommen.";
+        }
+
+        return null;
     }
 }

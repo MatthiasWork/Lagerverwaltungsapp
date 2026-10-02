@@ -148,6 +148,7 @@ Der Katalog listet **alle Gegenstände** mit Seriennummer, Standort, Status und 
 
 * **Suchfeld**: Name, Seriennummer oder Raum eingeben und mit **Enter** bestätigen.
 * **Kategorie**, **Raum** und **Status** filtern sofort bei Auswahl.
+* Kommen Sie über die Anzahl der Gegenstände bei einem [Hersteller](#hersteller), ist zusätzlich nach **Hersteller** gefiltert. **Hersteller: alle** hebt diesen Filter auf.
 * Status-Werte: **Verfügbar** (liegt in einem Raum), **In Transfer** (gerade unterwegs), **Kein Bestand** (im Katalog, aber nirgends gebucht).
 
 Beispiel: alle Geräte, die gerade unterwegs sind:
@@ -375,6 +376,8 @@ Menüpunkt **Benutzer**: links die Liste aller Benutzer mit Rolle, Raumverantwor
 
 ![Rollen](Docs/Screenshots/44-rollen.png)
 
+Eine Rolle kann nur gelöscht werden, wenn ihr **keine Personen** mehr zugeordnet sind.
+
 > Die Rolle wird beim Anmelden übernommen. Ändert ein Admin die Rolle einer Person, gilt die neue Rolle erst, wenn sich diese Person ab- und wieder anmeldet. Eine geänderte **Raumverantwortung** gilt dagegen sofort.
 
 ### 12.2 Stammdaten
@@ -396,7 +399,7 @@ Die Liste zeigt jede Kategorie mit der Anzahl ihrer Gegenstände.
 
 #### Hersteller
 
-Funktioniert wie die Kategorien: Name eindeutig, Löschen nur ohne zugeordnete Gegenstände.
+Funktioniert wie die Kategorien: Name eindeutig, Löschen nur ohne zugeordnete Gegenstände. Ein Klick auf die **Anzahl der Gegenstände** öffnet den Katalog, gefiltert nach diesem Hersteller.
 
 ![Hersteller](Docs/Screenshots/47-hersteller.png)
 
@@ -424,6 +427,8 @@ Eine Raumart beschreibt einen Raum nur näher (z. B. Labor). Wer buchen und best
 
 ![Raumarten](Docs/Screenshots/50-raumarten.png)
 
+Die Spalte **Räume** zeigt, welche Räume diese Raumart haben. Löschen geht nur, wenn **kein Raum** mehr diese Raumart hat.
+
 #### Bewegungsarten
 
 Eine Bewegungsart beschreibt eine Lagerbewegung nur näher (z. B. Ausgabe, Rückgabe, Reparatur) und gibt keine Regeln für den Ablauf vor.
@@ -431,6 +436,8 @@ Eine Bewegungsart beschreibt eine Lagerbewegung nur näher (z. B. Ausgabe, Rück
 ![Bewegungsarten](Docs/Screenshots/51-bewegungsarten.png)
 
 > **Ausnahmen:** „Storniert“ (für abgelehnte und zurückgezogene Transfers) und „Korrektur“ (für Korrekturbuchungen im Lagerbestand) vergibt die App selbst. Sie können beim Buchen nicht gewählt, nicht umbenannt und nicht gelöscht werden.
+
+Auch eine Bewegungsart, die schon in einer **Lagerbewegung vorkommt**, kann nicht gelöscht werden, sonst wäre die Historie nicht mehr vollständig. Umbenennen geht aber.
 
 ### 12.3 Lagerbestand (Korrektur)
 

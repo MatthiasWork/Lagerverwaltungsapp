@@ -185,6 +185,7 @@ public class BewegungsartController : Controller
             return NotFound();
         }
 
+        ViewData["LoeschHindernis"] = await LoeschHindernisAsync(bewegungsart);
         return View(bewegungsart);
     }
 
@@ -201,10 +202,11 @@ public class BewegungsartController : Controller
         var bewegungsart = await _context.Bewegungsart.FindAsync(id);
         if (bewegungsart != null)
         {
-            var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
-            if (nurVergebenFuer != null)
+            // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
+            var hindernis = await LoeschHindernisAsync(bewegungsart);
+            if (hindernis != null)
             {
-                TempData["Fehler"] = $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen {nurVergebenFuer}, daher kann sie nicht gelöscht werden.";
+                TempData["Fehler"] = hindernis;
                 return RedirectToAction(nameof(Index));
             }
 
@@ -223,6 +225,30 @@ public class BewegungsartController : Controller
     private bool BewegungsartExists(int? id)
     {
         return _context.Bewegungsart.Any(e => e.ID == id);
+    }
+
+    /// <summary>
+    /// Methode, die überprüft, ob eine Bewegungsart gelöscht werden darf.
+    /// </summary>
+    /// <param name="bewegungsart">Die Bewegungsart, die gelöscht werden soll</param>
+    /// <returns>Der Grund, warum die Bewegungsart nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
+    private async Task<string?> LoeschHindernisAsync(Bewegungsart bewegungsart)
+    {
+        // "Storniert" und "Korrektur" vergibt der LagerService selbst, er sucht sie über den Namen
+        var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
+        if (nurVergebenFuer != null)
+        {
+            return $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen {nurVergebenFuer}, daher kann sie nicht gelöscht werden.";
+        }
+
+        // Lagerbewegungen werden nie gelöscht, sonst wäre die Historie nicht mehr vollständig
+        var anzahlLagerbewegungen = await _context.Lagerbewegung.CountAsync(l => l.BewegungsartID == bewegungsart.ID);
+        if (anzahlLagerbewegungen > 0)
+        {
+            return $"Die Bewegungsart \"{bewegungsart.Name}\" kommt in {anzahlLagerbewegungen} Lagerbewegung(en) vor und kann daher nicht gelöscht werden, sonst ginge die Historie verloren.";
+        }
+
+        return null;
     }
 
     /// <summary>
