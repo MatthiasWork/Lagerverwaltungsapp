@@ -21,12 +21,17 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
 
         public int? KategorieID { get; set; }
 
+        public int? HerstellerID { get; set; }
+
         public string? RaumID { get; set; }
 
         public string? Status { get; set; }
 
         // Alle Kategorien nach Name für den Filter "Kategorie"
         public List<Kategorie> Kategorien { get; set; } = new List<Kategorie>();
+
+        // Alle Hersteller nach Name für den Filter "Hersteller"; nur geladen, wenn nach einem Hersteller gefiltert wird
+        public List<Hersteller> Hersteller { get; set; } = new List<Hersteller>();
 
         // IDs aller Räume für den Filter "Raum"
         public List<string> Raeume { get; set; } = new List<string>();

@@ -3,16 +3,16 @@
 @{
     ViewData["Title"] = "Bewegungsart löschen";
 
-    // "Storniert" und "Korrektur" vergibt der LagerService selbst, daher können sie nicht gelöscht werden (siehe BewegungsartController)
-    var nurVergebenFuer = Bewegungsart.NurVergebenFuer(Model.Name);
+    // "Storniert" und "Korrektur" sowie Bewegungsarten, die in Lagerbewegungen vorkommen, können nicht gelöscht werden (siehe BewegungsartController)
+    var loeschHindernis = ViewData["LoeschHindernis"] as string;
 }
 
 <h1>Bewegungsart löschen</h1>
 <hr />
 
-@if (nurVergebenFuer != null)
+@if (loeschHindernis != null)
 {
-    <div class="alert alert-danger">Die Bewegungsart "@Model.Name" bekommen @nurVergebenFuer, daher kann sie nicht gelöscht werden.</div>
+    <div class="alert alert-danger">@loeschHindernis</div>
 }
 else
 {
@@ -26,7 +26,7 @@ else
     </dl>
     <form asp-action="Delete">
         <input type="hidden" asp-for="ID" />
-        @if (nurVergebenFuer == null)
+        @if (loeschHindernis == null)
         {
             <input type="submit" value="Löschen" class="btn btn-danger" />
         }
