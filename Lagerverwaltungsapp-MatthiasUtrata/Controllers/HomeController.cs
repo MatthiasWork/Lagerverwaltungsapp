@@ -234,7 +234,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         /// <summary>
         /// Methode, die die Registrierungsseite anzeigt. Registrieren kann sich nur der erste Benutzer, solange es noch keinen gibt;
         /// danach legt ein Admin alle weiteren Benutzer an und es wird zum Login weitergeleitet.
-        /// Bereits angemeldete Benutzer werden zur Startseite weitergeleitet.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
         // GET: Home/Register

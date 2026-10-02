@@ -89,11 +89,9 @@ public class RaumController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("ID,PersonID,RaumartID")] Raum raum)
     {
-        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Raum.Raumart));
 
-        // Die Raumnummer ist der Primärschlüssel und steht in der Adresse der Seiten (z. B. Raum/Details/309),
-        // daher muss sie eindeutig sein und darf keine Zeichen wie / oder Leerzeichen enthalten
+        // Die Raumnummer ist der Primärschlüssel und steht in der Adresszeile der Seiten, daher muss sie eindeutig sein und darf keine Zeichen wie / oder Leerzeichen enthalten
         if (raum.ID != null)
         {
             raum.ID = raum.ID.Trim();
@@ -157,7 +155,6 @@ public class RaumController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string? id, [Bind("ID,PersonID,RaumartID")] Raum raum)
     {
-        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Raum.Raumart));
 
         if (id != raum.ID)
@@ -234,7 +231,6 @@ public class RaumController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
         var hindernis = await LoeschHindernisAsync(raum);
         if (hindernis != null)
         {

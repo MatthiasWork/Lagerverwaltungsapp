@@ -69,8 +69,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .ToListAsync()
             };
 
-            // Verlauf: was die Person gebucht hat, was in ihre Räume übernommen wurde und welche Transfers von oder zu
-            // ihren Räumen storniert wurden. Jede Bewegung ergibt höchstens zwei Einträge, daher reichen die 8 neuesten Bewegungen für 8 Einträge
             var bewegungen = await _context.Lagerbewegung
                 .Include(l => l.Gegenstand)
                 .Include(l => l.Bewegungsart)
@@ -106,7 +104,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     continue;
                 }
 
-                // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung, sie ist also nie "sofort bestätigt"
+                // Eine stornierte Bewegung hat in BestaetigtAm den Zeitpunkt der Stornierung
                 var sofortBestaetigt = !l.Storniert && l.BestaetigtAm == l.ErstelltAm;
 
                 if (l.PersonID == anzeigenID)

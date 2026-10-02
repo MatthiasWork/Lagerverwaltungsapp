@@ -27,7 +27,6 @@ public class HerstellerController : Controller
     // GET: Hersteller
     public async Task<IActionResult> Index()
     {
-        // Die Gegenstände werden mitgeladen, um anzuzeigen, wie viele einem Hersteller zugeordnet sind
         return View(await _context.Hersteller.Include(h => h.Gegenstand).OrderBy(h => h.Name).ToListAsync());
     }
 
@@ -195,7 +194,6 @@ public class HerstellerController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
         var hindernis = await LoeschHindernisAsync(hersteller);
         if (hindernis != null)
         {
@@ -222,7 +220,6 @@ public class HerstellerController : Controller
 
     /// <summary>
     /// Methode, die überprüft, ob es schon einen anderen Hersteller mit demselben Namen gibt, und dann einen Fehler im ModelState einträgt.
-    /// Zwei gleichnamige Hersteller könnte man in den Auswahllisten nicht unterscheiden.
     /// </summary>
     /// <param name="hersteller">Der Hersteller, der gespeichert werden soll</param>
     /// <returns>Gibt eine Task zurück</returns>

@@ -8,7 +8,6 @@ using Lagerverwaltungsapp_MatthiasUtrata.Services;
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
 // Lagerbestand: Ein Admin wählt einen Raum, sieht dessen Bestand und kann ihn korrigieren (z. B. nach einer Inventur).
-// Der Bestand ändert sich dabei nur über den LagerService, sonst könnte z. B. ein Gerät mit Seriennummer in zwei Räumen liegen
 [Authorize(Roles = "Admin")]
 public class RaumbestandController : Controller
 {
@@ -62,7 +61,6 @@ public class RaumbestandController : Controller
 
         if (ModelState.IsValid)
         {
-            // Nur geänderte Zeilen buchen, ein leeres Feld heißt "nicht ändern". Negative Mengen bleiben drin, damit der LagerService sie ablehnt
             var positionen = new Dictionary<int, (int Bisher, int Neu)>();
             foreach (var (gegenstandID, neu) in korrektur.Mengen)
             {
@@ -73,7 +71,7 @@ public class RaumbestandController : Controller
                 }
             }
 
-            // Ein hinzugefügter Gegenstand war bisher nicht im Raum, mit der Menge 0 ändert sich also nichts
+            // Ein hinzugefügter Gegenstand war bisher nicht im Raum, mit der Menge 0 ändert sich nichts
             if (korrektur.NeuGegenstandID != null && korrektur.NeuMenge != 0)
             {
                 positionen[korrektur.NeuGegenstandID.Value] = (0, korrektur.NeuMenge!.Value);
@@ -112,7 +110,6 @@ public class RaumbestandController : Controller
             .OrderBy(r => r.ID)
             .ToListAsync();
 
-        // Groß-/Kleinschreibung egal, wie bei der Suche in der Datenbank
         korrektur.Raum = korrektur.Raeume.FirstOrDefault(r => string.Equals(r.ID, korrektur.RaumID, StringComparison.OrdinalIgnoreCase));
         korrektur.RaumID = korrektur.Raum?.ID;
         if (korrektur.Raum == null)

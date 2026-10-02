@@ -6,9 +6,8 @@ using Lagerverwaltungsapp_MatthiasUtrata.Models;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers;
 
-// Lagerbewegungen ansehen darf nur ein Admin. Anlegen, Bearbeiten und Löschen gibt es nicht: Lagerbewegungen entstehen nur
-// über Buchungen im LagerService und werden nie geändert oder gelöscht, sonst passen Raumbestand und Historie nicht mehr zusammen
-// (z. B. wäre ein Gerät mit Seriennummer dann gleichzeitig in einem Raum und unterwegs)
+// Lagerbewegungen ansehen darf nur ein Admin. Anlegen, Bearbeiten und Löschen gibt es nicht:
+// Lagerbewegungen entstehen nur über Buchungen im LagerService und werden nie geändert oder gelöscht, sonst passen Raumbestand und Historie nicht mehr zusammen
 [Authorize(Roles = "Admin")]
 public class LagerbewegungController : Controller
 {
@@ -56,7 +55,6 @@ public class LagerbewegungController : Controller
             abfrage = abfrage.Where(l => l.BewegungsartID == bewegungsartID);
         }
 
-        // Auch eine stornierte Lagerbewegung hat einen Zeitpunkt in BestaetigtAm, erkannt wird sie an der Bewegungsart
         if (status == HistorieViewModel.FreigabeOffen)
         {
             abfrage = abfrage.Where(Lagerbewegung.IstOffen);
@@ -94,7 +92,6 @@ public class LagerbewegungController : Controller
                 .Include(l => l.Gegenstand)
                 .Include(l => l.Bewegungsart)
                 .Include(l => l.Person)
-                // Mit den verantwortlichen Personen, damit bei offenen Lagerbewegungen steht, wer freigeben muss (Lagerbewegung.FreigabeRaum)
                 .Include(l => l.VonRaum).ThenInclude(r => r.Person)
                 .Include(l => l.NachRaum).ThenInclude(r => r.Person)
                 .OrderByDescending(l => l.ErstelltAm)
@@ -119,6 +116,11 @@ public class LagerbewegungController : Controller
         return View(historie);
     }
 
+    /// <summary>
+    /// Methode, die die Details einer Lagerbewegung anzeigt. Sie ist nur für Admins sichtbar, da sie sensible Daten enthält.
+    /// </summary>
+    /// <param name="id">Die ID der Lagerbewegung, deren Details angezeigt werden sollen</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Lagerbewegung/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -138,9 +140,8 @@ public class LagerbewegungController : Controller
     }
 
     /// <summary>
-    /// Methode, die alle Lagerbewegungen als CSV-Datei zum Herunterladen liefert, chronologisch nach dem Zeitpunkt, an dem sie
-    /// gebucht (angelegt) wurden, die älteste zuerst. Getrennt wird mit Strichpunkt, damit Excel mit deutschen Einstellungen
-    /// die Spalten erkennt.
+    /// Methode, die alle Lagerbewegungen als CSV-Datei zum Herunterladen liefert.
+    /// Es wird chronologisch nach ErstelltAm sortiert
     /// </summary>
     /// <returns>Gibt eine Task zurück</returns>
     // GET: Lagerbewegung/Export

@@ -23,8 +23,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Benutzerverwaltung anzeigt: links die Benutzerliste, rechts der ausgewählte Benutzer.
-        /// Die Liste kann nach Suchbegriff und Rolle gefiltert werden.
+        /// Methode, die die Benutzerverwaltung anzeigt, in der man nach Suchbegriff und Rolle filtern kann.
         /// </summary>
         /// <param name="suche">Suchbegriff für Vorname, Nachname, Benutzername oder E-Mail</param>
         /// <param name="rolleID">Die ID der Rolle, nach der gefiltert werden soll</param>

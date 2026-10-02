@@ -16,12 +16,21 @@ public class BewegungsartController : Controller
         _context = context;
     }
 
+    /// <summary>
+    /// Methode, die alle Bewegungsarten anzeigt.
+    /// </summary>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Bewegungsart.ToListAsync());
     }
 
+    /// <summary>
+    /// Methode, die Details zu einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -40,12 +49,21 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Erstellen einer neuen Bewegungsart anzeigt.
+    /// </summary>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Create
     public IActionResult Create()
     {
         return View();
     }
 
+    /// <summary>
+    /// Methode, die eine neue Bewegungsart erstellt.
+    /// </summary>
+    /// <param name="bewegungsart">Die zu erstellende Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -64,6 +82,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Bearbeiten einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
@@ -80,6 +103,12 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die eine Bewegungsart bearbeitet.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <param name="bewegungsart">Die zu bearbeitende Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -136,6 +165,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Löschen einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
@@ -154,6 +188,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die eine Bewegungsart löscht.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
@@ -176,14 +215,19 @@ public class BewegungsartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>
+    /// Methode, die prüft, ob eine Bewegungsart mit der angegebenen ID existiert.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt True oder False zurück</returns>
     private bool BewegungsartExists(int? id)
     {
         return _context.Bewegungsart.Any(e => e.ID == id);
     }
 
     /// <summary>
-    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. Die gibt es schon (Testdaten.sql
-    /// legt sie an), und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
+    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. 
+    /// Die werden im Testdaten.sql angelegt, und der LagerService sucht sie über den Namen. 
     /// </summary>
     /// <param name="bewegungsart">Die Bewegungsart aus dem Formular</param>
     private void FesteNichtNeuVergeben(Bewegungsart bewegungsart)

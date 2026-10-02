@@ -45,7 +45,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             var uebernahme = new UebernahmeViewModel
             {
                 Raum = await _context.Raum.Include(r => r.Raumart).FirstAsync(r => r.ID == raumID),
-                // Über die aktuelle Zuständigkeit für den freigebenden Raum, wie beim Bestätigen im LagerService
                 Offen = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
                     .Include(l => l.Bewegungsart)
@@ -94,7 +93,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
             }
             else
             {
-                // Die Geräte sind jetzt im Nach-Raum: dem eigenen Raum oder, wenn aus dem eigenen Lager geholt wurde, dem anfragenden
                 var nachRaumIDs = await _context.Lagerbewegung.Where(l => ids.Contains(l.ID)).Select(l => l.NachRaumID).Distinct().ToListAsync();
                 string wo;
                 if (nachRaumIDs.Count == 1)
