@@ -228,8 +228,32 @@ public class BewegungsartController : Controller
     }
 
     /// <summary>
-    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. Die gibt es schon (Testdaten.sql
-    /// legt sie an), und der LagerService sucht sie über den Namen. Ohne Beachtung der Groß-/Kleinschreibung, wie SQL Server beim Suchen.
+    /// Methode, die überprüft, ob eine Bewegungsart gelöscht werden darf.
+    /// </summary>
+    /// <param name="bewegungsart">Die Bewegungsart, die gelöscht werden soll</param>
+    /// <returns>Der Grund, warum die Bewegungsart nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
+    private async Task<string?> LoeschHindernisAsync(Bewegungsart bewegungsart)
+    {
+        // "Storniert" und "Korrektur" vergibt der LagerService selbst, er sucht sie über den Namen
+        var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
+        if (nurVergebenFuer != null)
+        {
+            return $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen {nurVergebenFuer}, daher kann sie nicht gelöscht werden.";
+        }
+
+        // Lagerbewegungen werden nie gelöscht, sonst wäre die Historie nicht mehr vollständig
+        var anzahlLagerbewegungen = await _context.Lagerbewegung.CountAsync(l => l.BewegungsartID == bewegungsart.ID);
+        if (anzahlLagerbewegungen > 0)
+        {
+            return $"Die Bewegungsart \"{bewegungsart.Name}\" kommt in {anzahlLagerbewegungen} Lagerbewegung(en) vor und kann daher nicht gelöscht werden, sonst ginge die Historie verloren.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Methode, die verhindert, dass eine weitere Bewegungsart "Storniert" oder "Korrektur" heißt. 
+    /// Die werden im Testdaten.sql angelegt, und der LagerService sucht sie über den Namen. 
     /// </summary>
     /// <param name="bewegungsart">Die Bewegungsart aus dem Formular</param>
     private void FesteNichtNeuVergeben(Bewegungsart bewegungsart)

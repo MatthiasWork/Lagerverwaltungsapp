@@ -116,6 +116,11 @@ public class LagerbewegungController : Controller
         return View(historie);
     }
 
+    /// <summary>
+    /// Methode, die die Details einer Lagerbewegung anzeigt. Sie ist nur für Admins sichtbar, da sie sensible Daten enthält.
+    /// </summary>
+    /// <param name="id">Die ID der Lagerbewegung, deren Details angezeigt werden sollen</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Lagerbewegung/Details/5
     public async Task<IActionResult> Details(int? id)
     {
