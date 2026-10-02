@@ -7,9 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 {
-    // Neue Ausleihe: die Seite für Transfers aus dem eigenen Raum (eine eigene Transfer-Seite gibt es nicht mehr). Die für einen Raum
-    // verantwortliche Person bucht Gegenstände aus ihrem Raum in einen anderen Raum, dessen verantwortliche Person die Übernahme
-    // unter "Freigaben" bestätigt. Die Buchung macht LagerService.AusborgenAsync.
     public class AusleiheController : Controller
     {
         private readonly LagerverwaltungContext _context;
@@ -27,8 +24,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die das Formular "Neue Ausleihe" anzeigt. Wer für keinen Raum verantwortlich ist, bekommt nur einen Hinweis,
-        /// da nur die verantwortliche Person Gegenstände aus einem Raum buchen darf.
+        /// Methode, die das Formular "Neue Ausleihe" anzeigt. Wer für keinen Raum verantwortlich ist, bekommt nur einen Hinweis, weil sie keinen Raum hat und deswegen nichts buchen kann.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>
         // GET: Ausleihe
@@ -52,8 +48,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die ausgewählten Gegenstände aus dem eigenen Raum an den gewählten Raum ausleiht. Wie beim Transfer
-        /// werden sie sofort abgebucht und sind unterwegs, bis die Person des Zielraums die Übernahme bestätigt.
+        /// Methode, die die ausgewählten Gegenstände aus dem eigenen Raum an den gewählten Raum ausleiht. 
         /// </summary>
         /// <param name="ausleihe">Das AusborgenViewModel mit Zielraum, Bewegungsart und Mengen aus dem Formular</param>
         /// <returns>Gibt eine Task zurück</returns>
@@ -99,8 +94,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die alles für die Anzeige des Formulars setzt: den eigenen Raum mit seinem Bestand, die möglichen Zielräume
-        /// und die Bewegungsarten.
+        /// Methode, die alles für die Anzeige des Formulars setzt: den eigenen Raum mit seinem Bestand, die möglichen Zielräume und die Bewegungsarten.
         /// </summary>
         /// <param name="ausleihe">Das AusborgenViewModel, das angezeigt werden soll</param>
         /// <param name="raumID">Die ID des eigenen Raums, aus dem ausgeliehen wird</param>
@@ -115,7 +109,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(r => r.Gegenstand.Name).ThenBy(r => r.Gegenstand.Seriennummer)
                 .ToListAsync();
 
-            // Nur Räume mit verantwortlicher Person, denn diese muss die Übernahme bestätigen
+            // Nur Räume mit einer verantwortlichen Person, denn diese muss die Übernahme bestätigen
             ausleihe.Raeume = await _context.Raum
                 .Include(r => r.Raumart)
                 .Include(r => r.Person)

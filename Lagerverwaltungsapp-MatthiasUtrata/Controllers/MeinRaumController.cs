@@ -25,7 +25,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
         /// <summary>
         /// Methode, die den Raum der angemeldeten Person mit seinem Bestand anzeigt, dazu die für den Raum angefragten
-        /// Lagerbewegungen (Transfers aus dem Raum, aus einem Lager geholte Geräte), die noch nicht freigegeben sind.
+        /// Lagerbewegungen, die noch nicht freigegeben sind.
         /// Der Bestand kann nach Suchbegriff und Kategorie gefiltert werden.
         /// </summary>
         /// <param name="suche">Suchbegriff für Bezeichnung oder Seriennummer</param>
@@ -90,8 +90,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, mit der die angemeldete Person eine Lagerbewegung zurückzieht, die sie angefragt hat (Transfer aus ihrem Raum
-        /// oder aus einem Lager geholte Geräte), solange sie noch nicht freigegeben ist. Die Menge kommt wieder in den Von-Raum.
+        /// Methode, mit der die angemeldete Person eine Lagerbewegung zurückzieht, die sie angefragt hat 
         /// </summary>
         /// <param name="id">Die ID der Lagerbewegung, die zurückgezogen werden soll</param>
         /// <returns>Gibt eine Task zurück</returns>
@@ -148,7 +147,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
         /// <summary>
         /// Methode, die einen Wareneingang in den eigenen Raum bucht. Die Lagerbewegung ist sofort bestätigt,
-        /// da die Person für den Raum verantwortlich ist, und steht danach in der Historie des Gegenstands.
+        /// da die Person für den Raum verantwortlich ist und die Ware außerhalb des Inventars hinzugefügt wird.
         /// </summary>
         /// <param name="wareneingang">Das WareneingangViewModel mit Gegenstand, Menge und Bewegungsart aus dem Formular</param>
         /// <returns>Gibt eine Task zurück</returns>

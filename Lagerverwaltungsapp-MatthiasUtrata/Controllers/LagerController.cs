@@ -7,9 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 {
-    // Aus dem Lager holen: Die für einen Raum verantwortliche Person sucht sich ein Lager aus (Raumart mit "Lager" im Namen)
-    // und fragt Geräte daraus für ihren Raum an. Das ist eine Lagerbewegung wie jede andere, nur dass hier der Nach-Raum anfragt
-    // und daher die Person des Lagers freigibt (siehe Lagerbewegung.FreigabeRaum)
     public class LagerController : Controller
     {
         private readonly LagerverwaltungContext _context;
@@ -101,8 +98,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die alles für die Anzeige setzt: den eigenen Raum, die Lager zur Auswahl, das gewählte Lager mit seinem
-        /// Bestand und die Bewegungsarten.
+        /// Methode, die alles für die Anzeige setzt
         /// </summary>
         /// <param name="holen">Das HolenViewModel, das angezeigt werden soll</param>
         /// <param name="raumID">Die ID des eigenen Raums, in den geholt wird</param>
@@ -119,7 +115,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                 .OrderBy(r => r.ID)
                 .ToListAsync();
 
-            // Ohne gültige Auswahl das erste Lager. Groß-/Kleinschreibung egal, wie bei der Suche in der Datenbank
+            // Ohne gültige Auswahl das erste Lager
             holen.VonRaum = holen.Lager.FirstOrDefault(r => string.Equals(r.ID, holen.VonRaumID, StringComparison.OrdinalIgnoreCase))
                 ?? holen.Lager.FirstOrDefault();
             holen.VonRaumID = holen.VonRaum?.ID;

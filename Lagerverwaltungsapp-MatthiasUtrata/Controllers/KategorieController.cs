@@ -27,7 +27,6 @@ public class KategorieController : Controller
     // GET: Kategorie
     public async Task<IActionResult> Index()
     {
-        // Die Gegenstände werden mitgeladen, um anzuzeigen, wie viele einer Kategorie zugeordnet sind
         return View(await _context.Kategorie.Include(k => k.Gegenstand).OrderBy(k => k.Name).ToListAsync());
     }
 

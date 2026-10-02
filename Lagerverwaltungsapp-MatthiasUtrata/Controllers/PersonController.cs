@@ -76,7 +76,7 @@ public class PersonController : Controller
 
     /// <summary>
     /// Methode, die eine neue Person anlegt, sofern der Benutzername noch nicht vergeben ist.
-    /// Das Passwort wird dabei gehasht gespeichert.
+    /// Das Passwort wird dabei gehasht und danach gespeichert.
     /// </summary>
     /// <param name="person">Die Person mit den Daten aus dem Formular</param>
     /// <returns>Gibt eine Task zurück</returns>
@@ -87,7 +87,6 @@ public class PersonController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID")] Person person)
     {
-        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Person.Rolle));
 
         // Der Login sucht über den Benutzernamen, daher muss er eindeutig sein
@@ -133,8 +132,7 @@ public class PersonController : Controller
     }
 
     /// <summary>
-    /// Methode, die die Änderungen an einer Person speichert. Bleibt das Passwort leer,
-    /// wird das bisherige Passwort beibehalten, ansonsten wird das neue Passwort gehasht gespeichert.
+    /// Methode, die die Änderungen an einer Person speichert. 
     /// </summary>
     /// <param name="id">Die ID der Person, die bearbeitet werden soll</param>
     /// <param name="person">Die Person mit den geänderten Daten aus dem Formular</param>
@@ -147,8 +145,8 @@ public class PersonController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int? id, [Bind("ID,Vorname,Nachname,Username,Password,Email,RolleID")] Person person)
     {
-        // Navigationseigenschaften werden nicht gebunden, sonst schlägt die Validierung fehl
         ModelState.Remove(nameof(Person.Rolle));
+
         // Beim Bearbeiten ist das Passwort optional (leer = bisheriges Passwort behalten)
         ModelState.Remove(nameof(Person.Password));
 
@@ -256,7 +254,6 @@ public class PersonController : Controller
             return RedirectToAction("Index", "Admin");
         }
 
-        // Nochmals prüfen, da der POST auch ohne die Bestätigungsseite abgeschickt werden kann
         var hindernis = await LoeschHindernisAsync(person);
         if (hindernis != null)
         {

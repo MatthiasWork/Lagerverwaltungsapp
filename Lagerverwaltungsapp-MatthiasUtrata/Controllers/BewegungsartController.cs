@@ -16,12 +16,21 @@ public class BewegungsartController : Controller
         _context = context;
     }
 
+    /// <summary>
+    /// Methode, die alle Bewegungsarten anzeigt.
+    /// </summary>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart
     public async Task<IActionResult> Index()    
     {
         return View(await _context.Bewegungsart.ToListAsync());
     }
 
+    /// <summary>
+    /// Methode, die Details zu einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -40,12 +49,21 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Erstellen einer neuen Bewegungsart anzeigt.
+    /// </summary>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Create
     public IActionResult Create()
     {
         return View();
     }
 
+    /// <summary>
+    /// Methode, die eine neue Bewegungsart erstellt.
+    /// </summary>
+    /// <param name="bewegungsart">Die zu erstellende Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Create
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -64,6 +82,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Bearbeiten einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
@@ -80,6 +103,12 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die eine Bewegungsart bearbeitet.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <param name="bewegungsart">Die zu bearbeitende Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Edit/5
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -136,6 +165,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die das Formular zum Löschen einer Bewegungsart anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Bewegungsart/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
@@ -155,6 +189,11 @@ public class BewegungsartController : Controller
         return View(bewegungsart);
     }
 
+    /// <summary>
+    /// Methode, die eine Bewegungsart löscht.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // POST: Bewegungsart/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
@@ -178,33 +217,14 @@ public class BewegungsartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>
+    /// Methode, die prüft, ob eine Bewegungsart mit der angegebenen ID existiert.
+    /// </summary>
+    /// <param name="id">Die ID der Bewegungsart</param>
+    /// <returns>Gibt True oder False zurück</returns>
     private bool BewegungsartExists(int? id)
     {
         return _context.Bewegungsart.Any(e => e.ID == id);
-    }
-
-    /// <summary>
-    /// Methode, die überprüft, ob eine Bewegungsart gelöscht werden darf.
-    /// </summary>
-    /// <param name="bewegungsart">Die Bewegungsart, die gelöscht werden soll</param>
-    /// <returns>Der Grund, warum die Bewegungsart nicht gelöscht werden darf, oder null, wenn das Löschen erlaubt ist</returns>
-    private async Task<string?> LoeschHindernisAsync(Bewegungsart bewegungsart)
-    {
-        // "Storniert" und "Korrektur" vergibt der LagerService selbst, er sucht sie über den Namen
-        var nurVergebenFuer = Bewegungsart.NurVergebenFuer(bewegungsart.Name);
-        if (nurVergebenFuer != null)
-        {
-            return $"Die Bewegungsart \"{bewegungsart.Name}\" bekommen {nurVergebenFuer}, daher kann sie nicht gelöscht werden.";
-        }
-
-        // Lagerbewegungen werden nie gelöscht, sonst wäre die Historie nicht mehr vollständig
-        var anzahlLagerbewegungen = await _context.Lagerbewegung.CountAsync(l => l.BewegungsartID == bewegungsart.ID);
-        if (anzahlLagerbewegungen > 0)
-        {
-            return $"Die Bewegungsart \"{bewegungsart.Name}\" kommt in {anzahlLagerbewegungen} Lagerbewegung(en) vor und kann daher nicht gelöscht werden, sonst ginge die Historie verloren.";
-        }
-
-        return null;
     }
 
     /// <summary>
