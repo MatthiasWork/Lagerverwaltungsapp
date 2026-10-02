@@ -20,7 +20,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die das Profil einer Person anzeigt: Rolle, Raumverantwortung, offene Transfers und die letzten Buchungen.
+        /// Methode, die das Profil einer Person anzeigt: Rolle, Raumverantwortung, offene Ausleihen und die letzten Buchungen.
         /// </summary>
         /// <param name="id">Die ID der Person; ohne ID das eigene Profil</param>
         /// <returns>Gibt eine Task zurück</returns>
@@ -59,7 +59,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .GroupBy(r => r.RaumID)
                     .Select(g => new { RaumID = g.Key, Stueck = g.Sum(r => r.Menge) })
                     .ToDictionaryAsync(g => g.RaumID, g => g.Stueck),
-                OffeneTransfers = await _context.Lagerbewegung
+                OffeneAusleihen = await _context.Lagerbewegung
                     .Include(l => l.Gegenstand)
                     .Include(l => l.VonRaum).ThenInclude(r => r.Person)
                     .Include(l => l.NachRaum).ThenInclude(r => r.Person)
@@ -112,7 +112,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     string text;
                     if (!sofortBestaetigt)
                     {
-                        text = $"Transfer {was} {l.VonRaumID} → {l.NachRaumID} angefragt";
+                        text = $"Ausleihe {was} {l.VonRaumID} → {l.NachRaumID} angefragt";
                     }
                     else if (l.VonRaumID == l.NachRaumID)
                     {
@@ -127,7 +127,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
 
                 if (l.Storniert)
                 {
-                    profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer {was} {l.VonRaumID} → {l.NachRaumID} storniert" });
+                    profil.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Ausleihe {was} {l.VonRaumID} → {l.NachRaumID} storniert" });
                 }
                 else if (l.BestaetigtAm != null && !sofortBestaetigt && raumIDs.Contains(l.NachRaumID))
                 {

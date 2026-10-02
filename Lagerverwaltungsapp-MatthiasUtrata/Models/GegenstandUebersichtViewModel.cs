@@ -5,7 +5,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
     {
         // Mögliche Status eines Gegenstands im Katalog
         public const string Verfuegbar = "Verfügbar";
-        public const string InTransfer = "In Transfer";
+        public const string InAusleihe = "In Ausleihe";
         public const string KeinBestand = "Kein Bestand";
 
         // Gefilterte Liste der Gegenstände

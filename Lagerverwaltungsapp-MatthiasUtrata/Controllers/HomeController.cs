@@ -147,10 +147,10 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     continue;
                 }
 
-                uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = $"{person} fragt Transfer von {was} nach {l.NachRaumID} an" });
+                uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = $"{person} fragt Ausleihe von {was} nach {l.NachRaumID} an" });
                 if (l.Storniert)
                 {
-                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer von {was} nach {l.NachRaumID} storniert, zurück in {l.VonRaumID}" });
+                    uebersicht.Aktivitaeten.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Ausleihe von {was} nach {l.NachRaumID} storniert, zurück in {l.VonRaumID}" });
                 }
                 else if (l.BestaetigtAm != null)
                 {

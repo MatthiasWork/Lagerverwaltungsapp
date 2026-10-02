@@ -4,8 +4,8 @@
     var person = Model.Person;
     var istAdmin = User.IsInRole("Admin");
 
-    // Offene Transfers, die die Person angelegt hat, je Von- und Nach-Raum zusammengefasst (z. B. "HL → 310")
-    var anfragen = Model.OffeneTransfers.GroupBy(l => $"{l.VonRaumID} → {l.NachRaumID}").ToList();
+    // Offene Ausleihen, die die Person angelegt hat, je Von- und Nach-Raum zusammengefasst (z. B. "HL → 310")
+    var anfragen = Model.OffeneAusleihen.GroupBy(l => $"{l.VonRaumID} → {l.NachRaumID}").ToList();
     string anfragenTitel;
     if (Model.IstEigenesProfil)
     {
@@ -110,7 +110,7 @@
             @foreach (var anfrage in anfragen)
             {
                 <div class="anfrage-zeile">
-                    <span><b class="fw-medium">Transfer @anfrage.Key</b><br /><span class="nebeninfo">@AnfrageText(anfrage)</span></span>
+                    <span><b class="fw-medium">Ausleihe @anfrage.Key</b><br /><span class="nebeninfo">@AnfrageText(anfrage)</span></span>
                     <span class="tag tag-accent">wartet auf @Kurzname(anfrage.First().FreigabeRaum.Person)</span>
                 </div>
             }
@@ -160,7 +160,7 @@
         {
             <div class="profil-zeile">
                 <span>
-                    <b class="fw-medium">Transfer @anfrage.Key</b><br />
+                    <b class="fw-medium">Ausleihe @anfrage.Key</b><br />
                     <span class="nebeninfo">@AnfrageText(anfrage)</span>
                 </span>
                 <span class="tag tag-outline">wartet auf @Kurzname(anfrage.First().FreigabeRaum.Person)</span>

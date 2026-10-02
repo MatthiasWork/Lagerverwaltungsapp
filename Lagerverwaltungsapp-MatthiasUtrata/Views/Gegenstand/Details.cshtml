@@ -5,8 +5,8 @@
     ViewData["Title"] = gegenstand.Name;
 
     var istAdmin = User.IsInRole("Admin");
-    // Ein Transfer geht immer vom eigenen Raum aus, daher nur, wenn der Gegenstand dort liegt
-    var kannTransfer = Model.EigenerRaumID != null && Model.Eintrag.Standorte.Any(r => r.RaumID == Model.EigenerRaumID);
+    // Eine Ausleihe geht immer vom eigenen Raum aus, daher nur, wenn der Gegenstand dort liegt
+    var kannAusleihen = Model.EigenerRaumID != null && Model.Eintrag.Standorte.Any(r => r.RaumID == Model.EigenerRaumID);
     // Einbuchen in den eigenen Raum; ein Gerät mit Seriennummer nur, solange es weder in einem Raum liegt noch unterwegs ist
     var kannWareneingang = Model.EigenerRaumID != null
         && (gegenstand.Seriennummer == null || Model.Eintrag.Status == GegenstandUebersichtViewModel.KeinBestand);
@@ -95,7 +95,7 @@
                     Wartet auf die Freigabe durch @wartetAuf.
                     @if (Model.Unterwegs.Count > 1)
                     {
-                        <text>Dazu @(Model.Unterwegs.Count - 1) weitere Transfers.</text>
+                        <text>Dazu @(Model.Unterwegs.Count - 1) weitere Ausleihen.</text>
                     }
                 </div>
                 @* Freigeben darf nur, wer für den freigebenden Raum verantwortlich ist *@
@@ -116,12 +116,12 @@
             }
         </div>
 
-        @if (kannTransfer || kannWareneingang || istAdmin)
+        @if (kannAusleihen || kannWareneingang || istAdmin)
         {
             <div class="detail-aktionen">
-                @if (kannTransfer)
+                @if (kannAusleihen)
                 {
-                    <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+                    <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="arrow-right-left"></i>Ausleihe anfragen</a>
                 }
                 @if (kannWareneingang)
                 {
@@ -192,12 +192,12 @@
         }
     </div>
 
-    @if (kannTransfer || kannWareneingang || istAdmin)
+    @if (kannAusleihen || kannWareneingang || istAdmin)
     {
         <div class="aktionsleiste">
-            @if (kannTransfer)
+            @if (kannAusleihen)
             {
-                <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index">Transfer</a>
+                <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index">Ausleihen</a>
             }
             @if (kannWareneingang)
             {

@@ -105,7 +105,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, mit der die für einen Raum verantwortliche Person mehrere Gegenstände von einem Raum in einen anderen bucht:
-        /// aus ihrem Raum an einen anderen Raum (Transfer, Ausleihe) oder aus einem Lager in ihren Raum (holen).
+        /// aus ihrem Raum an einen anderen Raum (Ausleihe) oder aus einem Lager in ihren Raum (holen).
         /// Alles oder nichts in einer Transaktion; die Regeln je Gegenstand stehen in BewegungBuchenAsync.
         /// </summary>
         /// <param name="positionen">Die Gegenstände, die gebucht werden (Schlüssel = GegenstandID, Wert = Menge)</param>
@@ -217,7 +217,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
 
         /// <summary>
         /// Methode, mit der die Person, die angefragt hat (Lagerbewegung.AnfrageRaum), eine offene Lagerbewegung zurückzieht,
-        /// solange sie noch nicht bestätigt ist: bei einem Transfer die Person des Von-Raums, bei Geräten, die aus einem Lager
+        /// solange sie noch nicht bestätigt ist: bei einer Ausleihe die Person des Von-Raums, bei Geräten, die aus einem Lager
         /// geholt werden, die des Nach-Raums. Die Menge wird wieder im Von-Raum zugebucht, die Lagerbewegung bleibt als storniert in der Historie.
         /// </summary>
         /// <param name="lagerbewegungID">Die ID der Lagerbewegung, die zurückgezogen werden soll</param>
@@ -327,7 +327,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Services
                 return $"\"{gegenstand.Name}\" ({gegenstand.Seriennummer}) ist ein einzelnes Gerät und kann nur einmal oder gar nicht im Raum sein.";
             }
 
-            // Hat sich der Bestand geändert, seit der Admin ihn gesehen hat (z. B. durch einen Transfer), stimmt die gezählte Menge
+            // Hat sich der Bestand geändert, seit der Admin ihn gesehen hat (z. B. durch eine Ausleihe), stimmt die gezählte Menge
             // vielleicht nicht mehr. Dann lieber abbrechen und neu prüfen lassen
             var bestand = await _context.Raumbestand.FindAsync(gegenstand.ID, raumID);
             var aktuell = bestand?.Menge ?? 0;

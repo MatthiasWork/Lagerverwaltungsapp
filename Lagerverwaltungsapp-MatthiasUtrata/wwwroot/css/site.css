@@ -1261,13 +1261,13 @@ dl.row dd {
         width: 44px;
     }
 
-/* Transfer anfragen */
-.transfer,
-.transfer-formular {
+/* Geräte buchen: Aufbau von "Aus dem Lager holen", Kopf und Titel mobil auch für "Neue Ausleihe" */
+.buchung,
+.buchung-formular {
     gap: 22px;
 }
 
-.transfer-formular {
+.buchung-formular {
     display: flex;
     flex-direction: column;
 }
@@ -1277,20 +1277,20 @@ dl.row dd {
     color: var(--color-neutral-700);
 }
 
-.transfer-raster {
+.buchung-raster {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
     gap: 28px;
 }
 
-.transfer-auswahl {
+.buchung-auswahl {
     display: flex;
     flex-direction: column;
     gap: 18px;
     min-width: 0;
 }
 
-.transfer-seite {
+.buchung-seite {
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -1434,7 +1434,7 @@ dl.row dd {
     color: var(--color-neutral-700);
 }
 
-.transfer-optionen {
+.buchung-optionen {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
@@ -1474,18 +1474,18 @@ dl.row dd {
 
 @media (max-width: 991.98px) {
     /* Mobil: eine Spalte bis zur Tab-Leiste, der Button sitzt unten */
-    /* .seite.transfer, damit der allgemeine Abstand von .seite (weiter unten) nicht gewinnt */
-    .seite.transfer {
+    /* .seite.buchung, damit der allgemeine Abstand von .seite (weiter unten) nicht gewinnt */
+    .seite.buchung {
         gap: 12px;
         min-height: calc(100dvh - 114px - env(safe-area-inset-bottom, 0px));
     }
 
     /* "Abbrechen" sitzt im Design 6 px unter dem oberen Rand statt 12 */
-    .transfer-kopf-mobil {
+    .buchung-kopf-mobil {
         margin-top: -6px;
     }
 
-    .transfer-formular {
+    .buchung-formular {
         flex: 1;
         gap: 14px;
     }
@@ -1496,19 +1496,19 @@ dl.row dd {
         text-decoration: none;
     }
 
-    .transfer-titel-mobil {
+    .buchung-titel-mobil {
         margin: 8px 0 0;
         font-size: 30px;
     }
 
-    .transfer-raster {
+    .buchung-raster {
         display: flex;
         flex-direction: column;
         flex: 1;
         gap: 14px;
     }
 
-    .transfer-auswahl {
+    .buchung-auswahl {
         gap: 14px;
     }
 
@@ -1542,25 +1542,25 @@ dl.row dd {
         }
 
     /* Bewegungsart über die ganze Breite */
-    .transfer-optionen > div {
+    .buchung-optionen > div {
         width: 100%;
     }
 
-    .transfer-seite {
+    .buchung-seite {
         margin-top: auto;
     }
 
-        .transfer-seite .btn-cta {
+        .buchung-seite .btn-cta {
             min-height: 48px;
             margin-bottom: -12px;
         }
 
-            .transfer-seite .btn-cta::before {
+            .buchung-seite .btn-cta::before {
                 display: none;
             }
 }
 
-/* Aus dem Lager holen: Aufbau wie "Transfer anfragen", darüber die Lager als Karten zur Auswahl, das gewählte mit Akzentrahmen */
+/* Aus dem Lager holen: Aufbau wie oben (.buchung-*), darüber die Lager als Karten zur Auswahl, das gewählte mit Akzentrahmen */
 .lager-liste {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1956,7 +1956,7 @@ dl.row dd {
     font-weight: 400;
 }
 
-.transfers-offen {
+.ausleihen-offen {
     color: var(--color-accent-800);
 }
 

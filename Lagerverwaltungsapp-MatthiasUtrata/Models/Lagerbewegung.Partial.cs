@@ -7,7 +7,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models;
 // die Bewegungsart ist dann "Storniert" und BestaetigtAm enthält den Zeitpunkt der Stornierung (also "abgeschlossen am").
 //
 // Freigeben (bestätigen oder ablehnen) muss immer die Person des anderen Raums als die, die angefragt hat; zurückziehen darf,
-// wer angefragt hat. Meist fragt die Person des Von-Raums an (Transfer aus dem eigenen Raum), dann gibt der Nach-Raum frei.
+// wer angefragt hat. Meist fragt die Person des Von-Raums an (Ausleihe aus dem eigenen Raum), dann gibt der Nach-Raum frei.
 // Holt die Person des Nach-Raums Geräte aus einem Lager in ihren Raum, gibt der Von-Raum (das Lager) frei.
 // Welche Seite angefragt hat, steht nicht in der Tabelle: Erkannt wird es an der Person, die die Lagerbewegung angelegt hat
 // (PersonID), verglichen mit der aktuell für den Nach-Raum verantwortlichen Person.
@@ -37,7 +37,7 @@ public partial class Lagerbewegung
 
     /// <summary>
     /// Methode, die die Bedingung für die Lagerbewegungen liefert, die für einen Raum angefragt wurden und daher von dessen
-    /// Person zurückgezogen werden können: aus dem Raum (Transfer) oder in den Raum (aus einem Lager geholt).
+    /// Person zurückgezogen werden können: aus dem Raum (Ausleihe) oder in den Raum (aus einem Lager geholt).
     /// Als Ausdruck für Abfragen, für offene Lagerbewegungen zusammen mit IstOffen.
     /// </summary>
     /// <param name="raumID">Die ID des Raums, für den angefragt wurde</param>

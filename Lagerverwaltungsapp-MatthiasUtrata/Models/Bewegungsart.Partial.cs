@@ -37,7 +37,7 @@ public partial class Bewegungsart
     {
         if (string.Equals(name?.Trim(), Storniert, StringComparison.OrdinalIgnoreCase))
         {
-            return "abgelehnte und zurückgezogene Transfers";
+            return "abgelehnte und zurückgezogene Ausleihen";
         }
         if (string.Equals(name?.Trim(), Korrektur, StringComparison.OrdinalIgnoreCase))
         {

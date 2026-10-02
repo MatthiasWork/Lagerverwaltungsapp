@@ -74,7 +74,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
                     .Where(m => m.Value != null && m.Value != 0)
                     .ToDictionary(m => m.Key, m => m.Value!.Value);
 
-                // Dieselbe Buchung wie beim Transfer; der LagerService erlaubt sie, weil der Von-Raum ein Lager ist
+                // Dieselbe Buchung wie bei der Ausleihe; der LagerService erlaubt sie, weil der Von-Raum ein Lager ist
                 var fehler = await _lagerService.AusborgenAsync(positionen, holen.VonRaumID!, raumID, holen.BewegungsartID!.Value, personID.Value);
                 if (fehler == null)
                 {
@@ -107,7 +107,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         {
             holen.NachRaum = await _context.Raum.Include(r => r.Raumart).FirstAsync(r => r.ID == raumID);
 
-            // Nur Lager mit verantwortlicher Person, denn diese muss freigeben. Das eigene Lager nicht, dafür gibt es den Transfer
+            // Nur Lager mit verantwortlicher Person, denn diese muss freigeben. Das eigene Lager nicht, dafür gibt es die Ausleihe
             holen.Lager = await _context.Raum
                 .Include(r => r.Raumart)
                 .Include(r => r.Person)

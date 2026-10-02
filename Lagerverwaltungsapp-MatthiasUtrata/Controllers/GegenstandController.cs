@@ -143,7 +143,7 @@ public class GegenstandController : Controller
         }
         else if (unterwegs > 0)
         {
-            eintrag.Status = GegenstandUebersichtViewModel.InTransfer;
+            eintrag.Status = GegenstandUebersichtViewModel.InAusleihe;
         }
         else
         {
@@ -219,7 +219,7 @@ public class GegenstandController : Controller
             if (l.Storniert)
             {
                 details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.ErstelltAm, Text = GrossAnfang($"{menge}von {l.VonRaumID} nach {l.NachRaumID} gebucht von {person}") });
-                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Transfer nach {l.NachRaumID} storniert, {menge}zurück in {l.VonRaumID}" });
+                details.Verlauf.Add(new Aktivitaet { Zeitpunkt = l.BestaetigtAm!.Value, Text = $"Ausleihe nach {l.NachRaumID} storniert, {menge}zurück in {l.VonRaumID}" });
                 continue;
             }
 

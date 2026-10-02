@@ -9,7 +9,7 @@ document.querySelectorAll('[data-auto-absenden]').forEach(function (auswahl) {
     });
 });
 
-// Formular mit data-bestaetigen (z. B. Transfer ablehnen oder zurückziehen): erst nach einer Rückfrage abschicken
+// Formular mit data-bestaetigen (z. B. Ausleihe ablehnen oder zurückziehen): erst nach einer Rückfrage abschicken
 document.querySelectorAll('form[data-bestaetigen]').forEach(function (formular) {
     formular.addEventListener('submit', function (e) {
         if (!window.confirm(formular.dataset.bestaetigen)) {

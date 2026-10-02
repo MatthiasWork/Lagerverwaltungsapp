@@ -40,7 +40,7 @@ FROM (VALUES
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Raumart r WHERE r.Name = v.Name);
 
 /* ---------- Bewegungsart (höchstens 20 Zeichen) ---------- */
--- "Storniert" muss genau so heißen, da abgelehnte und zurückgezogene Transfers diese Bewegungsart bekommen (Bewegungsart.Storniert),
+-- "Storniert" muss genau so heißen, da abgelehnte und zurückgezogene Ausleihen diese Bewegungsart bekommen (Bewegungsart.Storniert),
 -- ebenso "Korrektur" für Korrekturbuchungen im Lagerbestand (Bewegungsart.Korrektur)
 INSERT INTO dbo.Bewegungsart (Name)
 SELECT v.Name

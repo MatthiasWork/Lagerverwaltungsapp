@@ -10,16 +10,16 @@
     var anzahlGewaehlt = Model.Mengen.Count(m => m.Value > 0);
 }
 
-<div class="seite transfer holen">
+<div class="seite buchung holen">
     <div class="seiten-kopf d-none d-lg-flex">
         <div>
             <h1>Aus dem Lager holen</h1>
             <div class="seiten-untertitel">Geräte aus einem Lager in Raum @Model.NachRaum.ID holen.</div>
         </div>
     </div>
-    <div class="transfer-kopf-mobil d-lg-none">
+    <div class="buchung-kopf-mobil d-lg-none">
         <a class="abbrechen-link" asp-controller="MeinRaum" asp-action="Index">Abbrechen</a>
-        <h1 class="transfer-titel-mobil">Aus dem Lager</h1>
+        <h1 class="buchung-titel-mobil">Aus dem Lager</h1>
     </div>
 
     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
@@ -47,11 +47,11 @@
         </nav>
 
         @* Ohne _ValidationScriptsPartial: Bewegungsart und Mengen (min/max) prüft der Browser selbst, alles andere Controller und LagerService *@
-        <form asp-action="Index" method="post" id="holenFormular" class="transfer-formular">
+        <form asp-action="Index" method="post" id="holenFormular" class="buchung-formular">
             <input type="hidden" asp-for="VonRaumID" />
 
-            <div class="transfer-raster">
-                <div class="transfer-auswahl">
+            <div class="buchung-raster">
+                <div class="buchung-auswahl">
                     <div class="geraete-liste">
                         <h4>Geräte aus @lager.ID · <span data-holen="anzahl">@anzahlGewaehlt</span></h4>
 
@@ -113,7 +113,7 @@
                         }
                     </div>
 
-                    <div class="transfer-optionen">
+                    <div class="buchung-optionen">
                         <div>
                             <label class="form-label" asp-for="BewegungsartID"></label>
                             <select asp-for="BewegungsartID" asp-items="Model.Bewegungsarten" class="form-select" required></select>
@@ -122,7 +122,7 @@
                     </div>
                 </div>
 
-                <div class="transfer-seite">
+                <div class="buchung-seite">
                     <div class="blueprint ablauf d-none d-lg-flex">
                         <span class="card-kicker">Ablauf</span>
                         <div class="ablauf-schritt"><span class="schritt-nummer aktuell">1</span><span>Sie fragen die Geräte an, sie werden in @lager.ID für Sie reserviert</span></div>
@@ -139,7 +139,7 @@
 
 @section Scripts {
     <script>
-        // Geräteauswahl wie beim Transfer: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen
+        // Geräteauswahl wie bei der Ausleihe: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen
         (function () {
             var formular = document.getElementById('holenFormular');
             if (!formular) {

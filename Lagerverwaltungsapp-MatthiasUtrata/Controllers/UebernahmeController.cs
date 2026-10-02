@@ -23,7 +23,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die alle offenen Lagerbewegungen anzeigt, die die angemeldete Person freigeben muss: Transfers in ihren Raum
+        /// Methode, die alle offenen Lagerbewegungen anzeigt, die die angemeldete Person freigeben muss: Ausleihen in ihren Raum
         /// (z. B. an sie ausgeborgte Gegenstände) und Geräte, die andere aus ihrem Lager holen. Darunter die zuletzt erledigten.
         /// </summary>
         /// <returns>Gibt eine Task zurück</returns>

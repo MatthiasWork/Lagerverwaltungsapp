@@ -9,7 +9,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Bewegungen, die noch auf die Übernahme im Zielraum warten, älteste zuerst
         public List<Lagerbewegung> Unterwegs { get; set; } = new List<Lagerbewegung>();
 
-        // Raum, für den die angemeldete Person verantwortlich ist (null = keiner); nur von dort aus kann sie einen Transfer anlegen
+        // Raum, für den die angemeldete Person verantwortlich ist (null = keiner); nur von dort aus kann sie eine Ausleihe anlegen
         public string? EigenerRaumID { get; set; }
 
         // Alle Buchungen des Gegenstands als Verlauf, neueste zuerst

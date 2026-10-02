@@ -20,7 +20,7 @@
         return string.Join(", ", raeume);
     }
 
-    int Offen(Person person) => Model.OffeneTransfers.GetValueOrDefault(person.ID);
+    int Offen(Person person) => Model.OffeneAusleihen.GetValueOrDefault(person.ID);
 
     var ausgewaehlt = Model.Ausgewaehlt;
 }
@@ -70,7 +70,7 @@
                             <th>Name</th>
                             <th>Rolle</th>
                             <th>Raumverantwortung</th>
-                            <th>Transfers</th>
+                            <th>Ausleihen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,7 +91,7 @@
                                 <td>@RaeumeText(person)</td>
                                 @if (offen > 0)
                                 {
-                                    <td class="transfers-offen">@offen offen</td>
+                                    <td class="ausleihen-offen">@offen offen</td>
                                 }
                                 else
                                 {

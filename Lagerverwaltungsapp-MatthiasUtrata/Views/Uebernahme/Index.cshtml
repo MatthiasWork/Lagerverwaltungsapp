@@ -102,14 +102,14 @@
     }
     else
     {
-        @* Jede Anfrage ist eine Lagerbewegung: ein Transfer in den eigenen Raum oder Geräte, die jemand aus dem eigenen Lager holt.
+        @* Jede Anfrage ist eine Lagerbewegung: eine Ausleihe in den eigenen Raum oder Geräte, die jemand aus dem eigenen Lager holt.
            "Freigeben" bestätigt sie und bucht die Geräte im Nach-Raum ein *@
         <div class="freigaben-raster">
             @foreach (var bewegung in Model.Offen)
             {
                 <div class="blueprint freigabe-karte">
                     <div class="freigabe-kopf">
-                        <span class="tag tag-outline">Transfer</span>
+                        <span class="tag tag-outline">Ausleihe</span>
                         <span class="freigabe-zeit"><span class="d-lg-none">@bewegung.Person.Vorname @bewegung.Person.Nachname · </span>@Wann(bewegung.ErstelltAm)</span>
                     </div>
                     <h2 class="uebernahme-titel">@bewegung.Gegenstand.Name@Menge(bewegung)</h2>
@@ -147,7 +147,7 @@
                 @foreach (var bewegung in Model.Erledigt)
                 {
                     // Übernommen oder storniert (abgelehnt oder vom Von-Raum zurückgezogen)
-                    var text = $"{bewegung.Gegenstand.Name}{Menge(bewegung)} · Transfer {bewegung.VonRaumID} → {bewegung.NachRaumID}";
+                    var text = $"{bewegung.Gegenstand.Name}{Menge(bewegung)} · Ausleihe {bewegung.VonRaumID} → {bewegung.NachRaumID}";
                     var icon = "check";
                     if (bewegung.Storniert)
                     {

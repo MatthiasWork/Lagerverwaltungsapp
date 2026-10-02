@@ -13,8 +13,8 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         // Gefilterte Benutzerliste mit Rolle und den Räumen, für die sie verantwortlich sind
         public List<Person> Benutzer { get; set; } = new List<Person>();
 
-        // Noch nicht übernommene Transfers je Person (Schlüssel = PersonID), die sie angelegt hat
-        public Dictionary<int, int> OffeneTransfers { get; set; } = new Dictionary<int, int>();
+        // Noch nicht übernommene Ausleihen je Person (Schlüssel = PersonID), die sie angelegt hat
+        public Dictionary<int, int> OffeneAusleihen { get; set; } = new Dictionary<int, int>();
 
         // Der Benutzer, der rechts im Detail angezeigt wird
         public Person? Ausgewaehlt { get; set; }

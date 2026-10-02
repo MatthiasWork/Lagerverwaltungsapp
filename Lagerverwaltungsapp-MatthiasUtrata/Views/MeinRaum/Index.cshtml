@@ -22,7 +22,7 @@
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Wareneingang" class="btn btn-outline-secondary"><i data-lucide="package-plus"></i>Wareneingang</a>
         <a asp-controller="Lager" asp-action="Index" class="btn btn-outline-secondary"><i data-lucide="warehouse"></i>Aus dem Lager holen</a>
-        <a asp-controller="Ausleihe" asp-action="Index" class="btn btn-primary"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+        <a asp-controller="Ausleihe" asp-action="Index" class="btn btn-primary"><i data-lucide="arrow-right-left"></i>Ausleihe anfragen</a>
     </div>
 </div>
 <hr />
@@ -70,7 +70,7 @@
 {
     <h2 class="h4">Angefragt, noch nicht freigegeben</h2>
     <p class="text-muted">
-        Transfers aus Raum @Model.Raum.ID und aus einem Lager geholte Geräte. Sie sind schon im Von-Raum abgebucht und kommen im Nach-Raum an,
+        Ausleihen aus Raum @Model.Raum.ID und aus einem Lager geholte Geräte. Sie sind schon im Von-Raum abgebucht und kommen im Nach-Raum an,
         sobald die andere Seite freigibt. Bis dahin kann die Anfrage zurückgezogen werden, dann kommen sie wieder in den Von-Raum.
     </p>
     <div class="table-responsive mb-4">

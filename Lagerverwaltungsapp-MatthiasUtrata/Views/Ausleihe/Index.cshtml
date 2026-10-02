@@ -31,9 +31,9 @@
             </ol>
         }
     </div>
-    <div class="transfer-kopf-mobil d-lg-none">
+    <div class="buchung-kopf-mobil d-lg-none">
         <a class="abbrechen-link" asp-controller="Home" asp-action="Index">Abbrechen</a>
-        <h1 class="transfer-titel-mobil">Neue Ausleihe</h1>
+        <h1 class="buchung-titel-mobil">Neue Ausleihe</h1>
     </div>
 
     @if (!hatRaum)
@@ -71,7 +71,7 @@
         <form asp-action="Index" method="post" id="ausleiheFormular">
             <div class="ausleihe-raster">
                 <div class="ausleihe-auswahl">
-                    @* Wohin: Die Person des Zielraums bestätigt die Übernahme, wie bei jedem Transfer *@
+                    @* Wohin: Die Person des Zielraums bestätigt die Übernahme, wie bei jeder Ausleihe *@
                     <div class="ausleihe-ziel">
                         <div>
                             <label class="form-label" asp-for="NachRaumID">Ausleihen an</label>
@@ -196,7 +196,7 @@
 
 @section Scripts {
     <script>
-        // Geräteauswahl wie beim Transfer: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen.
+        // Geräteauswahl: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen.
         // Dazu die Zusammenfassung (Zielraum, benötigte Freigabe) und die Schritte oben
         (function () {
             var formular = document.getElementById('ausleiheFormular');
