@@ -1,41 +1,52 @@
 @model IEnumerable<Lagerverwaltungsapp_MatthiasUtrata.Models.Rolle>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Rollen";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Rollen</h1>
+    <a asp-action="Create" class="btn btn-primary"><i data-lucide="plus"></i>Neue Rolle</a>
+</div>
+<hr />
 
-<p>
-    <a asp-action="Create">Create New</a>
+<p class="text-muted">
+    Personen mit einer Rolle mit Admin-Rechten sehen die Benutzerverwaltung und alle Stammdaten. Eine geänderte Rolle gilt ab der nächsten Anmeldung.
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Admin)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Admin)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
+
+<partial name="_Meldungen" />
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Es gibt noch keine Rollen.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Admin-Rechte</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rolle in Model)
+                {
+                    <tr>
+                        <td>@rolle.Name</td>
+                        <td>@(rolle.Admin ? "Ja" : "Nein")</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@rolle.ID" class="btn btn-sm btn-outline-secondary">Details</a>
+                            <a asp-action="Edit" asp-route-id="@rolle.ID" class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                            <a asp-action="Delete" asp-route-id="@rolle.ID" class="btn btn-sm btn-outline-danger">Löschen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary">Zurück zu den Benutzern</a>

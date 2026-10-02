@@ -11,7 +11,7 @@
     var kannWareneingang = Model.EigenerRaumID != null
         && (gegenstand.Seriennummer == null || Model.Eintrag.Status == GegenstandUebersichtViewModel.KeinBestand);
 
-    // Kennung auf dem Etikett und im Pfad: Seriennummer, ohne Seriennummer die ID
+    // Kennung im Pfad: Seriennummer, ohne Seriennummer die ID
     var kennung = gegenstand.Seriennummer ?? $"ID {gegenstand.ID}";
 
     // Standort: der Raum mit der größten Menge, bei mehreren Räumen mit der Zahl der übrigen
@@ -79,114 +79,99 @@
         <span>@kennung</span>
     </nav>
 
-    <div class="detail-raster">
-        <div class="detail-links">
-            @* Beispiel aus dem Design: Fotos und QR-Etiketten gibt es noch nicht *@
-            <div class="blueprint duotone geraet-foto"><span class="platzhalter-text">produktfoto</span></div>
-            <div class="blueprint etikett">
-                <div class="qr-code" aria-hidden="true"></div>
-                <div class="etikett-text">
-                    <span class="etikett-kennung">@kennung</span>
-                    <button type="button" class="btn btn-outline-secondary"><i data-lucide="printer"></i>Etikett drucken</button>
-                </div>
-            </div>
+    <div class="detail-inhalt">
+        <div class="detail-titel">
+            <span class="tag @StatusTag.Klasse(Model.Eintrag.Status)">@Model.Eintrag.Status</span>
+            <h1>@gegenstand.Name</h1>
+            <span class="detail-unterzeile">@gegenstand.Kategorie.Name · @standortZeile</span>
         </div>
 
-        <div class="detail-rechts">
-            <div class="detail-titel">
-                <span class="tag @StatusTag.Klasse(Model.Eintrag.Status)">@Model.Eintrag.Status</span>
-                <h1>@gegenstand.Name</h1>
-                <span class="detail-unterzeile">@gegenstand.Kategorie.Name · @standortZeile</span>
-            </div>
-
-            @if (unterwegs != null)
-            {
-                <div class="blueprint hinweis-box">
-                    <i data-lucide="truck"></i>
-                    <div class="hinweis-box-text">
-                        <b>@unterwegsText von @unterwegs.VonRaumID nach @unterwegs.NachRaumID</b> seit @unterwegs.ErstelltAm.ToString("dd.MM."), gebucht von @unterwegs.Person.Vorname @unterwegs.Person.Nachname.
-                        Wartet auf die Freigabe durch @wartetAuf.
-                        @if (Model.Unterwegs.Count > 1)
-                        {
-                            <text>Dazu @(Model.Unterwegs.Count - 1) weitere Transfers.</text>
-                        }
-                    </div>
-                    @* Freigeben darf nur, wer für den freigebenden Raum verantwortlich ist *@
-                    @if (Model.EigenerRaumID == unterwegs.FreigabeRaum.ID)
+        @if (unterwegs != null)
+        {
+            <div class="blueprint hinweis-box">
+                <i data-lucide="truck"></i>
+                <div class="hinweis-box-text">
+                    <b>@unterwegsText von @unterwegs.VonRaumID nach @unterwegs.NachRaumID</b> seit @unterwegs.ErstelltAm.ToString("dd.MM."), gebucht von @unterwegs.Person.Vorname @unterwegs.Person.Nachname.
+                    Wartet auf die Freigabe durch @wartetAuf.
+                    @if (Model.Unterwegs.Count > 1)
                     {
-                        <a class="btn btn-primary" asp-controller="Uebernahme" asp-action="Index">Freigeben</a>
+                        <text>Dazu @(Model.Unterwegs.Count - 1) weitere Transfers.</text>
                     }
                 </div>
-            }
-
-            <div class="angaben-raster">
-                @foreach (var angabe in angaben)
+                @* Freigeben darf nur, wer für den freigebenden Raum verantwortlich ist *@
+                @if (Model.EigenerRaumID == unterwegs.FreigabeRaum.ID)
                 {
-                    <div class="angabe">
-                        <span class="angabe-label">@angabe.Label</span>
-                        <span>@angabe.Wert</span>
+                    <a class="btn btn-primary" asp-controller="Uebernahme" asp-action="Index">Freigeben</a>
+                }
+            </div>
+        }
+
+        <div class="angaben-raster">
+            @foreach (var angabe in angaben)
+            {
+                <div class="angabe">
+                    <span class="angabe-label">@angabe.Label</span>
+                    <span>@angabe.Wert</span>
+                </div>
+            }
+        </div>
+
+        @if (kannTransfer || kannWareneingang || istAdmin)
+        {
+            <div class="detail-aktionen">
+                @if (kannTransfer)
+                {
+                    <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
+                }
+                @if (kannWareneingang)
+                {
+                    <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Wareneingang" asp-route-gegenstandID="@gegenstand.ID"><i data-lucide="package-plus"></i>Wareneingang in @Model.EigenerRaumID</a>
+                }
+                @* Den Katalog sehen alle, bearbeiten und löschen darf nur ein Admin *@
+                @if (istAdmin)
+                {
+                    <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@gegenstand.ID"><i data-lucide="pencil"></i>Bearbeiten</a>
+                    <a class="btn btn-outline-secondary" asp-action="Delete" asp-route-id="@gegenstand.ID"><i data-lucide="trash-2"></i>Löschen</a>
+                }
+            </div>
+        }
+
+        @* Nicht im Design: Gegenstände ohne Seriennummer können in mehreren Räumen liegen *@
+        @if (Model.Eintrag.Standorte.Count > 1)
+        {
+            <div class="bestand-liste">
+                <h4>Bestand in Räumen</h4>
+                @foreach (var bestand in Model.Eintrag.Standorte)
+                {
+                    <div class="bestand-zeile">
+                        <span>@bestand.RaumID · @bestand.Raum.Raumart.Name</span>
+                        <span>@bestand.Menge</span>
                     </div>
                 }
             </div>
+        }
 
-            @if (kannTransfer || kannWareneingang || istAdmin)
+        <div class="verlauf">
+            <h4>Verlauf</h4>
+            @for (var i = 0; i < Model.Verlauf.Count; i++)
             {
-                <div class="detail-aktionen">
-                    @if (kannTransfer)
-                    {
-                        <a class="btn btn-outline-secondary" asp-controller="Ausleihe" asp-action="Index"><i data-lucide="arrow-right-left"></i>Transfer anfragen</a>
-                    }
-                    @if (kannWareneingang)
-                    {
-                        <a class="btn btn-outline-secondary" asp-controller="MeinRaum" asp-action="Wareneingang" asp-route-gegenstandID="@gegenstand.ID"><i data-lucide="package-plus"></i>Wareneingang in @Model.EigenerRaumID</a>
-                    }
-                    @* Den Katalog sehen alle, bearbeiten und löschen darf nur ein Admin *@
-                    @if (istAdmin)
-                    {
-                        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@gegenstand.ID"><i data-lucide="pencil"></i>Bearbeiten</a>
-                        <a class="btn btn-outline-secondary" asp-action="Delete" asp-route-id="@gegenstand.ID"><i data-lucide="trash-2"></i>Löschen</a>
-                    }
+                <div class="verlauf-zeile">
+                    <span class="verlauf-datum">@Datum(Model.Verlauf[i].Zeitpunkt)</span>
+                    <span class="verlauf-punkt @(i == 0 ? "aktuell" : null)" aria-hidden="true"></span>
+                    <span>@Model.Verlauf[i].Text</span>
                 </div>
             }
-
-            @* Nicht im Design: Gegenstände ohne Seriennummer können in mehreren Räumen liegen *@
-            @if (Model.Eintrag.Standorte.Count > 1)
+            @if (Model.Verlauf.Count == 0)
             {
-                <div class="bestand-liste">
-                    <h4>Bestand in Räumen</h4>
-                    @foreach (var bestand in Model.Eintrag.Standorte)
-                    {
-                        <div class="bestand-zeile">
-                            <span>@bestand.RaumID · @bestand.Raum.Raumart.Name</span>
-                            <span>@bestand.Menge</span>
-                        </div>
-                    }
-                </div>
+                <p class="aktivitaet-leer">Noch keine Buchungen.</p>
             }
-
-            <div class="verlauf">
-                <h4>Verlauf</h4>
-                @for (var i = 0; i < Model.Verlauf.Count; i++)
-                {
-                    <div class="verlauf-zeile">
-                        <span class="verlauf-datum">@Datum(Model.Verlauf[i].Zeitpunkt)</span>
-                        <span class="verlauf-punkt @(i == 0 ? "aktuell" : null)" aria-hidden="true"></span>
-                        <span>@Model.Verlauf[i].Text</span>
-                    </div>
-                }
-                @if (Model.Verlauf.Count == 0)
-                {
-                    <p class="aktivitaet-leer">Noch keine Buchungen.</p>
-                }
-            </div>
         </div>
     </div>
 </div>
 
-@* Mobil: Foto über die ganze Breite, Angaben als Liste, Buttons unten *@
+@* Mobil: Angaben als Liste, Buttons unten *@
 <div class="detail-mobil d-lg-none">
     <a class="zurueck-link" asp-action="Index"><i data-lucide="chevron-left"></i>Katalog</a>
-    <div class="duotone geraet-foto geraet-foto-mobil"><span class="platzhalter-text">produktfoto</span></div>
 
     <div class="detail-mobil-inhalt">
         <span class="tag @StatusTag.Klasse(Model.Eintrag.Status)">@Model.Eintrag.Status</span>

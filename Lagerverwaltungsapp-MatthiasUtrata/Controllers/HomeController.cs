@@ -164,16 +164,6 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die die Seite mit der Datenschutzerklärung anzeigt.
-        /// </summary>
-        /// <returns>Gibt ein IActionResult zurück</returns>
-        // GET: Home/Privacy
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        /// <summary>
         /// Methode, die die Login-Seite anzeigt. Gibt es noch keinen Benutzer, wird stattdessen zur Registrierung
         /// weitergeleitet, damit sich der erste Benutzer als Admin registrieren kann.
         /// </summary>

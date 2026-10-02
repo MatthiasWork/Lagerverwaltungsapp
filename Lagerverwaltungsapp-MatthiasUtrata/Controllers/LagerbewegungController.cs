@@ -119,6 +119,11 @@ public class LagerbewegungController : Controller
         return View(historie);
     }
 
+    /// <summary>
+    /// Methode, die die Details einer Lagerbewegung anzeigt.
+    /// </summary>
+    /// <param name="id">Die ID der Lagerbewegung, die angezeigt werden soll</param>
+    /// <returns>Gibt eine Task zurück</returns>
     // GET: Lagerbewegung/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -128,6 +133,12 @@ public class LagerbewegungController : Controller
         }
 
         var lagerbewegung = await _context.Lagerbewegung
+            .Include(l => l.Gegenstand)
+            .Include(l => l.Bewegungsart)
+            .Include(l => l.Person)
+            // Mit den verantwortlichen Personen, damit bei einer offenen Lagerbewegung steht, wer freigeben muss (Lagerbewegung.FreigabeRaum)
+            .Include(l => l.VonRaum).ThenInclude(r => r.Person)
+            .Include(l => l.NachRaum).ThenInclude(r => r.Person)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (lagerbewegung == null)
         {

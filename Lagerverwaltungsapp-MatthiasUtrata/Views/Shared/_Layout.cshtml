@@ -50,11 +50,7 @@
             </main>
         </div>
 
-        @* Seiten im Vollbild (z. B. Scannen) blenden die Tab-Leiste mit ViewData["TabLeisteAusblenden"] = true aus *@
-        @if (ViewData["TabLeisteAusblenden"] as bool? != true)
-        {
-            @await Component.InvokeAsync("Menue", new { ansicht = "TabLeiste" })
-        }
+        @await Component.InvokeAsync("Menue", new { ansicht = "TabLeiste" })
     }
     else
     {

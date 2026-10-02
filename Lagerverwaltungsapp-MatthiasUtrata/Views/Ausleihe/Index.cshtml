@@ -114,7 +114,6 @@
                             <div class="geraet-zeile" hidden="@(!gewaehlt)"
                                  data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
                                  data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Raum")">
-                                <div class="geraet-bild" aria-hidden="true"></div>
                                 <div>
                                     <div class="fw-medium">@gegenstand.Name</div>
                                     <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name) · @vonRaum.ID</div>
