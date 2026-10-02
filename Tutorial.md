@@ -15,10 +15,9 @@ Dieses Tutorial erklärt die Bedienung der Lagerverwaltungs-App Schritt für Sch
 9. [Ausleihen (Transfer anfragen)](#9-ausleihen-transfer-anfragen)
 10. [Freigaben](#10-freigaben)
 11. [Profil](#11-profil)
-12. [Scannen](#12-scannen)
-13. [Administration](#13-administration)
-14. [Mobile Ansicht](#14-mobile-ansicht)
-15. [Häufige Fragen und Meldungen](#15-häufige-fragen-und-meldungen)
+12. [Administration](#12-administration)
+13. [Mobile Ansicht](#13-mobile-ansicht)
+14. [Häufige Fragen und Meldungen](#14-häufige-fragen-und-meldungen)
 
 ---
 
@@ -94,7 +93,7 @@ Ist die Datenbank noch leer (kein einziger Benutzer), zeigt die App statt der An
 
 ![Registrierung](Docs/Screenshots/01-registrieren.png)
 
-Sobald es einen Benutzer gibt, ist die Registrierung gesperrt. Neue Konten legt dann nur noch ein Admin unter **Benutzer** an (siehe [13.1](#131-benutzer)).
+Sobald es einen Benutzer gibt, ist die Registrierung gesperrt. Neue Konten legt dann nur noch ein Admin unter **Benutzer** an (siehe [12.1](#121-benutzer)).
 
 ### 3.2 Anmelden und Abmelden
 
@@ -119,13 +118,13 @@ Zum **Abmelden** klicken Sie unten in der Seitenleiste auf das Pfeil-Symbol nebe
 
 ![Dark Mode](Docs/Screenshots/04-dark-mode.png)
 
-Auf schmalen Bildschirmen (Smartphone) ersetzt eine **Tab-Leiste unten** die Seitenleiste, siehe [Mobile Ansicht](#14-mobile-ansicht).
+Auf schmalen Bildschirmen (Smartphone) ersetzt eine **Tab-Leiste unten** die Seitenleiste, siehe [Mobile Ansicht](#13-mobile-ansicht).
 
 ---
 
 ## 4. Übersicht (Startseite)
 
-Die Übersicht ist die Startseite nach der Anmeldung. Oben stehen das Datum und eine Begrüßung je nach Tageszeit, rechts die Schnellzugriffe **QR scannen** und **Neue Ausleihe**.
+Die Übersicht ist die Startseite nach der Anmeldung. Oben stehen das Datum und eine Begrüßung je nach Tageszeit, rechts der Schnellzugriff **Neue Ausleihe**.
 
 ![Übersicht für eine Lehrerin](Docs/Screenshots/05-uebersicht-lehrerin.png)
 
@@ -169,8 +168,6 @@ Die Detailseite zeigt:
 * **Verlauf**: alle Buchungen dieses Gegenstands, die neueste zuerst.
 * Je nach Berechtigung die Buttons **Transfer anfragen**, **Wareneingang in &lt;Ihr Raum&gt;**, **Freigeben** (wenn Sie eine offene Anfrage freigeben müssen), sowie für Admins **Bearbeiten** und **Löschen**.
 
-> Produktfoto und „Etikett drucken“ sind Platzhalter aus dem Design und haben noch keine Funktion.
-
 ### 5.3 Gegenstand erfassen, bearbeiten, löschen (nur Admin)
 
 **Erfassen:** Im Katalog oben rechts auf **Gerät erfassen** klicken.
@@ -191,8 +188,6 @@ Die Detailseite zeigt:
 **Löschen:** In den Details auf **Löschen** klicken. Gelöscht werden kann ein Gegenstand nur, wenn er **keinen Bestand** mehr hat und in **keiner Lagerbewegung** vorkommt (sonst ginge die Historie verloren). Andernfalls erklärt die Seite, warum es nicht geht:
 
 ![Gegenstand löschen nicht möglich](Docs/Screenshots/15-gegenstand-loeschen.png)
-
-> Der Button „CSV importieren“ im Katalog ist ein Platzhalter aus dem Design. Einen CSV-Import gibt es noch nicht.
 
 ---
 
@@ -245,7 +240,7 @@ Die Buchung ist **sofort bestätigt**, eine Freigabe ist nicht nötig. Danach er
 
    ![Lager auswählen](Docs/Screenshots/23-lager-auswahl.png)
 
-3. Im Suchfeld Name oder Seriennummer eingeben (oder scannen). Ein Klick auf einen Vorschlag fügt das Gerät hinzu, **Enter** übernimmt den ersten Vorschlag.
+3. Im Suchfeld Name oder Seriennummer eingeben oder mit einem USB-Handscanner einlesen. Ein Klick auf einen Vorschlag fügt das Gerät hinzu, **Enter** übernimmt den ersten Vorschlag.
 4. Bei Mengenartikeln die **Menge** eintragen (rechts steht „von …“, also wie viel im Lager liegt). Mit **×** entfernen Sie ein Gerät wieder aus der Liste.
 5. **Bewegungsart** wählen (Standard: „Ausgabe“).
 6. **Holen anfragen** klicken.
@@ -269,7 +264,7 @@ Mit **Ausleihen** (bzw. **Transfer anfragen** unter „Mein Raum“ oder **Neue 
 
 1. Bei **Ausleihen an** den Zielraum wählen. Angeboten werden nur Räume mit verantwortlicher Person, denn diese muss die Übernahme bestätigen.
 2. **Bewegungsart** wählen (Standard: „Ausgabe“, z. B. auch „Rueckgabe“ oder „Reparatur“).
-3. Geräte über das Suchfeld hinzufügen (Name/Seriennummer eintippen oder scannen, Vorschlag anklicken).
+3. Geräte über das Suchfeld hinzufügen: Name oder Seriennummer eintippen oder mit einem USB-Handscanner einlesen, dann den Vorschlag anklicken (oder **Enter** für den ersten Vorschlag).
 4. Bei Mengenartikeln die **Menge** eintragen. Geräte mit Seriennummer werden immer einzeln gebucht.
 5. Rechts in der **Zusammenfassung** prüfen: Von, An und **Benötigte Freigabe** (wer bestätigen muss).
 6. **Freigabe anfragen** klicken.
@@ -347,21 +342,11 @@ Admins können über die Benutzerverwaltung auch das Profil **anderer Personen**
 
 ---
 
-## 12. Scannen
-
-Über **QR scannen** (Übersicht) bzw. den Tab **Scannen** (mobil) erreichen Sie die Scan-Seite.
-
-![Scannen](Docs/Screenshots/34-scannen.png)
-
-> Die Seite ist derzeit eine **statische Vorschau** aus dem Design und hat noch keine Funktion. Zum Hinzufügen von Geräten können Sie aber in den Suchfeldern von „Ausleihen“ und „Aus dem Lager holen“ einen USB-Handscanner verwenden: Er tippt die Seriennummer ein, und **Enter** übernimmt den ersten Vorschlag.
-
----
-
-## 13. Administration
+## 12. Administration
 
 Alle Seiten in diesem Abschnitt sind **nur für Admins** sichtbar.
 
-### 13.1 Benutzer
+### 12.1 Benutzer
 
 Menüpunkt **Benutzer**: links die Liste aller Benutzer mit Rolle, Raumverantwortung und Anzahl offener Transfers, rechts die Details der ausgewählten Person.
 
@@ -369,7 +354,7 @@ Menüpunkt **Benutzer**: links die Liste aller Benutzer mit Rolle, Raumverantwor
 
 * **Rolle: alle** filtert die Liste nach Rolle, das Suchfeld rechts sucht nach Name oder E-Mail (mit Enter).
 * Ein **Klick auf eine Zeile** zeigt die Person rechts. Dort gibt es **Profil öffnen**, **Bearbeiten** (Stift) und **Löschen** (Papierkorb).
-* **+ Raum** führt zur Raumliste, denn die Raumverantwortung legt man beim Raum fest (siehe [13.2](#132-stammdaten)).
+* **+ Raum** führt zur Raumliste, denn die Raumverantwortung legt man beim Raum fest (siehe [12.2](#122-stammdaten)).
 
 **Benutzer anlegen:** Oben rechts auf **Benutzer anlegen** klicken, Vorname, Nachname, Benutzername (eindeutig), Passwort, E-Mail und Rolle eintragen, dann **Anlegen** klicken.
 
@@ -386,13 +371,13 @@ Menüpunkt **Benutzer**: links die Liste aller Benutzer mit Rolle, Raumverantwor
 * Eine Person, die für einen **Raum verantwortlich** ist, kann erst gelöscht werden, wenn der Raum einer anderen Person zugewiesen ist.
 * Eine Person, die **Lagerbewegungen erfasst** hat, kann nicht gelöscht werden (die Historie muss nachvollziehbar bleiben).
 
-**Rollen verwalten:** Über **Rollen verwalten** (oben rechts) legen Sie Rollen an, bearbeiten oder löschen sie. Ist bei einer Rolle **Admin** angehakt, bekommen alle Personen mit dieser Rolle Zugriff auf die Administration.
+**Rollen verwalten:** Über **Rollen verwalten** (oben rechts) kommen Sie zur Liste der Rollen. Mit **Neue Rolle** legen Sie eine Rolle an, je Zeile gibt es **Details**, **Bearbeiten** und **Löschen**. Ist bei einer Rolle **Admin-Rechte** angehakt, bekommen alle Personen mit dieser Rolle Zugriff auf die Administration. **Zurück zu den Benutzern** führt wieder zur Benutzerverwaltung.
 
 ![Rollen](Docs/Screenshots/44-rollen.png)
 
 > Die Rolle wird beim Anmelden übernommen. Ändert ein Admin die Rolle einer Person, gilt die neue Rolle erst, wenn sich diese Person ab- und wieder anmeldet. Eine geänderte **Raumverantwortung** gilt dagegen sofort.
 
-### 13.2 Stammdaten
+### 12.2 Stammdaten
 
 Alle Stammdaten-Seiten funktionieren gleich: eine Liste mit **Neu**-Button oben rechts und je Zeile **Details**, **Bearbeiten** und **Löschen**.
 
@@ -447,7 +432,7 @@ Eine Bewegungsart beschreibt eine Lagerbewegung nur näher (z. B. Ausgabe, Rück
 
 > **Ausnahmen:** „Storniert“ (für abgelehnte und zurückgezogene Transfers) und „Korrektur“ (für Korrekturbuchungen im Lagerbestand) vergibt die App selbst. Sie können beim Buchen nicht gewählt, nicht umbenannt und nicht gelöscht werden.
 
-### 13.3 Lagerbestand (Korrektur)
+### 12.3 Lagerbestand (Korrektur)
 
 Mit **Lagerbestand** korrigieren Admins den Bestand eines Raums, z. B. nach einer Inventur.
 
@@ -464,7 +449,7 @@ Jede geänderte Menge wird als **sofort bestätigte Lagerbewegung** mit der Bewe
 
 > Hat sich der Bestand zwischen Anzeigen und Buchen geändert (z. B. durch einen Transfer), bricht die Korrektur ab. Dann die Seite neu laden und neu zählen.
 
-### 13.4 Historie
+### 12.4 Historie
 
 Die **Historie** listet **alle Lagerbewegungen**, die neueste zuerst, mit 50 Einträgen pro Seite.
 
@@ -486,9 +471,9 @@ Ein Klick auf eine Zeile öffnet die Details des Gegenstands mit seinem Verlauf.
 
 ---
 
-## 14. Mobile Ansicht
+## 13. Mobile Ansicht
 
-Auf dem Smartphone passt sich die App an: Statt der Seitenleiste gibt es unten eine **Tab-Leiste** mit **Übersicht**, **Katalog**, **Scannen** (hervorgehoben in der Mitte), **Freigaben** (mit Badge) und **Profil**. Alle weiteren Bereiche, den Dark-Mode-Schalter und **Abmelden** finden Sie unter **Profil**.
+Auf dem Smartphone passt sich die App an: Statt der Seitenleiste gibt es unten eine **Tab-Leiste** mit **Übersicht**, **Katalog**, **Freigaben** (mit Badge) und **Profil**. Alle weiteren Bereiche, den Dark-Mode-Schalter und **Abmelden** finden Sie unter **Profil**.
 
 <table>
   <tr>
@@ -500,7 +485,7 @@ Auf dem Smartphone passt sich die App an: Statt der Seitenleiste gibt es unten e
 
 ---
 
-## 15. Häufige Fragen und Meldungen
+## 14. Häufige Fragen und Meldungen
 
 | Frage oder Meldung | Antwort |
 |---|---|
