@@ -25,9 +25,10 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Models
         [ValidateNever]
         public Raum VonRaum { get; set; } = null!;
 
-        // Bestand des eigenen Raums, also alles, was ausgeborgt werden kann
+        // Geräte im eigenen Raum, also alles, was ausgeborgt werden kann, als Einträge wie im Katalog.
+        // Stück und Standort beziehen sich nur auf den eigenen Raum
         [ValidateNever]
-        public List<Raumbestand> Bestand { get; set; } = new List<Raumbestand>();
+        public List<KatalogEintrag> Geraete { get; set; } = new List<KatalogEintrag>();
 
         // Mögliche Zielräume mit Raumart und verantwortlicher Person (für die Auswahl und die Zusammenfassung)
         [ValidateNever]

@@ -94,7 +94,7 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         }
 
         /// <summary>
-        /// Methode, die alles für die Anzeige des Formulars setzt: den eigenen Raum mit seinem Bestand, die möglichen Zielräume und die Bewegungsarten.
+        /// Methode, die alles für die Anzeige des Formulars setzt: den eigenen Raum mit seinen Geräten (wie im Katalog), die möglichen Zielräume und die Bewegungsarten.
         /// </summary>
         /// <param name="ausleihe">Das AusborgenViewModel, das angezeigt werden soll</param>
         /// <param name="raumID">Die ID des eigenen Raums, aus dem ausgeliehen wird</param>
@@ -103,11 +103,16 @@ namespace Lagerverwaltungsapp_MatthiasUtrata.Controllers
         {
             ausleihe.VonRaum = await _context.Raum.Include(r => r.Raumart).Include(r => r.Person).FirstAsync(r => r.ID == raumID);
 
-            ausleihe.Bestand = await _context.Raumbestand
-                .Include(r => r.Gegenstand).ThenInclude(g => g.Kategorie)
-                .Where(r => r.RaumID == raumID)
-                .OrderBy(r => r.Gegenstand.Name).ThenBy(r => r.Gegenstand.Seriennummer)
+            // Wie im Katalog, aber nur mit dem Bestand im eigenen Raum: Stück und Standort im Eintrag beziehen sich dann auf das,
+            // was ausgeliehen werden kann. Die offenen Bewegungen ergeben den Hinweis, z. B. was davon schon unterwegs ist
+            var gegenstaende = await _context.Gegenstand
+                .Include(g => g.Kategorie)
+                .Include(g => g.Raumbestand.Where(r => r.RaumID == raumID)).ThenInclude(r => r.Raum).ThenInclude(r => r.Raumart)
+                .Include(g => g.Lagerbewegung.Where(l => l.BestaetigtAm == null))
+                .Where(g => g.Raumbestand.Any(r => r.RaumID == raumID && r.Menge > 0))
+                .OrderBy(g => g.Name).ThenBy(g => g.Seriennummer)
                 .ToListAsync();
+            ausleihe.Geraete = gegenstaende.Select(g => KatalogEintrag.Erstellen(g)).ToList();
 
             // Nur Räume mit einer verantwortlichen Person, denn diese muss die Übernahme bestätigen
             ausleihe.Raeume = await _context.Raum

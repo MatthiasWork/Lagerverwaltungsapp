@@ -3,16 +3,6 @@
 @{
     ViewData["Title"] = "Katalog";
 
-    // Unter dem Namen: Kategorie, bei Gegenständen ohne Seriennummer auch die Stückzahl
-    string Zusatz(KatalogEintrag eintrag)
-    {
-        if (eintrag.Gegenstand.Seriennummer == null && eintrag.Stueck > 1)
-        {
-            return $"{eintrag.Gegenstand.Kategorie.Name} · {eintrag.Stueck} Stück";
-        }
-        return eintrag.Gegenstand.Kategorie.Name;
-    }
-
     var statusWerte = new[] { GegenstandUebersichtViewModel.Verfuegbar, GegenstandUebersichtViewModel.InTransfer, GegenstandUebersichtViewModel.KeinBestand };
 }
 
@@ -70,50 +60,6 @@
     }
     else
     {
-        @* Desktop: Tabelle, ein Klick auf die Zeile öffnet das Gerät *@
-        <div class="blueprint d-none d-lg-block">
-            <table class="table table-hover liste-tabelle katalog-tabelle">
-                <thead>
-                    <tr>
-                        <th class="spalte-bild"><span class="visually-hidden">Bild</span></th>
-                        <th>Gerät</th>
-                        <th>Seriennummer</th>
-                        <th>Standort</th>
-                        <th>Status</th>
-                        <th>Hinweis</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var eintrag in Model.Eintraege)
-                    {
-                        <tr data-href="@Url.Action("Details", new { id = eintrag.Gegenstand.ID })">
-                            <td><div class="geraet-bild" aria-hidden="true"></div></td>
-                            <td>
-                                <a class="zeilen-link fw-medium" asp-action="Details" asp-route-id="@eintrag.Gegenstand.ID">@eintrag.Gegenstand.Name</a>
-                                <div class="nebeninfo">@Zusatz(eintrag)</div>
-                            </td>
-                            <td class="zahlen">@(eintrag.Gegenstand.Seriennummer ?? "–")</td>
-                            <td>@(eintrag.Standort ?? "–")</td>
-                            <td><span class="tag @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span></td>
-                            <td>@(eintrag.Hinweis ?? "–")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @* Mobil: Liste mit Bild, Status und Standort *@
-        <div class="d-lg-none">
-            @foreach (var eintrag in Model.Eintraege)
-            {
-                <a class="katalog-zeile" asp-action="Details" asp-route-id="@eintrag.Gegenstand.ID">
-                    <div class="geraet-bild" aria-hidden="true"></div>
-                    <div class="katalog-zeile-text">
-                        <span class="katalog-zeile-name">@eintrag.Gegenstand.Name</span>
-                        <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@(eintrag.Standort ?? "–")</span>
-                    </div>
-                </a>
-            }
-        </div>
+        <partial name="_KatalogListe" model="new KatalogListeViewModel { Eintraege = Model.Eintraege }" />
     }
 </div>

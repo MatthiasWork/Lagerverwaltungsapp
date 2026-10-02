@@ -2646,6 +2646,65 @@ a.tag-outline {
         margin-top: 2px;
     }
 
+/* Meine Geräte: der eigene Raum wie im Katalog (_KatalogListe mit Auswahl), ein Klick wählt das Gerät aus */
+.ausleihe-katalog {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .ausleihe-katalog h4 {
+        margin: 0;
+    }
+
+.liste-tabelle > tbody > tr[data-auswahl] {
+    cursor: pointer;
+}
+
+/* Knopf zum Auswählen: zeigt je nach aria-pressed "Hinzufügen" (+) oder "Ausgewählt" (Haken) */
+.auswahl-nein,
+.auswahl-ja {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.auswahl-knopf[aria-pressed="true"] .auswahl-nein,
+.auswahl-knopf:not([aria-pressed="true"]) .auswahl-ja {
+    display: none;
+}
+
+.btn.auswahl-knopf[aria-pressed="true"] {
+    --bs-btn-color: var(--color-accent-800);
+    --bs-btn-border-color: var(--color-accent);
+    --bs-btn-hover-color: var(--color-accent-800);
+    --bs-btn-hover-border-color: var(--color-accent);
+    --bs-btn-active-color: var(--color-accent-800);
+    --bs-btn-active-border-color: var(--color-accent);
+}
+
+/* Mobil: die Zeile ist selbst der Knopf, rechts + bzw. Haken; ausgewählt mit Akzentfläche wie die Tabellenzeile */
+button.katalog-zeile {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border-width: 0 0 1px;
+    cursor: pointer;
+}
+
+    button.katalog-zeile .auswahl-nein {
+        color: var(--color-neutral-600);
+    }
+
+    button.katalog-zeile[aria-pressed="true"] {
+        background: var(--color-accent-100);
+    }
+
+        button.katalog-zeile[aria-pressed="true"] .auswahl-ja {
+            color: var(--color-accent-800);
+        }
+
 /* Neue Ausleihe mobil: eine Spalte, die Zusammenfassung mit dem Button unten */
 @media (max-width: 991.98px) {
     /* .seite.ausleihe, damit der allgemeine Abstand von .seite (weiter oben) nicht gewinnt */
