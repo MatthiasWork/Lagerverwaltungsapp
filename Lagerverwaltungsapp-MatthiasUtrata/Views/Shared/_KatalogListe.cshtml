@@ -1,0 +1,106 @@
+@model Lagerverwaltungsapp_MatthiasUtrata.Models.KatalogListeViewModel
+
+@*
+    Geräte wie im Katalog: Desktop als Tabelle, mobil als Liste. Im Katalog öffnet ein Klick das Gerät.
+    Bei der Auswahl (Neue Ausleihe) wählt ein Klick das Gerät aus bzw. wieder ab; das erledigt das Skript der Seite über data-auswahl
+    (Wert = GegenstandID) und zeigt den Zustand über aria-pressed am Knopf und die Klasse ausgewaehlt an der Zeile
+*@
+
+@{
+    // Unter dem Namen: Kategorie, bei Gegenständen ohne Seriennummer auch die Stückzahl
+    string Zusatz(KatalogEintrag eintrag)
+    {
+        if (eintrag.Gegenstand.Seriennummer == null && eintrag.Stueck > 1)
+        {
+            return $"{eintrag.Gegenstand.Kategorie.Name} · {eintrag.Stueck} Stück";
+        }
+        return eintrag.Gegenstand.Kategorie.Name;
+    }
+}
+
+@* Desktop: Tabelle, ein Klick auf die Zeile öffnet das Gerät bzw. wählt es aus *@
+<div class="blueprint d-none d-lg-block">
+    <table class="table table-hover liste-tabelle katalog-tabelle">
+        <thead>
+            <tr>
+                <th>Gerät</th>
+                <th>Seriennummer</th>
+                @if (!Model.Auswahl)
+                {
+                    <th>Standort</th>
+                }
+                <th>Status</th>
+                <th>Hinweis</th>
+                @if (Model.Auswahl)
+                {
+                    <th><span class="visually-hidden">Auswahl</span></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var eintrag in Model.Eintraege)
+            {
+                var gegenstand = eintrag.Gegenstand;
+                if (Model.Auswahl)
+                {
+                    <tr data-auswahl="@gegenstand.ID">
+                        <td>
+                            <span class="fw-medium">@gegenstand.Name</span>
+                            <div class="nebeninfo">@Zusatz(eintrag)</div>
+                        </td>
+                        <td class="zahlen">@(gegenstand.Seriennummer ?? "–")</td>
+                        <td><span class="tag @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span></td>
+                        <td>@(eintrag.Hinweis ?? "–")</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary auswahl-knopf" aria-pressed="false" aria-label="@gegenstand.Name auswählen">
+                                <span class="auswahl-nein"><i data-lucide="plus"></i>Hinzufügen</span>
+                                <span class="auswahl-ja"><i data-lucide="check"></i>Ausgewählt</span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    <tr data-href="@Url.Action("Details", "Gegenstand", new { id = gegenstand.ID })">
+                        <td>
+                            <a class="zeilen-link fw-medium" asp-controller="Gegenstand" asp-action="Details" asp-route-id="@gegenstand.ID">@gegenstand.Name</a>
+                            <div class="nebeninfo">@Zusatz(eintrag)</div>
+                        </td>
+                        <td class="zahlen">@(gegenstand.Seriennummer ?? "–")</td>
+                        <td>@(eintrag.Standort ?? "–")</td>
+                        <td><span class="tag @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span></td>
+                        <td>@(eintrag.Hinweis ?? "–")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Mobil: Liste mit Status und Standort; bei der Auswahl ist jede Zeile ein Knopf mit + bzw. Haken *@
+<div class="d-lg-none">
+    @foreach (var eintrag in Model.Eintraege)
+    {
+        var gegenstand = eintrag.Gegenstand;
+        if (Model.Auswahl)
+        {
+            <button type="button" class="katalog-zeile auswahl-knopf" data-auswahl="@gegenstand.ID" aria-pressed="false">
+                <span class="katalog-zeile-text">
+                    <span class="katalog-zeile-name">@gegenstand.Name</span>
+                    <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@(gegenstand.Seriennummer ?? Zusatz(eintrag))</span>
+                </span>
+                <span class="auswahl-nein" aria-hidden="true"><i data-lucide="plus"></i></span>
+                <span class="auswahl-ja" aria-hidden="true"><i data-lucide="check"></i></span>
+            </button>
+        }
+        else
+        {
+            <a class="katalog-zeile" asp-controller="Gegenstand" asp-action="Details" asp-route-id="@gegenstand.ID">
+                <div class="katalog-zeile-text">
+                    <span class="katalog-zeile-name">@gegenstand.Name</span>
+                    <span class="nebeninfo katalog-zeile-info"><span class="tag tag-klein @StatusTag.Klasse(eintrag.Status)">@eintrag.Status</span>@(eintrag.Standort ?? "–")</span>
+                </div>
+            </a>
+        }
+    }
+</div>

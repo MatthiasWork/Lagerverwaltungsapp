@@ -100,10 +100,10 @@
                         <h4>Geräte · <span data-ausleihe="anzahl">@anzahlGewaehlt</span></h4>
 
                         @* Alle Geräte des eigenen Raums sind da, aber nur die ausgewählten sichtbar; nicht ausgewählte Felder
-                           sind deaktiviert und werden daher nicht mitgeschickt. Hinzufügen über die Suche darunter *@
-                        @foreach (var bestand in Model.Bestand)
+                           sind deaktiviert und werden daher nicht mitgeschickt. Hinzufügen über die Suche darunter oder die Liste "Meine Geräte" *@
+                        @foreach (var eintrag in Model.Geraete)
                         {
-                            var gegenstand = bestand.Gegenstand;
+                            var gegenstand = eintrag.Gegenstand;
                             Model.Mengen.TryGetValue(gegenstand.ID, out var menge);
                             var gewaehlt = menge > 0;
                             if (!gewaehlt)
@@ -111,9 +111,9 @@
                                 // Vorschlag, falls das Gerät über die Suche hinzugefügt wird
                                 menge = 1;
                             }
-                            <div class="geraet-zeile" hidden="@(!gewaehlt)"
+                            <div class="geraet-zeile" hidden="@(!gewaehlt)" data-gegenstand="@gegenstand.ID"
                                  data-suchtext="@($"{gegenstand.Name} {gegenstand.Seriennummer} {gegenstand.Kategorie.Name}".ToLowerInvariant())"
-                                 data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{bestand.Menge} Stück im Raum")">
+                                 data-name="@gegenstand.Name" data-info="@(gegenstand.Seriennummer ?? $"{eintrag.Stueck} Stück im Raum")">
                                 <div>
                                     <div class="fw-medium">@gegenstand.Name</div>
                                     <div class="geraet-zeile-info">@(gegenstand.Seriennummer ?? gegenstand.Kategorie.Name) · @vonRaum.ID</div>
@@ -128,17 +128,17 @@
                                 {
                                     <span class="menge-auswahl">
                                         <input type="number" class="form-control" name="Mengen[@gegenstand.ID]" value="@menge"
-                                               min="1" max="@bestand.Menge" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
-                                        <span>von @bestand.Menge</span>
+                                               min="1" max="@eintrag.Stueck" step="1" disabled="@(!gewaehlt)" aria-label="Menge von @gegenstand.Name" />
+                                        <span>von @eintrag.Stueck</span>
                                     </span>
                                 }
                                 <button type="button" class="entfernen" data-entfernen aria-label="@gegenstand.Name entfernen"><i data-lucide="x"></i></button>
                             </div>
                         }
                         <p class="geraete-leer" hidden="@(anzahlGewaehlt > 0)">
-                            @if (Model.Bestand.Any())
+                            @if (Model.Geraete.Any())
                             {
-                                <text>Noch keine Geräte ausgewählt.</text>
+                                <text>Noch keine Geräte ausgewählt. Suchen Sie ein Gerät oder wählen Sie es unter „Meine Geräte“ aus.</text>
                             }
                             else
                             {
@@ -146,7 +146,7 @@
                             }
                         </p>
 
-                        @if (Model.Bestand.Any())
+                        @if (Model.Geraete.Any())
                         {
                             <div class="geraet-hinzufuegen">
                                 <i data-lucide="scan-line"></i>
@@ -156,6 +156,15 @@
                             </div>
                         }
                     </div>
+
+                    @* Was man selbst hat und daher ausleihen kann, dargestellt wie im Katalog. Ein Klick wählt das Gerät aus bzw. wieder ab (Skript unten) *@
+                    @if (Model.Geraete.Any())
+                    {
+                        <section class="ausleihe-katalog" aria-labelledby="meineGeraeteTitel">
+                            <h4 id="meineGeraeteTitel">Meine Geräte in Raum @vonRaum.ID · @Model.Geraete.Count</h4>
+                            <partial name="_KatalogListe" model="new KatalogListeViewModel { Eintraege = Model.Geraete, Auswahl = true }" />
+                        </section>
+                    }
                 </div>
 
                 <aside class="blueprint zusammenfassung">
@@ -187,7 +196,7 @@
                             die Übernahme unter „Freigaben“ bestätigt. Bis dahin können Sie die Ausleihe unter „Mein Raum“ zurückziehen.
                         </span>
                     </p>
-                    <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Bestand.Any())">Freigabe anfragen</button>
+                    <button type="submit" class="btn btn-primary btn-cta" disabled="@(!Model.Geraete.Any())">Freigabe anfragen</button>
                 </aside>
             </div>
         </form>
@@ -196,7 +205,7 @@
 
 @section Scripts {
     <script>
-        // Geräteauswahl: ausgewählte Geräte als Liste, weitere über die Suche hinzufügen, mit × entfernen.
+        // Geräteauswahl: ausgewählte Geräte als Liste, weitere über die Suche oder "Meine Geräte" hinzufügen, mit × entfernen.
         // Dazu die Zusammenfassung (Zielraum, benötigte Freigabe) und die Schritte oben
         (function () {
             var formular = document.getElementById('ausleiheFormular');
@@ -268,12 +277,23 @@
                 schritteZeigen([anzahl > 0 && zielGewaehlt, false]);
             }
 
+            // Unter "Meine Geräte" (Tabellenzeile und mobile Zeile) zeigen, ob das Gerät der Zeile ausgewählt ist
+            function katalogZeigen(zeile) {
+                var gewaehlt = !zeile.hidden;
+                formular.querySelectorAll('[data-auswahl="' + zeile.dataset.gegenstand + '"]').forEach(function (eintrag) {
+                    eintrag.classList.toggle('ausgewaehlt', gewaehlt);
+                    var knopf = eintrag.closest('.auswahl-knopf') || eintrag.querySelector('.auswahl-knopf');
+                    knopf.setAttribute('aria-pressed', String(gewaehlt));
+                });
+            }
+
             // Zeile zeigen und ihre Felder mitschicken oder ausblenden und nicht mitschicken
             function auswaehlen(zeile, gewaehlt) {
                 zeile.hidden = !gewaehlt;
                 zeile.querySelectorAll('input').forEach(function (eingabe) {
                     eingabe.disabled = !gewaehlt;
                 });
+                katalogZeigen(zeile);
                 aktualisieren();
             }
 
@@ -326,6 +346,17 @@
             zeilen.forEach(function (zeile) {
                 zeile.querySelector('[data-entfernen]').addEventListener('click', function () {
                     auswaehlen(zeile, false);
+                });
+                // Nach einem Fehler sind schon Geräte ausgewählt
+                katalogZeigen(zeile);
+            });
+
+            // Meine Geräte: ein Klick auf die Zeile oder ihren Knopf wählt das Gerät aus bzw. wieder ab.
+            // Ohne Fokuswechsel, damit die Liste nicht nach oben springt; die Anzahl oben zählt mit
+            formular.querySelectorAll('[data-auswahl]').forEach(function (eintrag) {
+                eintrag.addEventListener('click', function () {
+                    var zeile = formular.querySelector('.geraet-zeile[data-gegenstand="' + eintrag.dataset.auswahl + '"]');
+                    auswaehlen(zeile, zeile.hidden);
                 });
             });
 

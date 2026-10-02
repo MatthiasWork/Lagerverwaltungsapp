@@ -70,7 +70,7 @@ public class GegenstandController : Controller
         }
 
         var eintraege = (await abfrage.OrderBy(g => g.Name).ThenBy(g => g.Seriennummer).ToListAsync())
-            .Select(g => KatalogEintragErstellen(g, raumID))
+            .Select(g => KatalogEintrag.Erstellen(g, raumID))
             .ToList();
 
         if (!string.IsNullOrEmpty(status))
@@ -99,57 +99,6 @@ public class GegenstandController : Controller
         }
 
         return View(uebersicht);
-    }
-
-    /// <summary>
-    /// Methode, die für einen Gegenstand Standort, Stückzahl und Status berechnet.
-    /// Dafür müssen Raumbestand (mit Raum und Raumart) und Lagerbewegung geladen sein.
-    /// </summary>
-    /// <param name="gegenstand">Der Gegenstand mit Raumbestand und Lagerbewegungen</param>
-    /// <param name="raumID">Die ID des Raums, der bei den Standorten vorne stehen soll (Filter im Katalog)</param>
-    /// <returns>Der Eintrag mit Standorten, Stückzahl, Status und Hinweis</returns>
-    private static KatalogEintrag KatalogEintragErstellen(Gegenstand gegenstand, string? raumID = null)
-    {
-        var eintrag = new KatalogEintrag
-        {
-            Gegenstand = gegenstand,
-            // Ist nach einem Raum gefiltert, steht dieser Raum vorne, sonst der mit der größten Menge
-            Standorte = gegenstand.Raumbestand.Where(r => r.Menge > 0)
-                .OrderByDescending(r => r.RaumID == raumID)
-                .ThenByDescending(r => r.Menge)
-                .ToList()
-        };
-        eintrag.Stueck = eintrag.Standorte.Sum(r => r.Menge);
-
-        // Unterwegs ist, was schon abgebucht, aber weder im Zielraum übernommen noch storniert wurde
-        var offen = gegenstand.Lagerbewegung.Where(l => l.Offen).ToList();
-        var unterwegs = offen.Sum(l => l.Menge);
-        if (unterwegs > 0)
-        {
-            var ziele = string.Join(", ", offen.Select(l => l.NachRaumID).Distinct());
-            if (gegenstand.Seriennummer != null)
-            {
-                eintrag.Hinweis = $"unterwegs nach {ziele}";
-            }
-            else
-            {
-                eintrag.Hinweis = $"{unterwegs} Stück unterwegs nach {ziele}";
-            }
-        }
-
-        if (eintrag.Stueck > 0)
-        {
-            eintrag.Status = GegenstandUebersichtViewModel.Verfuegbar;
-        }
-        else if (unterwegs > 0)
-        {
-            eintrag.Status = GegenstandUebersichtViewModel.InAusleihe;
-        }
-        else
-        {
-            eintrag.Status = GegenstandUebersichtViewModel.KeinBestand;
-        }
-        return eintrag;
     }
 
     /// <summary>
@@ -182,7 +131,7 @@ public class GegenstandController : Controller
 
         var details = new GegenstandDetailsViewModel
         {
-            Eintrag = KatalogEintragErstellen(gegenstand),
+            Eintrag = KatalogEintrag.Erstellen(gegenstand),
             Unterwegs = gegenstand.Lagerbewegung.Where(l => l.Offen).OrderBy(l => l.ErstelltAm).ToList(),
             EigenerRaumID = await _lagerService.RaumDerPersonAsync(User.GetPersonID())
         };
